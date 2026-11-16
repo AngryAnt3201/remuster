@@ -130,3 +130,7 @@ html[data-game="brasswick"] .card-name.long { font-size: 10px; letter-spacing: -
 html[data-game="brasswick"] .btn.big { padding-left: 24px; padding-right: 24px; }
 html[data-game="brasswick"] .hm-card-name { font-size: 21px; line-height: 1; }
 html[data-game="brasswick"] .hm-card-line { color: #e8d9b8; }
+/* rivets only where there is room for them */
+html[data-game="brasswick"] .btn:not(.big) { background: var(--gloss), var(--b); }
+html[data-game="brasswick"] .of-card, html[data-game="brasswick"] .of-item { background: #17120f; border-color: #6d5122; color: var(--k-text); border-radius: 4px; }
+html[data-game="brasswick"] .of-head, html[data-game="brasswick"] .of-item b { color: var(--k-accent); }
