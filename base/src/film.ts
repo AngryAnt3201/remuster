@@ -4,6 +4,7 @@
 // Scenes are data; add one here and it works in every game.
 import type { MatchConfig, StartPiece } from "@engine/core/match";
 import type { UnitKind } from "@engine/core/defs";
+import { arenaById } from "@engine/core/arena";
 
 export interface Scene {
   /** Campaign act whose arena to fight in (1-10). */
@@ -54,6 +55,19 @@ export const SCENES: Record<string, Scene> = {
         ["lancer", 0.9, 5.0, 2], ["lancer", 8.1, 5.0, 2], ["harrier", 3.4, 2.4, 3], ["harrier", 5.6, 2.4, 3], ["grave", 4.5, 1.6, 2]],
     ],
   },
+  // Arena mode: the same kind of fight, but around houses, a hall and barricades. Shots stop on walls, the charge
+  // has to go round, bombs come over the roofs and the barricades get smashed.
+  arena: {
+    arena: 10, seed: 4242, names: ["You", "Rival"], title: "Old Village", terrain: "old-village",
+    armies: [
+      [["bulwark", 4.5, 5.3, 2], ["blades", 2.6, 5.2, 2], ["golem", 6.3, 5.0, 3], ["lancer", 0.9, 4.6, 2], ["ranger", 3.4, 3.0, 2],
+        ["ranger", 5.6, 3.0, 2], ["grenadier", 2.2, 2.2, 3], ["bombard", 6.8, 1.2, 2], ["storm", 4.5, 2.2, 3], ["harrier", 8.0, 3.4, 2],
+        ["keg", 7.6, 5.2, 2], ["medic", 4.5, 1.2, 2]],
+      [["hook", 4.5, 5.3, 2], ["ravager", 2.6, 5.2, 2], ["golem", 6.3, 5.0, 3], ["outrider", 0.9, 4.6, 2], ["rime", 3.4, 3.0, 2],
+        ["ballista", 5.6, 1.4, 3], ["grenadier", 2.2, 2.2, 3], ["tide", 6.8, 2.6, 2], ["shade", 8.0, 4.4, 2], ["griffin", 1.4, 1.6, 3],
+        ["keg", 7.6, 5.2, 2], ["grave", 4.5, 1.4, 2]],
+    ],
+  },
 };
 
 /** The match a scene plays: both armies already on the board, no gold to change them, one decisive battle. */
@@ -62,6 +76,7 @@ export function sceneConfig(s: Scene): MatchConfig {
     seed: s.seed, hp: [400, 400], names: s.names ?? ["You", "Rival"],
     start: [pieces(s.armies[0]), pieces(s.armies[1])],
     fixedGold: [0, 0], noReroll: true, firstRound: 9, maxRounds: 1,
+    ...(s.terrain ? { terrain: arenaById(s.terrain)?.blocks } : {}),
   };
 }
 

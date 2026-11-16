@@ -4,6 +4,9 @@
 import type { Battle, BattleEvent, Body, Proj } from "@engine/core/battle";
 import { H, UNITS, W, ZONE_DEPTH, bodyDef, toWorld, type BodyKind, type Obstacle, type Piece, type Side, type UnitKind } from "@engine/core/defs";
 import { arenaFor, backdropRect, propRect, propVariant, type Arena } from "./arena";
+import { TerrainLayer } from "./terrain";
+import type { Block } from "@engine/core/terrain";
+import type { ArenaMark } from "@engine/core/arena";
 import { Camera, DIST, SLAB, TILT, sortDrawables, type Drawable, type Rect, type ScreenPt } from "./camera";
 import { Fx, animAlpha, animFrame, frand, type Anim } from "./fx";
 import { BOARD, GOLD, INK, TEAM, VIOLET, ZAP, team } from "./palette";
@@ -75,6 +78,8 @@ export class BoardView {
   area: Rect = { x: 0, y: 0, w: 0, h: 0 };
   time = 0;
   obstacles: Obstacle[] = [];
+  /** [arena] Arena-mode terrain: walls, buildings, cover and water (render/terrain.ts). */
+  readonly terrain = new TerrainLayer();
   onShake?: (amount: number) => void;
   onSound?: (name: string, gain?: number) => void;
   private bg?: HTMLCanvasElement;
@@ -160,6 +165,9 @@ export class BoardView {
     this.obstacles = o ?? [];
     this.bg = undefined;
   }
+
+  /** [arena] The blocks and decoration marks of an Arena-mode battlefield (none for every other mode). */
+  setTerrain(blocks: Block[] | undefined, marks?: ArenaMark[]) { this.terrain.set(blocks, marks); }
 
   /** Picks the arena by campaign act (anything without one gets act 1's). */
   setArena(act: number | undefined): Promise<void> {
@@ -423,6 +431,7 @@ export class BoardView {
   private onEvent(e: BattleEvent, battle: Battle) {
     this.animEvent(e, battle);
     playEvent(this.fx, e, this.vfxEnv(battle));
+    this.terrain.onEvent(e, this.fx, battle.time, { sound: (n, g) => this.onSound?.(n, g), kick: (k) => this.onShake?.(k) }); // [arena]
     // JUICE: hit-stop, shake and Ascended callouts from the same event.
     this.juice.onEvent(e, (id) => battle.bodies.find((b) => b.id === id));
   }
@@ -799,6 +808,7 @@ export class BoardView {
   }
 
   private drawDeploy(sc: DeployScene) {
+    this.terrain.ground(this.ctx, this.cam, this.time); // [arena]
     if (sc.zone !== undefined && sc.zone !== null) this.drawZone(sc.zone);
     if (!this.arena?.props.length) for (const o of this.obstacles) this.shadow(o.x, o.y, o.r * 1.05, 0.3);
     const shown = sc.pieces.filter((p) => !(p.kind === "mine" && p.side === 1 && !sc.showEnemyMines));
@@ -833,6 +843,7 @@ export class BoardView {
       });
     }
     for (const o of this.obstacles) list.push({ y: o.y, layer: 1, draw: () => this.drawRock(o) });
+    list.push(...this.terrain.drawables(this.ctx, this.cam, this.time)); // [arena]
     this.pushKeeps(list, [...shown.filter((p) => p.kind !== "mine"), ...(sc.ghost ? [sc.ghost] : [])]);
     for (const d of sortDrawables(list)) d.draw();
     if (sc.ghost) {
@@ -894,6 +905,7 @@ export class BoardView {
 
   private drawBattle(sc: BattleScene) {
     const ctx = this.ctx, b = sc.battle, a = sc.alpha, as = this.assault;
+    this.terrain.ground(ctx, this.cam, b.time, b.blocks); // [arena]
     const spread = this.spreadBattle(b, a);
     // During the round-end assault the survivors move on the assault's clock, not the battle's.
     const pos = (bd: Body) => {
@@ -1024,6 +1036,7 @@ export class BoardView {
     // ---- upright and air layers, painter-sorted by ground y
     const list: Drawable[] = [];
     for (const o of this.obstacles) list.push({ y: o.y, layer: 1, draw: () => this.drawRock(o) });
+    list.push(...this.terrain.drawables(this.ctx, this.cam, b.time, b.blocks)); // [arena]
     for (const w of b.waves ?? []) this.drawWave(w);
     for (const f of b.fuses ?? []) {
       if (b.time >= f.at) continue;

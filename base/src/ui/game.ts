@@ -1,7 +1,7 @@
 // One match on screen: deploy (drag from the shop, move, upgrade, sell), then the battle plays out, then the damage.
 import { applyPlan, planTurnAsync, type AIProfile } from "@engine/core/ai";
 import type { Battle } from "@engine/core/battle";
-import { BODY_EXTRA, DT, UNITS, clampToZone, inZone, upgradeCost, type Piece, type Side, type SpawnKind, type UnitKind } from "@engine/core/defs";
+import { BODY_EXTRA, DT, UNITS, inZone, upgradeCost, type Piece, type Side, type SpawnKind, type UnitKind } from "@engine/core/defs";
 import { Match, type MatchConfig, type RoundReport } from "@engine/core/match";
 import { sfx, unlockAudio } from "../audio/sfx";
 import { playMusic } from "../audio/music";
@@ -60,6 +60,8 @@ export interface GameOpts {
   showEnemyMines?: boolean;
   /** Campaign act whose arena to fight in (anything else gets act 1's). */
   arena?: number;
+  /** [arena] Decoration for an Arena battlefield (gates, bridges); the blocks themselves are cfg.terrain. */
+  marks?: import("@engine/core/arena").ArenaMark[];
   /** Line under the opening banner (default "vs <rival>"). */
   intro?: string;
   /** First-time coaching: drag a card down, then Fight. */
@@ -131,6 +133,7 @@ export class GameScreen {
       }
     });
     this.view.setObstacles(opts.cfg.obstacles);
+    this.view.setTerrain(opts.cfg.terrain, opts.marks); // [arena]
     void this.view.setArena(opts.arena);
     this.view.onSound = (n, g) => sfx(n, g);
     this.view.onShake = (a) => { if (a >= 2) buzz("heavy"); };
@@ -654,10 +657,9 @@ export class GameScreen {
     if (d.type === "card") {
       const kind = this.match.sides[0].shop[d.slot!];
       if (!kind) return;
-      const ok = inZone(0, w.x, w.y) && !this.match.canBuy(0, d.slot!);
-      // Show the ghost exactly where the sim will place it (buy clamps into the zone by the unit's radius).
-      const at = ok ? clampToZone(0, w.x, w.y, UNITS[kind].radius) : w;
-      this.ghost = { kind, x: at.x, y: at.y, ok };
+      // Show the ghost exactly where the sim will place it: clamped into the zone and, in an arena, off the blocks.
+      const spot = inZone(0, w.x, w.y) && !this.match.canBuy(0, d.slot!) ? this.match.freeSpot(0, kind, w.x, w.y) : null;
+      this.ghost = { kind, x: spot?.x ?? w.x, y: spot?.y ?? w.y, ok: !!spot };
     } else {
       try { this.match.move(0, d.id!, w.x, w.y); } catch { /* not now */ }
       this.selected = d.id!;
@@ -696,7 +698,8 @@ export class GameScreen {
     const why = this.match.canBuy(0, slot);
     if (why) { this.flashStatus(why); sfx("deny"); return; }
     if (!inZone(0, x, y)) { this.flashStatus("Place it in your half"); sfx("deny"); return; }
-    const p = this.match.buy(0, slot, x, y);
+    let p: Piece;
+    try { p = this.match.buy(0, slot, x, y); } catch { this.flashStatus("No room there"); sfx("deny"); return; } // [arena] a zone walled full
     this.spendFx(slot, sx, sy);
     this.view.dropIn([{ id: p.id, x: p.x, y: p.y, radius: p.kind === "blades" ? 0.5 : UNITS[p.kind].radius, side: p.side }]);
     sfx("buy"); sfx("place");

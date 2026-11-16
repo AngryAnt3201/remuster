@@ -86,7 +86,7 @@ export function battleTab(o: BattleTabOpts): HTMLElement {
 }
 
 export interface ModeCard {
-  id: "daily" | "gauntlet" | "puzzles" | "skirmish" | "bastion";
+  id: "arena" | "daily" | "gauntlet" | "puzzles" | "skirmish" | "bastion";
   name: string;
   line: string;
   /** The stat chip, e.g. "streak 3" or "best 4". */

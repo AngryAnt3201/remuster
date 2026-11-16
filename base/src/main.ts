@@ -31,7 +31,9 @@ import { rallyOffer, shopCounters, shopView, showRewards } from "./ui/gemshop";
 import { armyLevel, migrateArmy } from "@engine/progression/troops";
 import { underLevelledHint } from "./ui/army";
 // [progression] troop levels, coin rewards and the Barracks (src/progression, src/ui/barracks.ts)
-import { awardCampaign, awardDaily, awardGauntletRival, awardSkirmish, settleLegacyCoins, withLevels } from "@engine/progression/troops";
+import { arenaLadder, awardArena, awardCampaign, awardDaily, awardGauntletRival, awardSkirmish, nextArenaMatch, settleLegacyCoins, withLevels } from "@engine/progression/troops";
+import { LEAGUES, arenaById, arenaUnlocked, leagueProgress, trophyChange, type ArenaDef } from "@engine/core/arena";
+import { ARENA_BACKDROP, TERRAIN } from "./game/terrain";
 import { foeLevelForAct } from "@engine/progression/economy";
 import { attachReward, barracksScreen } from "./ui/barracks";
 // [chests] chest slots, free and crown chests, the opening moment (src/progression/chests.ts, src/ui/chests.ts)
@@ -165,6 +167,7 @@ function modeCards(): ModeCard[] {
   const pz = Object.keys(s.puzzles).length, pzStars = Object.values(s.puzzles).reduce((a, b) => a + b, 0);
   const td = bastionStars();
   return [
+    { id: "arena", name: "Arena", line: "Walls, towers and cover: climb the ladder", stat: `${s.arena?.trophies ?? 0} trophies`, progress: (() => { const p = leagueProgress(s.arena?.trophies ?? 0); return p.span ? p.into / p.span : 1; })(), art: "/arenas/act4.jpg", artY: "40%", glyph: "flag", open: arena },
     { id: "daily", name: "Daily", line: fresh ? "A new board for everyone today" : `Next board in ${untilTomorrow()}`, stat: flameChip(streak), art: "/maps/sky.jpg", artY: "4%", glyph: "flame", dot: fresh, open: daily },
     { id: "gauntlet", name: "Gauntlet", line: "Rival after rival, one health pool", stat: s.gauntlet.best ? `best ${s.gauntlet.best}` : "endless", art: "/maps/ash.jpg", artY: "2%", glyph: "crown", open: gauntlet },
     { id: "puzzles", name: "Breakpoint", line: "Win with the gold you're given", stat: starChip(pzStars, PUZZLES.length * 3), progress: pz / PUZZLES.length, art: "/maps/frozen.jpg", glyph: "star", open: puzzles },
@@ -526,6 +529,88 @@ function boonPick(r: GauntletRun) {
   ]), false);
 }
 
+// ---------------------------------------------------------------- [arena] Arena: battles around walls, buildings and cover, on a trophy ladder
+/** A top-down thumbnail of an arena's blocks (the same rectangles the sim uses). */
+function arenaThumb(a: ArenaDef, px = 54) {
+  const c = el("canvas", { class: "ar-thumb" }) as HTMLCanvasElement;
+  const k = px / 9, dpr = Math.min(3, window.devicePixelRatio || 1);
+  c.width = Math.round(9 * k * dpr); c.height = Math.round(14 * k * dpr);
+  c.style.width = `${9 * k}px`; c.style.height = `${14 * k}px`;
+  const g = c.getContext("2d")!;
+  g.scale(k * dpr, k * dpr);
+  for (const m of a.marks) { g.fillStyle = m.look === "bridge" ? TERRAIN.bridge.deck : TERRAIN.gate; g.fillRect(m.x - m.w / 2, m.y - m.h / 2, m.w, m.h); }
+  for (const b of a.blocks) {
+    g.fillStyle = b.kind === "water" ? TERRAIN.water.shallow : (TERRAIN.looks[b.look ?? ""] ?? TERRAIN.looks[b.kind] ?? TERRAIN.looks.wall)[b.kind === "building" ? "roofLit" : "top"] ?? "#bbb";
+    g.fillRect(b.x - b.w / 2, b.y - b.h / 2, b.w, b.h);
+  }
+  return c;
+}
+
+function arena() {
+  clear();
+  here = arena;
+  const s = arenaLadder(), p = leagueProgress(s.trophies), next = nextArenaMatch();
+  const gain = trophyChange(s, true);
+  screen("arena-screen", header("Arena", title),
+    el("div", { class: "panel ar-ladder" }, [
+      el("div", { class: "ar-league" }, [
+        el("span", { class: `ar-badge league-${p.league.id}` }, [icon("flag")]),
+        el("div", {}, [el("small", {}, ["League"]), el("b", {}, [p.league.name])]),
+        el("div", { class: "ar-trophies" }, [el("b", {}, [String(s.trophies)]), el("small", {}, ["trophies"])]),
+      ]),
+      el("div", { class: "ar-bar" }, [el("i", { style: `width:${Math.round((p.span ? p.into / p.span : 1) * 100)}%` })]),
+      el("small", { class: "ar-next" }, [p.next ? `${p.span - p.into} to ${p.next.name}` : "Top league"]),
+      el("div", { class: "result-stats" }, [
+        el("span", {}, [el("b", {}, [String(s.wins)]), "wins"]),
+        el("span", {}, [el("b", {}, [String(s.streak)]), "streak"]),
+        el("span", {}, [el("b", {}, [String(s.best)]), "best"]),
+      ]),
+    ]),
+    el("div", { class: "panel ar-next-match" }, [
+      el("div", { class: "ar-vs" }, [
+        arenaThumb(next.arena, 46),
+        el("div", { class: "ar-vs-text" }, [
+          el("small", {}, ["Next battle"]),
+          el("b", {}, [next.arena.name]),
+          el("span", {}, [next.arena.blurb]),
+          el("span", { class: "ar-foe" }, [`vs ${next.foe.name}, ${next.foe.title} · level ${next.foe.level}`]),
+        ]),
+      ]),
+      btn(el("span", {}, ["Battle", el("small", {}, [` +${gain} / ${trophyChange(s, false)}`])]), "primary big", () => playArena()),
+    ]),
+    el("div", { class: "ar-list" }, LEAGUES.map((l) => el("div", { class: `panel ar-row ${s.best >= l.trophies ? "" : "locked"}` }, [
+      el("div", { class: "ar-row-head" }, [el("b", {}, [l.name]), el("small", {}, [s.best >= l.trophies ? "Unlocked" : `${l.trophies} trophies`])]),
+      el("div", { class: "ar-arenas" }, l.arenas.map((id) => arenaById(id)!).map((a) => el("div", { class: `ar-arena ${arenaUnlocked(a, s.best) ? "" : "locked"}` }, [
+        arenaThumb(a, 40), el("span", {}, [a.name]), el("small", {}, [s.arenaWins[a.id] ? `${s.arenaWins[a.id]} won` : arenaUnlocked(a, s.best) ? "new" : "locked"]),
+      ]))),
+    ]))),
+  );
+}
+
+function playArena(o: { arena?: string; seed?: number } = {}) {
+  clear();
+  const next = nextArenaMatch(o);
+  game = new GameScreen(app, {
+    cfg: next.cfg, foe: next.foe.ai, mode: "arena", title: next.arena.name,
+    arena: ARENA_BACKDROP[next.arena.id], marks: next.arena.marks,
+    intro: `${next.arena.name} · vs ${next.foe.name}`,
+    onEnd: (m) => {
+      const won = m.winner === 0;
+      const end = awardArena(next, won);
+      const r = end.result;
+      results(m, {
+        heading: won ? "Victory" : m.winner === 1 ? "Defeat" : "Draw",
+        note: `${r.delta >= 0 ? "+" : ""}${r.delta} trophies · ${r.trophies} now${r.promoted ? ` · promoted to ${r.to.name}` : r.streak > 1 ? ` · ${r.streak} in a row` : ""}`,
+        primary: ["Next battle", () => playArena()],
+        secondary: ["Arena", arena],
+      });
+      attachReward(end.reward, barracks);
+      if (end.chest) chestEarned(end.chest);
+    },
+    onQuit: arena,
+  });
+}
+
 // ---------------------------------------------------------------- daily challenge
 /** Today's day key: the device's local calendar day. */
 const today = () => dateKey(new Date());
@@ -726,6 +811,7 @@ async function playFilm(name: string, speed: number) {
   clear();
   game = new GameScreen(app, {
     cfg: sceneConfig(scene), you: { ...DEFAULT_AI, difficulty: 0 }, mode: "watch", title: scene.title, arena: scene.arena,
+    marks: scene.terrain ? arenaById(scene.terrain)?.marks : undefined,
     onEnd: () => { filmMark("end"); }, onQuit: title,
   });
   st.ready = true;
@@ -778,6 +864,8 @@ async function boot() {
   if (q.has("puzzles")) return puzzles();
   if (q.has("lab")) return skirmish();
   if (q.has("daily")) return daily();
+  // [arena] ?arena opens the ladder, ?arena=<id> plays that arena (engine/core/arena.ts ids).
+  if (q.has("arena")) return q.get("arena") ? playArena({ arena: q.get("arena")!, seed: 7 }) : arena();
   if (q.has("barracks") || q.has("army")) return barracks(); // [progression]
   if (q.has("shop")) return shopScreen();
   // [home] ?tab=shop|army|battle|modes|pass opens a tab; ?settings opens the settings sheet over Battle.
