@@ -20,7 +20,7 @@
     "cap:sync": "npm run build && node tools/cap-sync.mjs",
     "ios:sim": "npm run cap:sync && xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/App/build/dd CODE_SIGNING_ALLOWED=NO build",
     "ios:open": "npm run cap:sync && cap open ios",
-    "ios:run": "npm run ios:sim && xcrun simctl install booted ios/App/build/dd/Build/Products/Debug-iphonesimulator/App.app && xcrun simctl launch booted co.inflect.muster",
+    "ios:run": "npm run ios:sim && xcrun simctl install booted ios/App/build/dd/Build/Products/Debug-iphonesimulator/App.app && xcrun simctl launch booted co.inflect.remuster",
     "e2e": "node tools/e2e.mjs .",
     "release:config": "node tools/release-config.mjs",
     "ios:release:dry": "sh tools/ios-release.sh dry",
