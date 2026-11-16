@@ -1,0 +1,16 @@
+{
+  "note": "The launch video's voice-over, line by line. `bar` is where the line starts on the music grid (144 BPM, 4/4, one bar = 1.6667 s, bar 1 = the first bar of music). Record each line as vo/<id>.wav (mono or stereo, any sample rate) and re-render: the edit picks the files up by id. The placeholder files are the Mac's built-in voice (vo/make.sh).",
+  "voice": "Daniel",
+  "rate": 178,
+  "lines": [
+    { "id": "01-one-game", "bar": 2, "text": "This is Crownfall. A fantasy battler you can play today." },
+    { "id": "02-how", "bar": 6, "text": "Draft an army. Place it. Watch it fight." },
+    { "id": "03-tell-claude", "bar": 9, "text": "Rather it wasn't fantasy? Tell Claude." },
+    { "id": "04-every-look", "bar": 15, "text": "Same battle. Same rules. A completely different game." },
+    { "id": "05-we-run", "bar": 21, "text": "We run the game underneath: the rules, the servers, the ladder." },
+    { "id": "06-you-own", "bar": 25, "text": "You redesign everything a player sees and hears." },
+    { "id": "07-arenas", "bar": 29, "text": "And there's a new way to fight. Arenas. Walls, cover, choke points." },
+    { "id": "08-yours", "bar": 39, "text": "One game. Make it yours." },
+    { "id": "09-remuster", "bar": 46, "text": "Remuster." }
+  ]
+}
