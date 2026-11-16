@@ -542,4 +542,8 @@ export const LEXICON: Record<string, string> = {
   "War Pass": "Bounty Board",
   "Replay": "Ride Again",
   "Map": "Trail",
+  // ---- base interface lines the text dump does not list
+  "Win a battle": "Win a showdown",
+  "Free chest": "Free strongbox",
+  "Crown chest": "Sheriff's safe",
 };
