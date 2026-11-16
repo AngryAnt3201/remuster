@@ -396,7 +396,7 @@ html, body { background: #3a2210; }
 :root .ar-tile.ghost { background: linear-gradient(180deg, var(--r) 0 5px, #cdb98c 5px); }
 
 /* ---------------------------------------------------------------- High Noon ladder */
-:root .ar-thumb { border-radius: 2px; background: #dcb67c; box-shadow: 0 0 0 2px var(--k-ink), 2px 3px 0 rgba(30, 12, 0, 0.4); }
+:root .ar-thumb { border-radius: 2px; background: #a8743f; box-shadow: 0 0 0 2px var(--k-ink), 2px 3px 0 rgba(30, 12, 0, 0.4); }
 :root .ar-badge { border-radius: 3px; }
 
 /* ---------------------------------------------------------------- the rail stands on a dark sill, so screens do not show through it */
@@ -425,3 +425,11 @@ html, body { background: #3a2210; }
 :root .tile-id { font-size: 25px; color: #fff3d6; }
 :root .tile-name { font-size: 11.5px; color: #fff3d6; }
 :root .tile-crown { border-radius: 2px; }
+
+/* ---------------------------------------------------------------- Stockade (tower defence) */
+:root .td-run { background: #c79a5e; }
+:root .td-chip { border-radius: 3px; background: var(--dl-wood); font-family: var(--display); }
+:root .td-hp { border-radius: 2px; } :root .td-toast { border-radius: 3px; }
+:root .td-unit { border-radius: 2px; background: var(--dl-paper); } :root .td-port.big { border-radius: 2px; }
+:root .td-result-card { border-radius: 3px; background: var(--dl-paper); } :root .td-result-lines > div { border-radius: 2px; }
+:root .btn.td-follow { padding-left: 14px; padding-right: 14px; font-size: 13px; }

@@ -85,7 +85,7 @@ export const MAPS: MapArt = {
       const x = p.rand(20, map.w - 20), y = p.rand(120, map.h - 40);
       if (blocked(x, y, 96) || spots.some((s) => Math.abs(s.y - y) < 60 && Math.abs((s as { x?: number }).x! - x) < 96)) continue;
       const v = Math.floor(p.r() * th.scatter.length);
-      spots.push(Object.assign({ y, draw: () => st.model(p, th.scatter[v], x, y, { ppu: 46, yaw: v % 2 ? 62 : 118, el: 52, key: `${id}s${v}`, shadow: 0.9 }) }, { x }));
+      spots.push(Object.assign({ y, draw: () => st.model(p, th.scatter[v], x, y, { ppu: 48, yaw: v % 2 ? 72 : 108, el: 40, key: `${id}s${v}`, shadow: 0.9 }) }, { x }));
       i++;
     }
     const lx = map.boss[0] + (map.boss[0] > map.w / 2 ? -250 : 250);
@@ -188,7 +188,7 @@ export const TDART: TdArt = {
       if (!free(px, py, 1.0)) { if (free(px, py, 0.2) && p.r() < 0.4) spots.push({ y: py, draw: () => st.model(p, (m) => cactus(m, 1.1, 1), px, py, { ppu: 72, el: 53.13, key: "tdcactus", shadow: 0.15 }) }); continue; }
       const v = Math.floor(p.r() * th.scatter.length);
       if (p.r() < 0.55) { if (p.r() < 0.5) spots.push({ y: py, draw: () => st.model(p, (m) => (v % 2 ? cactus(m, 1.3, 2) : boulder(m, 0.5, 0.3)), px, py, { ppu: 72, el: 53.13, key: `tdx${v % 2}`, shadow: 0.2 }) }); continue; }
-      spots.push({ y: py, draw: () => st.model(p, th.scatter[v], px, py, { ppu: 72, yaw: v % 2 ? 60 : 120, el: 53.13, key: `td${map.act}s${v}`, shadow: 0.9 }) });
+      spots.push({ y: py, draw: () => st.model(p, th.scatter[v], px, py, { ppu: 72, yaw: v % 2 ? 74 : 106, el: 53.13, key: `td${map.act}s${v}`, shadow: 0.9 }) });
     }
     spots.sort((a, b) => a.y - b.y).forEach((s) => s.draw());
   },

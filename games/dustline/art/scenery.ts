@@ -17,13 +17,14 @@ export const S = {
   sign: mat("#f0e2b8"), signInk: mat("#3a2414"),
 };
 
+const ROOFS = [S.shingle, S.tin, S.barnDk, S.shingleDk, mat("#6f8a78"), S.tile];
 /** A false-front store: a plain shed behind a tall flat facade with a cornice and a sign, a porch roof on posts and
  *  a boardwalk. `w` runs along y, `d` back along -x, `h` is the shed's eaves. */
-export function falseFront(m: Model, o: { w: number; d?: number; h?: number; wall?: Material; front?: Material; trim?: Material; awning?: Material | null; lit?: boolean; seed?: number; storeys?: number; sign?: boolean }) {
+export function falseFront(m: Model, o: { w: number; d?: number; h?: number; wall?: Material; front?: Material; trim?: Material; awning?: Material | null; lit?: boolean; seed?: number; storeys?: number; sign?: boolean; roof?: Material }) {
   const w = o.w, d = o.d ?? 2, h = o.h ?? 1.5, wall = o.wall ?? S.pine, front = o.front ?? wall, trim = o.trim ?? S.pineDk, seed = o.seed ?? 1, st = o.storeys ?? 1;
   const fh = h + 0.55 + 0.1 * (seed % 3), step = seed % 2 === 0;
   m.box([-d / 2, 0, h / 2], [d, w, h], wall);
-  m.with(() => { m.move(-d / 2, 0, h).rotZ(90); m.extrude([[-w / 2 - 0.06, 0], [w / 2 + 0.06, 0], [0, 0.45]], d + 0.1, S.shingle); });
+  m.with(() => { m.move(-d / 2, 0, h).rotZ(90); m.extrude([[-w / 2 - 0.06, 0], [w / 2 + 0.06, 0], [0, 0.45]], d + 0.1, o.roof ?? ROOFS[seed % ROOFS.length]); });
   // the facade
   m.box([0.04, 0, fh / 2], [0.1, w + 0.08, fh], front);
   if (step) m.box([0.04, 0, fh + 0.14], [0.1, w * 0.56, 0.28], front);
