@@ -14,5 +14,5 @@
     "baseUrl": ".",
     "paths": { "@engine/*": ["engine/*"], "@base/*": ["base/src/*"] }
   },
-  "include": ["engine", "base/src", "games", "tests", "tools", "vite.config.ts", "capacitor.config.ts"]
+  "include": ["engine", "base/src", "games", "tests", "tools", "infra", "vite.config.ts", "capacitor.config.ts"]
 }

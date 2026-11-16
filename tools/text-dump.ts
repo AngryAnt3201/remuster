@@ -30,7 +30,7 @@ for (const u of Object.values(UNITS)) { add("units", u.name); add("unit lines", 
 for (const b of Object.values(BODY_EXTRA)) add("units", b.name);
 for (const a of Object.values(ABILITIES)) { add("abilities", a.name); add("ability lines", a.text); }
 add("acts", ...ACTS);
-for (const l of LEVELS) { add("levels", l.name); add("rivals", l.foe); add("level lines", l.line); }
+for (const l of LEVELS) { add("levels", l.name); add("rivals", l.foe ?? ""); add("level lines", l.line ?? ""); }
 for (const p of PUZZLES) harvest(p, (sections["puzzles"] ??= new Set()));
 
 // Everything else the engine names (chests, boons, daily twists, quests, cosmetics, pass, maps, arenas...):
