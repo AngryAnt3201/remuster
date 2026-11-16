@@ -1,4 +1,5 @@
 // Progress on this device.
+import { blankArena, type ArenaSave } from "./core/arena";
 import { blankDaily, type DailySave } from "./core/daily";
 import type { StoreSave } from "./store/starter";
 import type { WalletSave } from "./economy/wallet";
@@ -30,10 +31,12 @@ export interface Save {
   chests?: ChestSave;
   /** Keep skins owned and equipped (engine/progression/cosmetics.ts). */
   cosmetics?: CosmeticsSave;
+  /** The Arena trophy ladder (engine/core/arena.ts). Older saves have none: they load with a blank ladder. */
+  arena?: ArenaSave;
 }
 
 const KEY = "muster.save.v1";
-const blank = (): Save => ({ campaign: {}, puzzles: {}, gauntlet: { best: 0, runs: 0 }, daily: blankDaily(), settings: { sound: true, haptics: true, speed: 1 }, seen: [] });
+const blank = (): Save => ({ campaign: {}, puzzles: {}, gauntlet: { best: 0, runs: 0 }, daily: blankDaily(), settings: { sound: true, haptics: true, speed: 1 }, seen: [], arena: blankArena() });
 
 let cache: Save | null = null;
 export function load(): Save {

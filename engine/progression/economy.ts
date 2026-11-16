@@ -47,7 +47,7 @@ export const COMMANDER_XP = [0, 20, 60, 140, 280, 500, 800, 1200, 1700, 2400, 33
 export const UPGRADE_XP = [0, 0, 4, 6, 10, 16, 25, 40, 60, 90, 130, 180, 250] as const;
 export const upgradeXp = (newLevel: number) => UPGRADE_XP[clampLevel(newLevel)] ?? 0;
 /** Wins earn a little XP too: a campaign first clear (bosses double), a replay, a Gauntlet rival, a Skirmish win. */
-export const WIN_XP = { firstClear: 15, boss: 30, replay: 3, gauntlet: 8, skirmish: 3 } as const;
+export const WIN_XP = { firstClear: 15, boss: 30, replay: 3, gauntlet: 8, skirmish: 3, arena: 5 } as const;
 export function commanderLevel(xp: number): number {
   let l = 1;
   while (l < MAX_COMMANDER && xp >= COMMANDER_XP[l]) l++;

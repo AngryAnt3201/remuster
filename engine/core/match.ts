@@ -6,7 +6,9 @@ import {
   type Mods, type Obstacle, type Piece, type Side, type UnitKind,
 } from "./defs";
 import type { Levels } from "./levels";
+import { freeSpotIn, spotBlocked } from "./placement";
 import { Rng, hashSeed } from "./rng";
+import type { Block } from "./terrain";
 
 export interface StartPiece { kind: UnitKind; lx: number; depth: number; rank?: number; }
 
@@ -22,6 +24,8 @@ export interface MatchConfig {
   /** Persistent troop levels per side (engine/core/levels.ts). Omitted = level 1 everywhere (Daily, puzzles, tools). */
   levels?: [Levels | undefined, Levels | undefined];
   obstacles?: Obstacle[];
+  /** Arena terrain (engine/core/terrain.ts): passed to every battle, and no piece may be placed overlapping a block. */
+  terrain?: Block[];
   start?: [StartPiece[] | undefined, StartPiece[] | undefined];
   noReroll?: boolean;
   /** If both commanders still stand after this round, the one with more health wins. */
@@ -93,7 +97,8 @@ export class Match {
     this.sides = [mk(0), mk(1)];
     for (const s of [0, 1] as Side[]) {
       for (const sp of cfg.start?.[s] ?? []) {
-        const { x, y } = toWorld(s, sp.lx, sp.depth);
+        const w = toWorld(s, sp.lx, sp.depth);
+        const { x, y } = (cfg.terrain?.length ? freeSpotIn(cfg.terrain, s, sp.kind, w.x, w.y) : null) ?? w;
         const rank = sp.rank ?? 1;
         this.sides[s].pieces.push({ id: this.nextPiece++, kind: sp.kind, side: s, x, y, rank, spent: UNITS[sp.kind].cost * rank });
       }
@@ -178,7 +183,8 @@ export class Match {
     if (why) throw Error(why);
     const st = this.sides[s];
     const kind = st.shop[slot]!;
-    const pos = clampToZone(s, x, y, UNITS[kind].radius);
+    const pos = this.freeSpot(s, kind, x, y);
+    if (!pos) throw Error("No room");
     st.gold -= UNITS[kind].cost;
     if (!this.cfg.fixedShop?.[s]) st.shop[slot] = null;
     const p: Piece = { id: this.nextPiece++, kind, side: s, x: pos.x, y: pos.y, rank: 1, spent: UNITS[kind].cost };
@@ -195,9 +201,23 @@ export class Match {
   move(s: Side, id: number, x: number, y: number) {
     if (this.phase !== "deploy") throw Error("Not now");
     const p = this.piece(s, id);
-    const pos = clampToZone(s, x, y, UNITS[p.kind].radius);
+    const pos = this.freeSpot(s, p.kind, x, y);
+    if (!pos) throw Error("No room");
     p.x = pos.x;
     p.y = pos.y;
+  }
+
+  /**
+   * Where a piece of `kind` dropped at (x, y) would stand: clamped into the side's zone and, in an arena, nudged off
+   * any block to the nearest free spot in the zone. Null when there is none (buy and move then refuse). The UI can call
+   * this while dragging to show the snapped spot; buy() and move() use it themselves.
+   */
+  freeSpot(s: Side, kind: UnitKind, x: number, y: number): { x: number; y: number } | null {
+    return this.cfg.terrain?.length ? freeSpotIn(this.cfg.terrain, s, kind, x, y) : clampToZone(s, x, y, UNITS[kind].radius);
+  }
+  /** Would a piece of `kind` at exactly (x, y) overlap a block (for tinting a drag ghost). */
+  spotBlocked(kind: UnitKind, x: number, y: number): boolean {
+    return spotBlocked(this.cfg.terrain, kind, x, y);
   }
 
   canUpgrade(s: Side, id: number): string | null {
@@ -242,6 +262,7 @@ export class Match {
     return new Battle(pieces, {
       seed: this.battleSeed(),
       obstacles: this.cfg.obstacles,
+      terrain: this.cfg.terrain,
       mods: [this.sides[0].mods, this.sides[1].mods],
       levels: this.cfg.levels,
       events,

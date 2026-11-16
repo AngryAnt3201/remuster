@@ -1,6 +1,7 @@
 // Troop levels on the device: the save binding for engine/progression/economy.ts, plus the coin, card and XP hooks the
 // result screens call. Coins move only through the shared wallet (engine/economy/wallet.ts); cards only through the
 // collection (engine/progression/collection.ts).
+import { ARENA_CROWNS, arenaCoins, arenaConfig, finishArena, normalizeArena, type ArenaMatch, type ArenaResult, type ArenaSave } from "../core/arena";
 import type { LevelDef } from "../core/content";
 import { START_HP, UNIT_KINDS, type UnitKind } from "../core/defs";
 import { dateKey } from "../core/daily";
@@ -9,6 +10,7 @@ import type { MatchConfig } from "../core/match";
 import { earn, spend, wallet } from "../economy/wallet";
 import { load, save, type Save } from "../save";
 import { LEVELS } from "../core/campaign";
+import { winChest, type WinResult } from "./chests";
 import { cardsOf, foundKinds, grantCards, grantIn, isFound, normalizeCollection, spendCards } from "./collection";
 import { passEvent } from "./passEvents"; // [pass]
 import {
@@ -198,6 +200,60 @@ export function awardSkirmish(won: boolean, watch: boolean, difficulty: number, 
   const r = pay(skirmishReward({ won, watch, difficulty, hp, earnedToday }), "skirmish");
   if (r.coins > 0) save((s) => { s.progression = normalizeProgression(s.progression); s.progression.skirmish = { day, coins: earnedToday + r.coins }; });
   return r.coins > 0 ? withXp(r, WIN_XP.skirmish) : r;
+}
+
+// ---------------------------------------------------------------- Arena (engine/core/arena.ts)
+const ladder = (): ArenaSave => {
+  const s = load();
+  s.arena = normalizeArena(s.arena);
+  return s.arena;
+};
+/** The player's Arena ladder: trophies, best, wins, losses, streak, per-arena wins. */
+export const arenaLadder = (): Readonly<ArenaSave> => ladder();
+/** The player's units in an Arena match: every unit found (the starters at least), narrowed to the deck when it applies. */
+export function arenaRoster(): UnitKind[] {
+  const found = UNIT_KINDS.filter((k) => isFound(k) || STARTER_KINDS.includes(k));
+  return deckRoster(found, deck()) ?? found;
+}
+/**
+ * The player's next Arena match, from the device save: the arena (their league's rotation), the opponent, and a
+ * MatchConfig carrying the player's troop levels, units (deck) and keep health. Read-only: call it again and the same
+ * match comes back until awardArena() records a result. `seed` re-rolls the opponent and shops; `arena` forces a map.
+ */
+export function nextArenaMatch(o: { seed?: number; arena?: string } = {}): ArenaMatch {
+  const lv = prog().levels;
+  return arenaConfig(ladder(), {
+    ...o,
+    levels: Object.keys(lv).length ? { ...lv } : undefined,
+    roster: arenaRoster(),
+    hp: START_HP + keepBonus(commander()),
+  });
+}
+export interface ArenaAward {
+  /** Coins paid (line items in `parts`), commander XP, and `capTo` when the commander levelled up. */
+  reward: Reward;
+  /** What happened on the ladder: trophy change, leagues before and after, promotion, streak. */
+  result: ArenaResult;
+  /** The chest a win dropped (null on a loss): show it as the other modes do. Do not call winChest() again. */
+  chest: WinResult | null;
+}
+/**
+ * Call once when an Arena match ends (`won` = match.winner === 0). Records the result on the ladder in the save, pays
+ * the coins through the wallet (capped per day) and commander XP, and on a win drops a chest through winChest().
+ */
+export function awardArena(match: Pick<ArenaMatch, "arena">, won: boolean, now = new Date()): ArenaAward {
+  const day = dateKey(now);
+  const before = ladder();
+  const earnedToday = before.day?.day === day ? before.day.coins : 0;
+  let result!: ArenaResult;
+  save((s) => { s.arena = normalizeArena(s.arena); result = finishArena(s.arena, match.arena.id, won); });
+  const parts = arenaCoins(result, earnedToday);
+  const coins = parts.reduce((n, [, c]) => n + c, 0);
+  const r = pay({ coins, parts }, `arena ${match.arena.id}`);
+  // Promotion coins are a one-off and sit outside the daily cap.
+  const capped = parts.filter(([label]) => !label.endsWith("reached")).reduce((n, [, c]) => n + c, 0);
+  if (capped > 0) save((s) => { s.arena = normalizeArena(s.arena); s.arena.day = { day, coins: earnedToday + capped }; });
+  return { reward: won ? withXp(r, WIN_XP.arena) : r, result, chest: won ? winChest(ARENA_CROWNS) : null };
 }
 
 /** The army's level for a roster: the average level of its best 8 found units (the "under-levelled" check). */
