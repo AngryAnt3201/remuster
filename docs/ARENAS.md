@@ -1,7 +1,7 @@
 # Arenas
 
 One Blender-rendered battlefield per campaign act in the active style direction (Sunlit Meadow), built for the 3/4
-camera (`src/render/camera.ts`), plus the props that obstacles stand up as.
+camera (`base/src/render/camera.ts`), plus the props that obstacles stand up as.
 
 | Act | Arena | Ground | Border, scenery and foreground | Obstacle prop |
 |---|---|---|---|---|
@@ -22,17 +22,17 @@ just outside the board. Shapes and palettes are original and built from primitiv
 
 ## How it fits the camera
 
-- `public/arenas/act<n>.jpg` is rendered through the game's own pinhole camera (same tilt and distance as
+- `base/public/arenas/act<n>.jpg` is rendered through the game's own pinhole camera (same tilt and distance as
   `camera.ts`, Blender perspective camera with matching lens and shift). The manifest's `view` is the normalised
   image-plane rectangle it covers, so the game draws it with one scale and offset (`backdropRect`) and its ground
   lines up with the board exactly on any screen size. The render script checks this with Blender's own projection
   (`camera check: max error 0.00px`). Everything in it is static and outside the play area.
-- `public/arenas/act<n>_prop<0..2>.png`: obstacle props modelled with their base on the unit circle (radius 1 = the
+- `base/public/arenas/act<n>_prop<0..2>.png`: obstacle props modelled with their base on the unit circle (radius 1 = the
   collision radius), rendered orthographic at the camera's mid-board elevation with a baked contact shadow. The
   board stands each on its obstacle (`propRect`) in the same depth sort as units and keeps.
-- `public/arenas/act<n>_fg.webp`: the foreground, rendered alone through the same camera (same frame as the
+- `base/public/arenas/act<n>_fg.webp`: the foreground, rendered alone through the same camera (same frame as the
   backdrop): canopy, boughs, banner pillars or cloud banks that overhang the board's side edges. They are in the
-  backdrop too; this copy is drawn over the units (`src/render/foreground.ts`). The manifest's `fg.cells` cut it into
+  backdrop too; this copy is drawn over the units (`base/src/render/foreground.ts`). The manifest's `fg.cells` cut it into
   bands per side (tight boxes of covered pixels); a cell fades to 28% while a unit's screen box overlaps it and eases
   back when it leaves, so units under the canopy stay readable.
 - Ground dressing per act (`dress` in the render script): mown stripes, a cobbled road across the neutral strip,

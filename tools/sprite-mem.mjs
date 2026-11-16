@@ -1,12 +1,12 @@
 // Peak decoded bytes of the tinted unit sheets over a long session: plays several campaign levels back to back in one
-// page (no reload, like a player going level to level) in headless WebKit, and reads src/render/sprites.ts
+// page (no reload, like a player going level to level) in headless WebKit, and reads base/src/render/sprites.ts
 // sheetCacheStats() after each. Runs twice: with no budget (every sheet kept, as before the cache was bounded) and
 // with the shipped SHEET_BUDGET.
 //   node tools/sprite-mem.mjs [port] [level ids, comma separated] [seconds of battle per level]
-// Needs the dev server: npx vite --host 127.0.0.1 --port 5180 (window.__playLevel is a dev-only hook).
+// Needs the dev server: npx vite --host 127.0.0.1 --port 5300 (window.__playLevel is a dev-only hook).
 import { webkit, devices } from "playwright";
 
-const [, , port = "5180", ids = "1,6,12,18,24,30,36,42,50,57", secs = "6"] = process.argv;
+const [, , port = "5300", ids = "1,6,12,18,24,30,36,42,50,57", secs = "6"] = process.argv;
 const levels = ids.split(",").map(Number);
 const MB = 1024 * 1024;
 
@@ -20,7 +20,7 @@ async function run(unbounded) {
   page.on("console", (m) => { if (m.type() === "error" && !m.text().includes("vibrate")) errors.push(m.text()); });
   await page.goto(`http://127.0.0.1:${port}/?level=${levels[0]}`);
   await page.waitForFunction(() => window.__game && window.__playLevel, null, { timeout: 60000 });
-  if (unbounded) await page.evaluate(async () => (await import("/src/render/sprites.ts")).setSheetBudget(Infinity));
+  if (unbounded) await page.evaluate(async () => (await import("/base/src/render/sprites.ts")).setSheetBudget(Infinity));
   const rows = [];
   for (const [i, id] of levels.entries()) {
     if (i > 0) {
@@ -30,7 +30,7 @@ async function run(unbounded) {
     await page.waitForTimeout(1200);
     // the game's AI deploys the player's side too, then the battle plays for a few seconds
     await page.evaluate(async () => {
-      const ai = await import("/src/core/ai.ts");
+      const ai = await import("/engine/core/ai.ts");
       const g = window.__game;
       await Promise.all(g.plans ?? []);
       ai.applyPlan(g.match, 0, await ai.planTurnAsync(g.match, 0, { ...ai.DEFAULT_AI, difficulty: 0.85, aggression: 0.5, tactic: "balanced" }));
@@ -38,7 +38,7 @@ async function run(unbounded) {
       void g.fight();
     });
     await page.waitForTimeout(Number(secs) * 1000);
-    const st = await page.evaluate(async () => (await import("/src/render/sprites.ts")).sheetCacheStats());
+    const st = await page.evaluate(async () => (await import("/base/src/render/sprites.ts")).sheetCacheStats());
     rows.push({ level: id, mb: +(st.bytes / MB).toFixed(1), peakMb: +(st.peak / MB).toFixed(1), inUseMb: +(st.inUse / MB).toFixed(1),
       pinnedMb: +(st.pinned / MB).toFixed(1), sheets: st.sheets, evictions: st.evictions });
   }

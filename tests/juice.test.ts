@@ -1,10 +1,10 @@
-// Combat feel (src/render/juice.ts): hit-stop and shake timing, which events kick the camera, the Ascended callout
+// Combat feel (base/src/render/juice.ts): hit-stop and shake timing, which events kick the camera, the Ascended callout
 // table, squash-and-stretch, HP-bar lag and the float cap.
 import { describe, expect, it } from "vitest";
-import type { BattleEvent } from "../src/core/battle";
-import { ABILITIES, type BodyKind, type Side } from "../src/core/defs";
-import { Fx, MAX_FLOATS } from "../src/render/fx";
-import { CALLOUT_LIFE, CALLOUT_REPEAT, FRAME, HP_HOLD, Juice, MAX_STOP_FRAMES, STOP_COOLDOWN, ascendedOf, kickFor, landSquash, popScale } from "../src/render/juice";
+import type { BattleEvent } from "../engine/core/battle";
+import { ABILITIES, type BodyKind, type Side } from "../engine/core/defs";
+import { Fx, MAX_FLOATS } from "../base/src/render/fx";
+import { CALLOUT_LIFE, CALLOUT_REPEAT, FRAME, HP_HOLD, Juice, MAX_STOP_FRAMES, STOP_COOLDOWN, ascendedOf, kickFor, landSquash, popScale } from "../base/src/render/juice";
 
 type B = { id: number; kind: BodyKind; rank: number; side: Side; x: number; y: number };
 const world = (bodies: B[]) => (id: number) => bodies.find((b) => b.id === id);

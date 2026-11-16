@@ -1,4 +1,4 @@
-// Content counts (units, levels, acts, puzzles...) read from src/core through vite-node, so store copy,
+// Content counts (units, levels, acts, puzzles...) read from base/src/core through vite-node, so store copy,
 // the website and screenshot captions quote what the game actually ships. See tools/content-counts.ts.
 import { execFileSync } from "node:child_process";
 import { join } from "node:path";

@@ -3,8 +3,8 @@
 //   KINDS=griffin,tide,lion RANK=3 N=24 npx vite-node tools/legends-balance.ts
 // Duel: about 15 gold of one kind against about 15 gold of another (both seats, mirrored), score = wins + draws/2.
 // Mixed: random 5-unit armies; each kind's score is the win rate of armies that hold it, minus the overall 0.5.
-import { simulate } from "../src/core/battle";
-import { H, UNITS, UNIT_KINDS, W, type Piece, type Side, type UnitKind } from "../src/core/defs";
+import { simulate } from "../engine/core/battle";
+import { H, UNITS, UNIT_KINDS, W, type Piece, type Side, type UnitKind } from "../engine/core/defs";
 
 const N = Number(process.env.N ?? 16);
 const RANK = Number(process.env.RANK ?? 2);

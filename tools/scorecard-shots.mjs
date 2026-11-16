@@ -69,7 +69,7 @@ if (only.has("battle")) {
   const strips = await page.evaluate(async () => {
     const g = window.__game, m = g.match;
     await Promise.all(g.plans);
-    const { UNITS, DT } = await import("/src/core/defs.ts");
+    const { UNITS, DT } = await import("/engine/core/defs.ts");
     const kinds = Object.keys(UNITS).slice(-24);
     let id = 1000;
     for (const s of [0, 1]) {
@@ -80,7 +80,7 @@ if (only.has("battle")) {
       });
       m.sides[s].seen = m.sides[s].pieces;
     }
-    const sprites = await import("/src/render/sprites.ts");
+    const sprites = await import("/base/src/render/sprites.ts");
     await sprites.loadSprites();
     for (const s of [0, 1]) sprites.preload([...Object.keys(UNITS), "mite", "golemling", "thrall", "turret", "decoy", "queen"], s);
     for (let quiet = 0, t0 = performance.now(); quiet < 15 && performance.now() - t0 < 30000;) {

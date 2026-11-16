@@ -2,18 +2,18 @@
 // it gets. A good player should reach stage ~8-12.
 //   npx vite-node tools/gauntlet.ts            RUNS=8 per player, parallel
 //   RUNS=4 WHO=strong npx vite-node tools/gauntlet.ts
-// Troop levels: GAUNTLET_LEVELS=1 gives rivals the game's level rule (src/progression/economy.ts gauntletFoeLevel,
+// Troop levels: GAUNTLET_LEVELS=1 gives rivals the game's level rule (engine/progression/economy.ts gauntletFoeLevel,
 // capped at CAP, default 10); PLAYER_LEVEL=n puts the player's whole army at level n. Default: everyone level 1.
 import { spawn } from "node:child_process";
 import { cpus } from "node:os";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { DEFAULT_AI, applyPlan, planTurn, type AIProfile } from "../src/core/ai";
-import type { Boon } from "../src/core/content";
-import { boardValue, boonChoices, duelConfig, endDuel, gauntletFoe, newRun, takeBoon, type GauntletRun } from "../src/core/gauntlet";
-import { uniformLevels } from "../src/core/levels";
-import { Match } from "../src/core/match";
-import { gauntletFoeLevel } from "../src/progression/economy";
+import { DEFAULT_AI, applyPlan, planTurn, type AIProfile } from "../engine/core/ai";
+import type { Boon } from "../engine/core/content";
+import { boardValue, boonChoices, duelConfig, endDuel, gauntletFoe, newRun, takeBoon, type GauntletRun } from "../engine/core/gauntlet";
+import { uniformLevels } from "../engine/core/levels";
+import { Match } from "../engine/core/match";
+import { gauntletFoeLevel } from "../engine/progression/economy";
 
 export const PLAYERS: Record<string, AIProfile> = {
   strong: { ...DEFAULT_AI, difficulty: 0.9 },

@@ -1,6 +1,6 @@
 // Bastion balance: scripted placements on every map, a few seeds each. `npx vite-node tools/td-balance.ts`
-import { MAP_DEFS } from "../src/core/td/maps";
-import { playBot, type BotPlan } from "../src/core/td/sim";
+import { MAP_DEFS } from "../engine/core/td/maps";
+import { playBot, type BotPlan } from "../engine/core/td/sim";
 
 const PLANS: Record<string, BotPlan> = {
   // Never builds: the waves must beat this.

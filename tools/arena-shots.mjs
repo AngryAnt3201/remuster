@@ -21,7 +21,7 @@ for (const act of acts) {
   await p.goto(`http://localhost:${port}/?level=${LEVEL[act]}`);
   await p.waitForTimeout(2500);
   await p.evaluate(async () => {
-    const ai = await import("/src/core/ai.ts");
+    const ai = await import("/engine/core/ai.ts");
     const g = window.__game, m = g.match;
     await Promise.all(g.plans ?? []);
     ai.applyPlan(m, 0, await ai.planTurnAsync(m, 0, { ...ai.DEFAULT_AI, difficulty: 0.85, aggression: 0.5, tactic: "balanced" }));

@@ -2,10 +2,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_KEEP, KEEP_SKINS, blankCosmetics, equipIn, grantIn } from "../src/progression/cosmetics";
-import { blankWallet } from "../src/economy/wallet";
-import { KEEP_ARTS, skinFile, skinName } from "../src/render/keeps";
-import { SKIN_INFO, SKIN_ORDER, SKIN_PRICES, buySkinIn, howToGet, skinPrice } from "../src/ui/skins";
+import { DEFAULT_KEEP, KEEP_SKINS, blankCosmetics, equipIn, grantIn } from "../engine/progression/cosmetics";
+import { blankWallet } from "../engine/economy/wallet";
+import { KEEP_ARTS, skinFile, skinName } from "../base/src/render/keeps";
+import { SKIN_INFO, SKIN_ORDER, SKIN_PRICES, buySkinIn, howToGet, skinPrice } from "../base/src/ui/skins";
 
 /** A stand-in for the browser Image: loads at once, or errors for any src matching `failing`. */
 function fakeImages(failing: RegExp | null) {
@@ -23,7 +23,7 @@ function fakeImages(failing: RegExp | null) {
 
 async function freshKeeps() {
   vi.resetModules();
-  return import("../src/render/keeps");
+  return import("../base/src/render/keeps");
 }
 
 afterEach(() => { vi.unstubAllGlobals(); });
@@ -84,7 +84,7 @@ describe("keep skin selection", () => {
   });
 
   it("ships every skin's art, on the default keep's canvas", () => {
-    const root = join(__dirname, "..", "public", "keeps");
+    const root = join(__dirname, "..", "base", "public", "keeps");
     const man = JSON.parse(readFileSync(join(root, "manifest.json"), "utf8"));
     for (const id of KEEP_SKINS) {
       for (const st of KEEP_ARTS) {

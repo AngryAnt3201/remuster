@@ -1,4 +1,4 @@
-"""The ten campaign act maps: palette, road, terrain and props per act, indexed like ACTS in src/core/campaign.ts.
+"""The ten campaign act maps: palette, road, terrain and props per act, indexed like ACTS in engine/core/campaign.ts.
 
 Colours are written for the Sunlit Meadow brightness. render_maps.py shifts them for the active style direction
 (darker and cooler with lanterns lit for dusk, pastel for toy), so the acts stay recognisable in every direction.

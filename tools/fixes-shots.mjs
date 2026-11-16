@@ -4,7 +4,7 @@ import { chromium, devices } from "playwright";
 import { mkdirSync } from "node:fs";
 
 const [, , only = "", tag = ""] = process.argv;
-const port = process.env.PORT || 5180;
+const port = process.env.PORT || 5300;
 const host = process.env.HOST || "localhost";
 const want = only ? new Set(only.split(",")) : null;
 const out = "outputs/review/fixes";
@@ -38,7 +38,7 @@ async function page(save = "levelled") {
 const skip = (name) => want && !want.has(name);
 const shot = async (p, name) => { await p.screenshot({ path: `${out}/${name}.png` }); console.log("shot", name); };
 const deployAI = async (p) => p.evaluate(async () => {
-  const ai = await import("/src/core/ai.ts");
+  const ai = await import("/engine/core/ai.ts");
   const g = window.__game, m = g.match;
   await Promise.all(g.plans ?? []);
   const me = { ...ai.DEFAULT_AI, difficulty: 0.85, aggression: 0.5, tactic: "balanced" };
@@ -68,7 +68,7 @@ for (const [name, path] of [["pill-title", ""], ["pill-shop", "?shop"], ["pill-b
   await p.screenshot({ path: `${out}/${name}${tag}.png`, clip: { x: 0, y: 0, width: 390, height: 160 } });
   console.log("shot", name);
   if (name === "pill-barracks" && tag === "") {
-    await p.evaluate(async () => { const w = await import("/src/economy/wallet.ts"); w.earn("coins", 1000, "shot"); });
+    await p.evaluate(async () => { const w = await import("/engine/economy/wallet.ts"); w.earn("coins", 1000, "shot"); });
     await p.waitForTimeout(900);
     const txt = await p.evaluate(() => document.querySelector(".screen-head .cur-coins b")?.textContent);
     console.log("barracks pill after +1000:", txt);
@@ -83,7 +83,7 @@ if (!skip("shop-back")) {
   await p.goto(`http://${host}:${port}/?barracks`);
   await p.waitForTimeout(1800);
   // Short of coins so a "Get coins" button shows.
-  await p.evaluate(async () => { const w = await import("/src/economy/wallet.ts"); w.spend("coins", w.wallet().coins, "shot"); });
+  await p.evaluate(async () => { const w = await import("/engine/economy/wallet.ts"); w.spend("coins", w.wallet().coins, "shot"); });
   await p.waitForTimeout(600);
   await p.click(".pg-get");
   await p.waitForTimeout(900);

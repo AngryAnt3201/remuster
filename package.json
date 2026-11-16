@@ -1,5 +1,5 @@
 {
-  "name": "muster",
+  "name": "remuster",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -11,8 +11,8 @@
     "art:style": "${BLENDER:-blender} -b --factory-startup -P art/style/frames.py",
     "style:pick": "node tools/style-pick.mjs",
     "vfx": "/usr/local/bin/python3 art/vfx/make_vfx.py --contact",
-    "art:title": "${BLENDER:-blender} -b --factory-startup -P art/ui/title_key.py && cwebp -quiet -q 80 art/ui/build/title_key.png -o public/ui/title-key.webp",
-    "dev": "vite --host 0.0.0.0 --port 5180",
+    "art:title": "${BLENDER:-blender} -b --factory-startup -P art/ui/title_key.py && cwebp -quiet -q 80 art/ui/build/title_key.png -o base/public/ui/title-key.webp",
+    "dev": "vite --host 0.0.0.0 --port ${PORT:-5300}",
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
     "balance": "vite-node tools/balance.ts",

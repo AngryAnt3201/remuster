@@ -2,7 +2,7 @@
 
 Generated from `store/metadata.json` (`inAppPurchase`, `gemPacks`) by `npm run release:config`. Edit that, not this file.
 Free to play, every level open: every campaign act, the Gauntlet, every Breakpoint puzzle, the Daily Challenge and Skirmish are free. Nothing is locked behind a purchase; purchases only speed you up.
-**Starter Pack** is a one-time offer: a consumable the app sells once per player (the Shop hides it after it's bought). It pays a fixed pack of gems, coins and unit cards (`src/store/starter.ts`), credited once per App Store transaction and only then finished, so an interrupted purchase is credited on the next launch.
+**Starter Pack** is a one-time offer: a consumable the app sells once per player (the Shop hides it after it's bought). It pays a fixed pack of gems, coins and unit cards (`engine/store/starter.ts`), credited once per App Store transaction and only then finished, so an interrupted purchase is credited on the next launch.
 The app reads the price from the App Store (StoreKit 2), so changing the price here never needs a new build.
 **No Restore Purchases.** Every product is a consumable, so there is nothing to restore and the app has no Restore button.
 **Removed:** the old Full Army non-consumable (`co.inflect.muster.fullarmy`) is gone from the app. It was never created in App Store Connect; don't create it.
@@ -59,7 +59,7 @@ Then submit the version as usual (`store/RELEASE-CHECKLIST.md` step 7). The purc
 ## 4. Gem packs (five consumables, 15 min)
 
 Gems are the optional premium currency: free players earn them by playing, and these packs sell them.
-The app decides how many gems each product id gives (`src/economy/gems.ts`) and shows StoreKit's own price, so prices can change here without a new build.
+The app decides how many gems each product id gives (`engine/economy/gems.ts`) and shows StoreKit's own price, so prices can change here without a new build.
 Each pack is credited once per App Store transaction and only then finished, so an interrupted purchase is credited on the next launch.
 No Restore Purchases: gems are consumables and are used up when spent.
 
@@ -130,7 +130,7 @@ War Pass Premium is a consumable the app sells once per 30-day season (the app r
 
 ## 6. Special offers (four consumable price tiers, 15 min)
 
-Limited-time bundles in the Shop (gems + coins + cards for a named unit + one chest), 2 or 3 at a time, rotating every 2 days, each buyable once while it's up. They sell through these four generic price tiers: the game decides and shows each bundle's contents (`src/store/offers.ts`), so the App Store description stays generic and bundles can change without touching App Store Connect. The chest inside is random with its odds one tap away (Odds button on the offer). Credited once per transaction and only then finished.
+Limited-time bundles in the Shop (gems + coins + cards for a named unit + one chest), 2 or 3 at a time, rotating every 2 days, each buyable once while it's up. They sell through these four generic price tiers: the game decides and shows each bundle's contents (`engine/store/offers.ts`), so the App Store description stays generic and bundles can change without touching App Store Connect. The chest inside is random with its odds one tap away (Odds button on the offer). Credited once per transaction and only then finished.
 
 For each row: **+** > Type **Consumable**, the Reference Name and Product ID, **Create**, then fill the page.
 

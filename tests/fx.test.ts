@@ -1,15 +1,15 @@
-// Sprite-sheet VFX: every battle event and field in docs/EVENTS.md maps to sheets that exist in public/vfx/atlas.json,
+// Sprite-sheet VFX: every battle event and field in docs/EVENTS.md maps to sheets that exist in base/public/vfx/atlas.json,
 // and the anim timeline (frames, fades, thrown arcs) behaves.
 import { readFileSync } from "node:fs";
 import { describe, expect, it, beforeAll } from "vitest";
-import type { BattleEvent, BoomKind } from "../src/core/battle";
-import type { BodyKind } from "../src/core/defs";
-import { Fx, animAlpha, animFrame } from "../src/render/fx";
-import { FLYER_Z } from "../src/render/board";
-import { DROP_TIME, FIELD_VFX, PROJ_VFX, playDrop, playEvent, setVfxManifest, type VfxEnv, type VfxManifest } from "../src/render/vfx";
+import type { BattleEvent, BoomKind } from "../engine/core/battle";
+import type { BodyKind } from "../engine/core/defs";
+import { Fx, animAlpha, animFrame } from "../base/src/render/fx";
+import { FLYER_Z } from "../base/src/render/board";
+import { DROP_TIME, FIELD_VFX, PROJ_VFX, playDrop, playEvent, setVfxManifest, type VfxEnv, type VfxManifest } from "../base/src/render/vfx";
 
 const root = new URL("../", import.meta.url);
-const manifest: VfxManifest = JSON.parse(readFileSync(new URL("public/vfx/atlas.json", root), "utf8"));
+const manifest: VfxManifest = JSON.parse(readFileSync(new URL("base/public/vfx/atlas.json", root), "utf8"));
 const doc = readFileSync(new URL("docs/EVENTS.md", root), "utf8");
 
 const BODIES: Record<number, { kind: BodyKind; side: 0 | 1 }> = { 1: { kind: "ranger", side: 0 }, 2: { kind: "banner", side: 0 }, 3: { kind: "medic", side: 1 }, 4: { kind: "tinker", side: 0 } };

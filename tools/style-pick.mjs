@@ -1,5 +1,5 @@
 // Set the active v3 style direction (art/style/active.json) once Jack picks one from
-// outputs/signoff/muster-style/index.html. The game palette (src/render/style.ts) and every Blender
+// outputs/signoff/muster-style/index.html. The game palette (base/src/render/style.ts) and every Blender
 // renderer (art/muster_art/style.py `load()`) read it.
 //   npm run style:pick -- dusk
 import { readFileSync, writeFileSync } from "node:fs";

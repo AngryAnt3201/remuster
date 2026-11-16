@@ -8,7 +8,7 @@ const page = await ctx.newPage();
 const errors = [];
 page.on("pageerror", (e) => errors.push(String(e)));
 page.on("console", (m) => { if (m.type() === "error" && !m.text().includes("vibrate")) errors.push(m.text()); });
-await page.goto("http://127.0.0.1:5180/?watch");
+await page.goto("http://127.0.0.1:5300/?watch");
 const t0 = Date.now();
 let midShot = false;
 const trace = [];

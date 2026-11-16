@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { Battle, simulate, type BattleEvent } from "../src/core/battle";
-import { H, UNITS, UNIT_KINDS, type Piece, type Side, type UnitKind } from "../src/core/defs";
+import { Battle, simulate, type BattleEvent } from "../engine/core/battle";
+import { H, UNITS, UNIT_KINDS, type Piece, type Side, type UnitKind } from "../engine/core/defs";
 
 let nid = 1;
 const P = (kind: UnitKind, side: Side, x: number, y: number, rank = 1): Piece => ({ id: nid++, kind, side, x, y, rank, spent: UNITS[kind].cost });

@@ -4,12 +4,12 @@
     npm run vfx
 
 Needs numpy + Pillow (the same system python3 as art/post.py). Deterministic: the same seed gives the same atlas.
-Writes public/vfx/atlas.png, public/vfx/atlas.json and art/vfx/contact.png (every sheet on a checker, for review).
+Writes base/public/vfx/atlas.png, base/public/vfx/atlas.json and art/vfx/contact.png (every sheet on a checker, for review).
 
 Look: chunky cel-shaded VFX to sit with the toon unit renders. Two or three hard-edged tone bands, white-hot cores,
 dark ink outlines on anything solid (smoke, dirt, ice, bombs) and none on light (sparks, flashes, lightning).
 
-Sheets marked tint=True are painted in greyscale and gradient-mapped at runtime (src/render/vfx.ts): dark -> tint ->
+Sheets marked tint=True are painted in greyscale and gradient-mapped at runtime (base/src/render/vfx.ts): dark -> tint ->
 white, so one sheet serves both teams and every element. The rest carry their own colour.
 Each sheet is one row of frames. Frame art is centred on the sheet's anchor (default the middle of the cell).
 """
@@ -24,7 +24,7 @@ from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
-OUT = os.path.join(ROOT, "public", "vfx")
+OUT = os.path.join(ROOT, "base", "public", "vfx")
 SS = 2  # supersample
 ATLAS_W = 2048
 

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { H, W, type Side } from "../src/core/defs";
-import { Match } from "../src/core/match";
-import { Assault, detour, styleOf } from "../src/render/assault";
-import { KEEP_ARTS, KEEP_STATES, RAISE_FROM, RAISE_TIME, VICTORY_HOLD, bannerRaise, behindKeep, collapsePose, keepAnchor, keepFile, keepSquash, keepState } from "../src/render/keeps";
+import { H, W, type Side } from "../engine/core/defs";
+import { Match } from "../engine/core/match";
+import { Assault, detour, styleOf } from "../base/src/render/assault";
+import { KEEP_ARTS, KEEP_STATES, RAISE_FROM, RAISE_TIME, VICTORY_HOLD, bannerRaise, behindKeep, collapsePose, keepAnchor, keepFile, keepSquash, keepState } from "../base/src/render/keeps";
 import { existsSync, readFileSync } from "node:fs";
 
 /** Plays one round headless with events off and returns the finished battle and its report. */
@@ -47,9 +47,9 @@ describe("keep damage art", () => {
     expect(keepFile(0, "cracked")).toBe("tide_cracked.webp");
     expect(keepFile(1, "cracked", true)).toBe("ember_boss_cracked.webp");
     expect(keepFile(0, "cracked", true)).toBe("tide_cracked.webp");
-    const man = JSON.parse(readFileSync("public/keeps/manifest.json", "utf8"));
+    const man = JSON.parse(readFileSync("base/public/keeps/manifest.json", "utf8"));
     expect(man.states).toEqual(KEEP_ARTS);
-    for (const st of KEEP_ARTS) for (const f of [keepFile(0, st), keepFile(1, st), keepFile(1, st, true)]) expect(existsSync(`public/keeps/${f}`), f).toBe(true);
+    for (const st of KEEP_ARTS) for (const f of [keepFile(0, st), keepFile(1, st), keepFile(1, st, true)]) expect(existsSync(`base/public/keeps/${f}`), f).toBe(true);
   });
 
   it("go see-through only for a body right behind the tower", () => {

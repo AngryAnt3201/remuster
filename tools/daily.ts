@@ -1,8 +1,8 @@
 // Daily Challenge check: an AI plays the player side through a run of days and we see how often it wins.
 //   npx vite-node tools/daily.ts            DAYS=40 from today
-import { DEFAULT_AI, applyPlan, planTurn, type AIProfile } from "../src/core/ai";
-import { dailyBoard, dailyConfig, dailyResult, dateKey, dayNumber, keyFromDay } from "../src/core/daily";
-import { Match } from "../src/core/match";
+import { DEFAULT_AI, applyPlan, planTurn, type AIProfile } from "../engine/core/ai";
+import { dailyBoard, dailyConfig, dailyResult, dateKey, dayNumber, keyFromDay } from "../engine/core/daily";
+import { Match } from "../engine/core/match";
 
 const PLAYERS: Record<string, AIProfile> = { strong: { ...DEFAULT_AI, difficulty: 0.9 }, mid: { ...DEFAULT_AI, difficulty: 0.5 } };
 const days = Number(process.env.DAYS ?? 40);

@@ -2,19 +2,19 @@
 //   npx vite-node tools/balance.ts                    all levels, N=8 seeds per player, parallel
 //   LEVELS=1,6,12 N=16 PROCS=6 npx vite-node tools/balance.ts
 // Troop levels (default: everyone level 1, the game as tuned):
-//   FOE_LEVEL=act        foes at the campaign's level curve (src/progression/economy.ts EXPECTED_LEVEL_BY_ACT); or a number
+//   FOE_LEVEL=act        foes at the campaign's level curve (engine/progression/economy.ts EXPECTED_LEVEL_BY_ACT); or a number
 //   PLAYER_LEVEL=expected|cap|behind|<n>   the player's whole army at the expected curve, one above it, one below it, or n
 // Targets: strong wins every level at least sometimes (>= 40% on bosses, more elsewhere); mid falls off act by act.
 import { spawn } from "node:child_process";
 import { cpus } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { DEFAULT_AI, applyPlan, planTurn, type AIProfile } from "../src/core/ai";
-import { ACTS, LEVELS, buildLevel } from "../src/core/campaign";
-import { levelConfig, starsFor, type LevelDef } from "../src/core/content";
-import { uniformLevels, type Levels } from "../src/core/levels";
-import { Match } from "../src/core/match";
-import { foeLevelForAct } from "../src/progression/economy";
+import { DEFAULT_AI, applyPlan, planTurn, type AIProfile } from "../engine/core/ai";
+import { ACTS, LEVELS, buildLevel } from "../engine/core/campaign";
+import { levelConfig, starsFor, type LevelDef } from "../engine/core/content";
+import { uniformLevels, type Levels } from "../engine/core/levels";
+import { Match } from "../engine/core/match";
+import { foeLevelForAct } from "../engine/progression/economy";
 
 export const PLAYERS: Record<string, AIProfile> = {
   strong: { ...DEFAULT_AI, difficulty: 0.9 },

@@ -1,4 +1,4 @@
-"""Animated previews of the packed character atlases (public/atlas), for reviewing motion by eye.
+"""Animated previews of the packed character atlases (base/public/atlas), for reviewing motion by eye.
 
     python3 art/anim_preview.py [--only kind,kind] [--tiers 1,4] [--out art/contact/anim]
 
@@ -24,7 +24,7 @@ from muster_art import style as STYLE  # noqa: E402
 from pack_atlas import OUT, sheet_rgba  # noqa: E402
 from post import NAMES, ORDER, font  # noqa: E402
 
-# runtime timing (src/render/sprites.ts CLIP_TIME / units.ts animFor), seconds
+# runtime timing (base/src/render/sprites.ts CLIP_TIME / units.ts animFor), seconds
 IDLE_PERIOD = {"heavy": 1.9, "mid": 1.6, "light": 1.35}
 WINDUP = {"heavy": 0.2, "mid": 0.16, "light": 0.12}
 STRIKE = 0.35

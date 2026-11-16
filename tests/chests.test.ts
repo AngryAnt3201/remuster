@@ -3,9 +3,9 @@ import {
   CHESTS, CROWNS_FOR_CHEST, CYCLE, DEAL_PRICE, FREE_BANK, FREE_EVERY, SLOTS, addCrownsIn, blankChests, claimCrownIn, claimFreeIn,
   crownReady, cycleAt, dailyDeals, dropIn, effectiveOdds, findable, freeBanked, freeNextIn, gemsToOpen, msLeft, normalizeChests,
   rollContents, rushIn, skipCost, startIn, stateOf, takeIn, tick, type ChestType, type Progress,
-} from "../src/progression/chests";
-import { RARITIES, RARITY } from "../src/progression/collection";
-import { UNIT_KINDS } from "../src/core/defs";
+} from "../engine/progression/chests";
+import { RARITIES, RARITY } from "../engine/progression/collection";
+import { UNIT_KINDS } from "../engine/core/defs";
 
 const MIN = 60_000, HOUR = 60 * MIN;
 const fresh: Progress = { campaign: {}, found: [] };

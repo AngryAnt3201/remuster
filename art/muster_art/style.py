@@ -9,7 +9,7 @@ by the selected style direction (art/style/<id>.json, docs/ART-V3.md), see `sele
     MUSTER_STYLE=v2     the built-in v2 look
     (unset)             the active direction in art/style/active.json (set by `npm run style:pick -- <id>`)
 
-The camera and frame plan never change with a direction: CAMERA_EL, DIRS and ANIMS are what src/render/camera.ts
+The camera and frame plan never change with a direction: CAMERA_EL, DIRS and ANIMS are what base/src/render/camera.ts
 and tests/atlas.test.ts check against. Other renderers use the direction API:
 
     from muster_art import style as S
@@ -42,7 +42,7 @@ DIRS = [0, 45, 90, -45, -90]  # E, SE, S, NE, N
 DIR8 = [(0, False), (1, False), (2, False), (1, True), (0, True), (3, True), (4, False), (3, False)]
 
 # ------------------------------------------------------------------ animation plan
-# name -> number of frames. Runtime timing lives in src/render/sprites.ts (clip timing) and src/render/units.ts.
+# name -> number of frames. Runtime timing lives in base/src/render/sprites.ts (clip timing) and base/src/render/units.ts.
 # idle: a breathing / weight-shift loop. walk: contact, down, passing, up for each foot. attack: two wind-up frames,
 # the impact (IMPACT), overshoot, follow-through and recover. death: recoil, buckle, fall, impact, bounce, settle.
 # cast: a special move for kinds in CAST (wind-up, raise, release at IMPACT, hold, settle).
@@ -56,7 +56,7 @@ FLYING = {"harrier", "griffin"}
 # Clips rendered below the atlas PPU (the runtime scales them back up): the death topple is a short, fading
 # transient, so it ships at 55% resolution to keep the download in budget.
 CLIP_SCALE = {"death": 0.55}
-# Kinds with a special move of their own, played on its battle event (src/render/board.ts castOf).
+# Kinds with a special move of their own, played on its battle event (base/src/render/board.ts castOf).
 CAST = {"medic", "grave", "tinker", "trickster", "lamp", "hook", "banner", "lion", "duelist", "pikeman"}
 # Motion class: heavy bodies wind up longer, bounce and squash more and raise dust as they step; light ones are snappy.
 WEIGHT = {

@@ -1,6 +1,6 @@
 # Battle events and state the renderer reads
 
-Source of truth: `src/core/battle.ts` (`BattleEvent`, `Body`, `Proj`, `Zone`, `Fuse`). Events go in `battle.events` only when the
+Source of truth: `engine/core/battle.ts` (`BattleEvent`, `Body`, `Proj`, `Zone`, `Fuse`). Events go in `battle.events` only when the
 Battle was made with `events: true`; everything else is plain state to read each frame. Positions are world units (board 9 x 14).
 Items marked **v2** are new.
 

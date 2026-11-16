@@ -29,7 +29,7 @@ npm run release:config         # must end with "release-config: ..." and no "fix
                                # against the build (Starter Pack, Daily Challenge, Act 8 and unit counts)
 npm run store:shots            # the art and content changed for 1.1, so re-shoot before submitting
 node tools/store-shots.mjs --only=iap-review   # the Starter Pack review screenshot for store/IAP.md
-PORT=5180 node tools/gems-shots.mjs            # the gem packs review screenshot (store/screenshots/iap-gems-review.png)
+PORT=5300 node tools/gems-shots.mjs            # the gem packs review screenshot (store/screenshots/iap-gems-review.png)
 ```
 
 Xcode > Settings > Accounts: your Apple ID is listed and team **Jack Wakem (F4ZF9VS4GN)** shows as a paid Apple Developer Program team (not "Personal Team").

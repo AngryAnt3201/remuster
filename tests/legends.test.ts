@@ -1,11 +1,11 @@
 // The three legendaries: Griffin Knight (dive on the back line), Tidecaller (lane wave), Lionheart (rally on kills).
 import { describe, expect, it } from "vitest";
-import { Battle, simulate, type BattleEvent, type Body } from "../src/core/battle";
-import { ABILITIES, H, UNITS, W, type BodyKind, type Piece, type Side, type UnitKind } from "../src/core/defs";
-import { DEFAULT_AI, POWER, TACTICS, draftArmy } from "../src/core/ai";
-import { RARITY, kindsOfRarity } from "../src/progression/collection";
-import { findable, rollContents } from "../src/progression/chests";
-import { ascendedOf } from "../src/render/juice";
+import { Battle, simulate, type BattleEvent, type Body } from "../engine/core/battle";
+import { ABILITIES, H, UNITS, W, type BodyKind, type Piece, type Side, type UnitKind } from "../engine/core/defs";
+import { DEFAULT_AI, POWER, TACTICS, draftArmy } from "../engine/core/ai";
+import { RARITY, kindsOfRarity } from "../engine/progression/collection";
+import { findable, rollContents } from "../engine/progression/chests";
+import { ascendedOf } from "../base/src/render/juice";
 
 const LEGENDS: UnitKind[] = ["griffin", "tide", "lion"];
 let nid = 1;

@@ -1,22 +1,22 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { Battle, simulate } from "../src/core/battle";
-import { LEVELS } from "../src/core/campaign";
-import { levelConfig, puzzleConfig } from "../src/core/content";
-import { dailyBoard, dailyConfig } from "../src/core/daily";
-import { UNITS, UNIT_KINDS, type Piece, type UnitKind } from "../src/core/defs";
-import { MAX_LEVEL, levelDmg, levelHp, uniformLevels } from "../src/core/levels";
-import { Match } from "../src/core/match";
-import { PUZZLES } from "../src/core/puzzles";
-import { wallet, earn } from "../src/economy/wallet";
+import { Battle, simulate } from "../engine/core/battle";
+import { LEVELS } from "../engine/core/campaign";
+import { levelConfig, puzzleConfig } from "../engine/core/content";
+import { dailyBoard, dailyConfig } from "../engine/core/daily";
+import { UNITS, UNIT_KINDS, type Piece, type UnitKind } from "../engine/core/defs";
+import { MAX_LEVEL, levelDmg, levelHp, uniformLevels } from "../engine/core/levels";
+import { Match } from "../engine/core/match";
+import { PUZZLES } from "../engine/core/puzzles";
+import { wallet, earn } from "../engine/economy/wallet";
 import {
   BASE_CAP, CAMPAIGN_WIN, COINS_TO_MAX, COMMANDER_XP, EXPECTED_LEVEL_BY_ACT, KEEP_HP_PER_LEVEL, MAX_COMMANDER, REPLAY_DAILY_CAP, SKIRMISH_DAILY_CAP,
   STARTER_KINDS, UPGRADE_CARDS, UPGRADE_COINS, actsCleared, campaignCards, campaignReward, cardsBetween, coinsBetween, commanderLevel, commanderProgress,
   dailyReward, foeLevelForAct, gauntletFoeLevel, gauntletRivalReward, keepBonus, levelCap, levelsFor, skirmishReward, unlockedKinds, upgradeCards,
   upgradeCoins, upgradeState, upgradeXp,
-} from "../src/progression/economy";
-import { RARITIES, cardsOf, grantCards, isFound } from "../src/progression/collection";
-import { addXp, awardCampaign, awardSkirmish, commander, migrateArmySave, migrateLevel, troopLevel, troopState, upgradeTroop, withLevels } from "../src/progression/troops";
-import { load, resetSave, save } from "../src/save";
+} from "../engine/progression/economy";
+import { RARITIES, cardsOf, grantCards, isFound } from "../engine/progression/collection";
+import { addXp, awardCampaign, awardSkirmish, commander, migrateArmySave, migrateLevel, troopLevel, troopState, upgradeTroop, withLevels } from "../engine/progression/troops";
+import { load, resetSave, save } from "../engine/save";
 
 const army = (side: 0 | 1, kinds: UnitKind[], idBase: number): Piece[] =>
   kinds.map((kind, i) => ({ id: idBase + i, kind, side, x: 1.5 + i * 1.6, y: side === 0 ? 11 : 3, rank: 1 + (i % 3), spent: 0 }));
@@ -169,7 +169,7 @@ describe("commander level", () => {
 
 describe("army level (recommended level check)", () => {
   it("averages the best 8 found units of the roster", async () => {
-    const { armyLevelOf, recommendedLevel } = await import("../src/progression/economy");
+    const { armyLevelOf, recommendedLevel } = await import("../engine/progression/economy");
     const lv: Partial<Record<UnitKind, number>> = { blades: 5, ranger: 5, mine: 1, medic: 3 };
     const roster: UnitKind[] = ["blades", "ranger", "mine", "medic", "golem"];
     expect(armyLevelOf(roster, (k) => lv[k] ?? 1, (k) => k !== "golem")).toBeCloseTo(14 / 4);
@@ -341,7 +341,7 @@ describe("coin rewards", () => {
 
 describe("legacy coins for clears made before troop levels", () => {
   it("pays each cleared level's first-clear coins once, by act", async () => {
-    const { legacyCoins } = await import("../src/progression/troops");
+    const { legacyCoins } = await import("../engine/progression/troops");
     expect(legacyCoins({})).toBe(0);
     // Levels 1-6 are Act 1 (125 each), level 7 is Act 2 (150); unplayed and zero-star entries pay nothing.
     expect(legacyCoins({ 1: 3, 2: 1, 3: 2, 4: 3, 5: 1, 6: 3, 7: 2, 8: 0 })).toBe(6 * 125 + 150);
@@ -351,14 +351,14 @@ describe("legacy coins for clears made before troop levels", () => {
 describe("the deck", () => {
   beforeEach(() => resetSave());
   it("narrows your in-match shop when it covers enough of the roster", async () => {
-    const { deckRoster, DECK_MIN } = await import("../src/progression/economy");
+    const { deckRoster, DECK_MIN } = await import("../engine/progression/economy");
     expect(deckRoster(["blades", "ranger", "mine"], [])).toBeUndefined(); // no deck: the whole roster, as tuned
     expect(deckRoster(["blades", "ranger", "mine", "medic", "bulwark"], ["medic", "blades", "ranger", "golem"])).toBeUndefined(); // 3 < DECK_MIN
     expect(DECK_MIN).toBe(4);
     expect(deckRoster(["blades", "ranger", "mine", "medic", "bulwark"], ["medic", "blades", "ranger", "bulwark"])).toEqual(["blades", "ranger", "medic", "bulwark"]);
   });
   it("only found units, at most 8, applied to campaign, Gauntlet and Skirmish but never the Daily or puzzles", async () => {
-    const { deck, toggleDeck } = await import("../src/progression/troops");
+    const { deck, toggleDeck } = await import("../engine/progression/troops");
     expect(toggleDeck("golem")).toBe(false); // not found
     const kinds = UNIT_KINDS.slice(0, 9);
     for (const k of kinds) grantCards(k, 1, "test");

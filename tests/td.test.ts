@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { UNITS, upgradeCost } from "../src/core/defs";
-import { MAP_DEFS, getMap, nearestOnRoad } from "../src/core/td/maps";
-import { KEEP_HP, TdRun, placeCost, playBot, rankUpCost, SELL_BACK, TD_ROSTER, type BotPlan } from "../src/core/td/sim";
-import { WAVE_COUNT, waves } from "../src/core/td/waves";
-import { TdCamera } from "../src/render/tdCamera";
+import { UNITS, upgradeCost } from "../engine/core/defs";
+import { MAP_DEFS, getMap, nearestOnRoad } from "../engine/core/td/maps";
+import { KEEP_HP, TdRun, placeCost, playBot, rankUpCost, SELL_BACK, TD_ROSTER, type BotPlan } from "../engine/core/td/sim";
+import { WAVE_COUNT, waves } from "../engine/core/td/waves";
+import { TdCamera } from "../base/src/render/tdCamera";
 
 const MIXED: BotPlan = { order: ["pikeman", "ranger", "grenadier", "ranger", "blades", "storm", "ballista", "medic"], upgrade: true, early: false };
 

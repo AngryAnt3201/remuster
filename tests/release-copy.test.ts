@@ -3,10 +3,10 @@
 // never quote stale content counts, and never hard-code the price the app reads from StoreKit.
 import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { ACTS, LEVELS } from "../src/core/campaign";
-import { contentCounts, numberWord } from "../src/core/counts";
-import { UNIT_KINDS } from "../src/core/defs";
-import { PUZZLES } from "../src/core/puzzles";
+import { ACTS, LEVELS } from "../engine/core/campaign";
+import { contentCounts, numberWord } from "../engine/core/counts";
+import { UNIT_KINDS } from "../engine/core/defs";
+import { PUZZLES } from "../engine/core/puzzles";
 
 const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
 const app = JSON.parse(read("app.config.json"));
@@ -16,7 +16,7 @@ const copy = [meta.promotionalText, meta.description, meta.reviewNotes, meta.wha
 const NO_IAP = /no (in-app )?purchases|no in-app purchase/i;
 
 describe("content counts for the store copy", () => {
-  it("counts what src/core ships", () => {
+  it("counts what base/src/core ships", () => {
     const c = contentCounts();
     expect(c.units).toBe(UNIT_KINDS.length);
     expect(c.levels).toBe(LEVELS.length);

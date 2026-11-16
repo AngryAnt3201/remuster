@@ -1,10 +1,10 @@
 // Breakpoint check: solves every puzzle, checks the obvious plays fail and suggests silver/par from what the solver reached.
 //   npx vite-node tools/puzzles.ts            all puzzles
 //   PIDS=3,7 EVALS=8000 npx vite-node tools/puzzles.ts
-import { DEFAULT_AI } from "../src/core/ai";
-import { PUZZLES, SOLUTIONS } from "../src/core/puzzles";
-import type { PuzzleDef } from "../src/core/content";
-import type { StartPiece } from "../src/core/match";
+import { DEFAULT_AI } from "../engine/core/ai";
+import { PUZZLES, SOLUTIONS } from "../engine/core/puzzles";
+import type { PuzzleDef } from "../engine/core/content";
+import type { StartPiece } from "../engine/core/match";
 import { fromStart, naive, playPuzzle, playPuzzleAI, robustness, solve, toStart, type Gene, type Win } from "./solver";
 
 const ids = (process.env.PIDS ?? "").split(",").filter(Boolean).map(Number);

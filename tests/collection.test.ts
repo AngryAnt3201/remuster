@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { UNIT_KINDS } from "../src/core/defs";
-import { RARITY, blankCollection, grantIn, kindsOfRarity, normalizeCollection, spendIn } from "../src/progression/collection";
+import { UNIT_KINDS } from "../engine/core/defs";
+import { RARITY, blankCollection, grantIn, kindsOfRarity, normalizeCollection, spendIn } from "../engine/progression/collection";
 
 describe("card collection", () => {
   it("gives every unit a rarity", () => {

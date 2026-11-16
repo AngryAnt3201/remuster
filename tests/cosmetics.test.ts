@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_KEEP, blankCosmetics, equipIn, grantIn, normalizeCosmetics } from "../src/progression/cosmetics";
+import { DEFAULT_KEEP, blankCosmetics, equipIn, grantIn, normalizeCosmetics } from "../engine/progression/cosmetics";
 
 describe("cosmetics", () => {
   it("owns the default keep and wears it", () => {

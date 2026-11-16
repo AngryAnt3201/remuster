@@ -2,10 +2,10 @@
 
     python3 art/pack_atlas.py [--sheets-only] [--merge] [--only kind,kind]
 
---merge keeps every body already in public/atlas/manifest.json and only (re)packs the ones posted in
+--merge keeps every body already in base/public/atlas/manifest.json and only (re)packs the ones posted in
 art/build/v3post, so a run that rendered just a few kinds does not drop the rest from the manifest.
 
-Writes public/atlas/<kind>_t<tier>.webp and public/atlas/manifest.json. Layout and manifest format:
+Writes base/public/atlas/<kind>_t<tier>.webp and base/public/atlas/manifest.json. Layout and manifest format:
 docs/ART-V3-ATLAS.md. Each sheet is one 8-bit image of palette indices (lossless WebP, index 0 = transparent) with a
 joint palette in the manifest: per entry the colour (RGBA, team parts in white) and the team mask (R main, G dark,
 B light coverage). The runtime tints a whole sheet for a team by tinting its 256 palette entries, so one small file
@@ -29,7 +29,7 @@ sys.path.insert(0, HERE)
 from muster_art import style as STYLE  # noqa: E402
 from post import ORDER, POST3  # noqa: E402
 
-OUT = os.environ.get("MUSTER_ATLAS_OUT") or os.path.join(ROOT, "public", "atlas")  # override to pack a test set elsewhere
+OUT = os.environ.get("MUSTER_ATLAS_OUT") or os.path.join(ROOT, "base", "public", "atlas")  # override to pack a test set elsewhere
 PAD = 2
 MAX_W = 2048
 VERSION = 4
@@ -152,7 +152,7 @@ def load_sheet(man, key):
 
 
 def tint_palette(pal, team):
-    """The runtime tint (src/render/sprites.ts) on palette entries: rgb = colour * (1 + R(main-1) + G(dark-1) + B(light-1))."""
+    """The runtime tint (base/src/render/sprites.ts) on palette entries: rgb = colour * (1 + R(main-1) + G(dark-1) + B(light-1))."""
     t = STYLE.TEAMS[team]
     k = np.ones((len(pal), 3))
     for ch, key in enumerate(("main", "dark", "light")):
@@ -179,7 +179,7 @@ def clean_stale(man):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--sheets-only", action="store_true", help="previews from public/atlas only (art/anim_preview.py)")
+    ap.add_argument("--sheets-only", action="store_true", help="previews from base/public/atlas only (art/anim_preview.py)")
     ap.add_argument("--merge", action="store_true", help="keep the bodies already in the manifest; repack only what is in v3post")
     ap.add_argument("--only", default="", help="pack only these kinds from v3post (implies --merge)")
     a = ap.parse_args()

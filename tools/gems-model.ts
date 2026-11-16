@@ -1,7 +1,7 @@
-// The 30-day gem model in outputs/economy/gems.md, run on the real earn rules (src/economy/gems.ts).
+// The 30-day gem model in outputs/economy/gems.md, run on the real earn rules (engine/economy/gems.ts).
 // npx vite-node tools/gems-model.ts
-import { ACTS, LEVELS } from "../src/core/campaign";
-import { claimIn, rewardsOwed, GEM_PACKS, type EarnSave } from "../src/economy/gems";
+import { ACTS, LEVELS } from "../engine/core/campaign";
+import { claimIn, rewardsOwed, GEM_PACKS, type EarnSave } from "../engine/economy/gems";
 
 const ctx = { levels: LEVELS, acts: ACTS.length };
 type Plan = { name: string; fullArmy: boolean; buys: Record<number, number> };

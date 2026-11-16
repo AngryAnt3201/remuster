@@ -1,4 +1,4 @@
-// The native side of the store: the JS bridge (src/store/native.ts) against a fake MusterStore plugin, and the
+// The native side of the store: the JS bridge (engine/store/native.ts) against a fake MusterStore plugin, and the
 // files that make the Swift plugin real (ios/MusterStore, ios/App/Muster.storekit, the App scheme, cap sync output).
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -23,9 +23,9 @@ vi.mock("@capacitor/core", () => ({
   },
 }));
 
-import { createStore } from "../src/store";
-import { NativeStore, PLUGIN_NAME, UnavailableStore } from "../src/store/native";
-import { STARTER } from "../src/store/types";
+import { createStore } from "../engine/store";
+import { NativeStore, PLUGIN_NAME, UnavailableStore } from "../engine/store/native";
+import { STARTER } from "../engine/store/types";
 
 /** A non-consumable the plugin could sell later (Muster sells none today; restore and owned stay in the bridge). */
 const LATER = "co.inflect.muster.later";

@@ -1,6 +1,0 @@
-# PERF_GPU=1 node tools/perf.mjs <port> 1 6 1, run interleaved main (5195) / polish/juice (5194), load avg 60-80 from other agents
-# after the silhouette cache (units.ts)
-main-1: syncFrameMs med 1 p95 2.9 max 8.1 | syncFps 741.4 | rAF gap med 16.7 p95 17.7 | slowFrames 0.025
-br-1: syncFrameMs med 1.2 p95 3.4 max 4.3 | syncFps 679.1 | rAF gap med 16.6 p95 18.3 | slowFrames 0.06
-main-2: syncFrameMs med 0.8 p95 2.8 max 6.1 | syncFps 910.1 | rAF gap med 16.7 p95 17.9 | slowFrames 0.008
-br-2: syncFrameMs med 1.1 p95 3.2 max 5.5 | syncFps 681.2 | rAF gap med 16.6 p95 18.8 | slowFrames 0.102

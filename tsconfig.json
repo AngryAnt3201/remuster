@@ -10,7 +10,9 @@
     "skipLibCheck": true,
     "isolatedModules": true,
     "resolveJsonModule": true,
-    "types": ["node", "vite/client"]
+    "types": ["node", "vite/client"],
+    "baseUrl": ".",
+    "paths": { "@engine/*": ["engine/*"], "@base/*": ["base/src/*"] }
   },
-  "include": ["src", "tests", "tools", "vite.config.ts", "capacitor.config.ts"]
+  "include": ["engine", "base/src", "games", "tests", "tools", "vite.config.ts", "capacitor.config.ts"]
 }

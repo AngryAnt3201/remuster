@@ -8,10 +8,10 @@ import { spawn } from "node:child_process";
 import { cpus } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { DEFAULT_AI, formation } from "../src/core/ai";
-import { simulate } from "../src/core/battle";
-import { UNITS, UNIT_KINDS, type Piece, type Side, type UnitKind } from "../src/core/defs";
-import { Rng, hashSeed } from "../src/core/rng";
+import { DEFAULT_AI, formation } from "../engine/core/ai";
+import { simulate } from "../engine/core/battle";
+import { UNITS, UNIT_KINDS, type Piece, type Side, type UnitKind } from "../engine/core/defs";
+import { Rng, hashSeed } from "../engine/core/rng";
 
 const FIGHT = UNIT_KINDS.filter((k) => k !== "mine");
 

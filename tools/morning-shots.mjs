@@ -7,7 +7,7 @@ import { chromium, devices } from "playwright";
 import { mkdirSync } from "node:fs";
 
 const [, , tag = "after", only = ""] = process.argv;
-const port = process.env.PORT || 5180;
+const port = process.env.PORT || 5300;
 const want = only ? new Set(only.split(",")) : null;
 const out = "outputs/review/morning";
 mkdirSync(out, { recursive: true });
@@ -56,7 +56,7 @@ async function battle(name, level, ms, { newIn11 = false } = {}) {
   await p.goto(`http://localhost:${port}/?level=${level}`);
   await p.waitForTimeout(2500);
   await p.evaluate(async () => {
-    const ai = await import("/src/core/ai.ts");
+    const ai = await import("/engine/core/ai.ts");
     const g = window.__game, m = g.match;
     await Promise.all(g.plans ?? []);
     const me = { ...ai.DEFAULT_AI, difficulty: 0.85, aggression: 0.5, tactic: "balanced" };

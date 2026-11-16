@@ -8,7 +8,7 @@ export async function bench(g, imp, secs) {
   const m = g.match;
   // 12 a side, 24 different kinds once each, ranks 1 to 4, spread over each deploy zone. There are 28 kinds since
   // the 1.1 roster, so take the last 24: every newer unit (and its VFX) is in, the four plain starters are out.
-  const { UNITS } = await imp("/src/core/defs.ts");
+  const { UNITS } = await imp("/engine/core/defs.ts");
   const kinds = Object.keys(UNITS).slice(-24);
   let id = 1000;
   for (const s of [0, 1]) {
@@ -21,7 +21,7 @@ export async function bench(g, imp, secs) {
   // Real games preload their rosters' sprites per side; these armies come from outside the level's roster, so tint
   // every kind and spawn at every tier for both sides up front (preload needs the side: without it nothing is warmed
   // and the sheets tint mid-fight, which the old bench counted as 300+ ms hitches).
-  const sprites = await imp("/src/render/sprites.ts");
+  const sprites = await imp("/base/src/render/sprites.ts");
   await sprites.loadSprites();
   for (const s of [0, 1]) sprites.preload([...Object.keys(UNITS), "mite", "golemling", "thrall", "turret", "decoy", "queen"], s);
   // Tinting runs on the main thread as each atlas decodes: wait until 2 s pass with no 50 ms timer lag (30 s cap).

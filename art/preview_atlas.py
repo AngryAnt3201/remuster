@@ -3,7 +3,7 @@
     python3 art/preview_atlas.py [--kinds ranger,golem,...]
 
 Writes outputs/signoff/character-atlases/data.js: a manifest subset with the atlas PNGs inlined as data URIs.
-The page tints them with the same formula as src/render/sprites.ts.
+The page tints them with the same formula as base/src/render/sprites.ts.
 """
 import argparse
 import base64
@@ -16,7 +16,7 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 from post import NAMES  # noqa: E402
 
-ATLAS = os.path.join(ROOT, "public", "atlas")
+ATLAS = os.path.join(ROOT, "base", "public", "atlas")
 DST = os.path.join(ROOT, "outputs", "signoff", "character-atlases")
 DEFAULT = "blades,ranger,bulwark,golem,harrier,grave,trickster,tinker"
 

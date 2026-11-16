@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { EDGE, H, UNITS, W, ZONE_DEPTH, clampToZone, inZone, toWorld, type UnitKind } from "../src/core/defs";
-import { Match } from "../src/core/match";
-import { Camera, mirror8, sortDrawables } from "../src/render/camera";
+import { EDGE, H, UNITS, W, ZONE_DEPTH, clampToZone, inZone, toWorld, type UnitKind } from "../engine/core/defs";
+import { Match } from "../engine/core/match";
+import { Camera, mirror8, sortDrawables } from "../base/src/render/camera";
 
 // Phone layouts the board gets fitted into (css px): iPhone 17 Pro, a small phone, the 6.9" store size, landscape-ish.
 const AREAS = [

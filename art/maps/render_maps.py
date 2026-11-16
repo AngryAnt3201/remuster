@@ -3,8 +3,8 @@
     blender -b --factory-startup -P art/maps/render_maps.py -- [--only 0,3] [--style meadow|dusk|toy] [--samples 32]
     npm run art:maps
 
-Writes public/maps/<id>.jpg (840x1848, phone portrait) for every act in art/maps/acts.py and
-src/ui/mapdata.ts with each act's road projected into image fractions, so the app can lay level nodes
+Writes base/public/maps/<id>.jpg (840x1848, phone portrait) for every act in art/maps/acts.py and
+base/src/ui/mapdata.ts with each act's road projected into image fractions, so the app can lay level nodes
 exactly on the painted road for any number of levels. The style direction (art/style/active.json once the
 style item lands, else Sunlit Meadow) sets ink, line weight, cel bands, shadow tint and the overall mood.
 """
@@ -1136,7 +1136,7 @@ def write_ts(entries, style_id):
         lines.append(f"  {{ id: {json.dumps(e['id'])}, image: {json.dumps(e['image'])}, tint: {json.dumps(tints[e['id']])}, camp: {json.dumps(e['camp'])}, boss: {json.dumps(e['boss'])},")
         lines.append(f"    path: {json.dumps(e['path'], separators=(',', ':'))} }},")
     lines.append("];")
-    with open(os.path.join(ROOT, "src", "ui", "mapdata.ts"), "w") as f:
+    with open(os.path.join(ROOT, "base", "src", "ui", "mapdata.ts"), "w") as f:
         f.write("\n".join(lines) + "\n")
 
 
@@ -1150,7 +1150,7 @@ def main():
     a = ap.parse_args(argv)
     style = load_style(a.style)
     MOOD = MOODS.get(style.get("id", "meadow"), MOODS["meadow"])
-    out_dir = os.path.join(ROOT, "public", "maps")
+    out_dir = os.path.join(ROOT, "base", "public", "maps")
     os.makedirs(out_dir, exist_ok=True)
     only = {int(x) for x in a.only.split(",") if x != ""}
     data_path = os.path.join(HERE, "paths.json")

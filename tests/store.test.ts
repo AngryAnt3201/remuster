@@ -1,15 +1,15 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
-import { UNIT_KINDS } from "../src/core/defs";
-import { GEM_PACKS } from "../src/economy/gems";
-import { blankWallet, creditPurchaseIn, earnIn } from "../src/economy/wallet";
-import { RARITY, blankCollection, grantIn } from "../src/progression/collection";
-import { createStore } from "../src/store";
-import { GemShop } from "../src/store/gems";
-import { MOCK_KEY, MockStore } from "../src/store/mock";
+import { UNIT_KINDS } from "../engine/core/defs";
+import { GEM_PACKS } from "../engine/economy/gems";
+import { blankWallet, creditPurchaseIn, earnIn } from "../engine/economy/wallet";
+import { RARITY, blankCollection, grantIn } from "../engine/progression/collection";
+import { createStore } from "../engine/store";
+import { GemShop } from "../engine/store/gems";
+import { MOCK_KEY, MockStore } from "../engine/store/mock";
 import {
   STARTER, STARTER_PACK, StarterShop, markStarter, payStarter, starterBought, starterGemValue, starterValueX, type StarterSave,
-} from "../src/store/starter";
+} from "../engine/store/starter";
 
 function kv() {
   const m = new Map<string, string>();
@@ -60,7 +60,7 @@ describe("starter pack", () => {
     expect(d.credit("tx-1")).toBe(true);
     expect(d.w.gems).toBe(STARTER_PACK.gems);
     expect(d.w.coins).toBe(STARTER_PACK.coins);
-    // A unit found for the first time uses one card (src/progression/collection.ts); the rest are spares.
+    // A unit found for the first time uses one card (engine/progression/collection.ts); the rest are spares.
     for (const [k, n] of STARTER_PACK.cards) expect((d.c.cards[k] ?? 0) + (d.c.found.includes(k) ? 1 : 0), k).toBe(n);
     expect(starterBought(d.s)).toBe(true);
     expect(d.credit("tx-1")).toBe(false);
@@ -186,7 +186,7 @@ describe("mock store", () => {
 
 describe("content is never gated", () => {
   it("has no gate rules, paywall or act-gate card left in the game", () => {
-    const src = ["src/main.ts", "src/ui/shop.ts", "src/ui/gemshop.ts"].map((f) => readFileSync(new URL(`../${f}`, import.meta.url), "utf8")).join("\n");
+    const src = ["base/src/main.ts", "base/src/ui/shop.ts", "base/src/ui/gemshop.ts"].map((f) => readFileSync(new URL(`../${f}`, import.meta.url), "utf8")).join("\n");
     expect(src).not.toMatch(/actGated|levelGated|gauntletGated|puzzleGated|paywall|actGateCard|fullArmyOffer|Full Army/);
     expect(src).not.toMatch(/Restore Purchases/);
   });

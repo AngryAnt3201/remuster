@@ -1,7 +1,7 @@
 """Post-process raw Blender renders into battle frames (v3) and card portraits.
 
     python3 art/post.py [--only kind,kind] [--jobs 8] [--resume] [--no-pack]      battle frames -> art/build/v3post, then art/pack_atlas.py
-    python3 art/post.py --portraits [--only kind,kind]      card portraits -> public/portraits + art/contact/portraits.png
+    python3 art/post.py --portraits [--only kind,kind]      card portraits -> base/public/portraits + art/contact/portraits.png
 
 Needs Pillow + numpy. Frame contract: docs/ART-V3-ATLAS.md and art/muster_art/style.py.
 
@@ -56,7 +56,7 @@ def raw_style():
 STYLE.select(raw_style())
 os.environ["MUSTER_STYLE"] = STYLE.ID  # worker processes and pack_atlas.py post in the same look
 POST3 = os.path.join(HERE, "build", "v3post")
-POR = os.path.join(ROOT, "public", "portraits")
+POR = os.path.join(ROOT, "base", "public", "portraits")
 CONTACT = os.path.join(HERE, "contact")
 INK = np.array([int(STYLE.INK[i:i + 2], 16) for i in (1, 3, 5)], np.float32) / 255
 TEAM = {k: {c: tuple(int(v[i:i + 2], 16) for i in (1, 3, 5)) for c, v in cols.items()} for k, cols in STYLE.TEAMS.items() if k != "neutral"}

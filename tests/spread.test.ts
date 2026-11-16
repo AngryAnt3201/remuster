@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { SPREAD_GAP, SPREAD_MAX, spreadOffsets, type SpreadBody } from "../src/render/spread";
-import { SPRITE_VIS, spriteVis } from "../src/render/units";
+import { SPREAD_GAP, SPREAD_MAX, spreadOffsets, type SpreadBody } from "../base/src/render/spread";
+import { SPRITE_VIS, spriteVis } from "../base/src/render/units";
 
 const body = (id: number, x: number, y: number, side = 0, r = 0.24): SpreadBody => ({ id, x, y, r, side, vis: spriteVis(r) });
 const gapAfter = (a: SpreadBody, b: SpreadBody, off: Map<number, [number, number]>) => {

@@ -5,7 +5,7 @@ import { chromium, devices } from "playwright";
 import { mkdirSync } from "node:fs";
 
 const out = process.argv[2] ?? "outputs/review/store";
-const port = process.argv[3] ?? process.env.PORT ?? "5180";
+const port = process.argv[3] ?? process.env.PORT ?? "5300";
 mkdirSync(out, { recursive: true });
 const base = `http://localhost:${port}/`;
 const campaign = Object.fromEntries(Array.from({ length: 12 }, (_, i) => [i + 1, 3]));

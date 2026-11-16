@@ -1,13 +1,13 @@
-// Ambient arena life (src/render/ambient.ts): every arena has some, and its motion stays where it should.
+// Ambient arena life (base/src/render/ambient.ts): every arena has some, and its motion stays where it should.
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { H, W } from "../src/core/defs";
-import { AMBIENT, FLOCK_CROSS, FLOCK_EVERY, FLOCK_FIRST, butterflyAt, flockAt, gustAt, moteAt, type MoteKind } from "../src/render/ambient";
-import { IDLE_BREATH, IDLE_FIDGET_EVERY, idleLife } from "../src/render/units";
+import { H, W } from "../engine/core/defs";
+import { AMBIENT, FLOCK_CROSS, FLOCK_EVERY, FLOCK_FIRST, butterflyAt, flockAt, gustAt, moteAt, type MoteKind } from "../base/src/render/ambient";
+import { IDLE_BREATH, IDLE_FIDGET_EVERY, idleLife } from "../base/src/render/units";
 
 describe("ambient arena life", () => {
   it("every arena in the manifest has ambient life that moves", () => {
-    const m = JSON.parse(readFileSync("public/arenas/manifest.json", "utf8"));
+    const m = JSON.parse(readFileSync("base/public/arenas/manifest.json", "utf8"));
     for (const [act, a] of Object.entries<{ obstacle: string }>(m.acts)) {
       const cfg = AMBIENT[a.obstacle];
       expect(cfg, `act ${act} (${a.obstacle})`).toBeDefined();

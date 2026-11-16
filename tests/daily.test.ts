@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_AI, applyPlan, planTurn } from "../src/core/ai";
+import { DEFAULT_AI, applyPlan, planTurn } from "../engine/core/ai";
 import {
   DAILY_RULES, beginDaily, blankDaily, canScore, challengeNumber, dailyBoard, dailyConfig, dailyResult, dateKey, dayNumber,
   finishDaily, keyFromDay, prevKey, streakOn,
-} from "../src/core/daily";
-import { UNITS, inZone, toWorld } from "../src/core/defs";
-import { Match } from "../src/core/match";
+} from "../engine/core/daily";
+import { UNITS, inZone, toWorld } from "../engine/core/defs";
+import { Match } from "../engine/core/match";
 
 const play = (key: string) => {
   const b = dailyBoard(key);

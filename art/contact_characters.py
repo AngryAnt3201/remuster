@@ -1,10 +1,10 @@
-"""Review contact sheets: one row per kind, tiers 1-4, tide then ember, SE idle frame 0, tinted like src/render/sprites.ts.
+"""Review contact sheets: one row per kind, tiers 1-4, tide then ember, SE idle frame 0, tinted like base/src/render/sprites.ts.
     python3 art/contact_characters.py   -> outputs/review/characters/sheet_<n>.png"""
 import json, os
 import numpy as np
 from PIL import Image, ImageDraw
 R = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-A = os.path.join(R, "public", "atlas")
+A = os.path.join(R, "base", "public", "atlas")
 m = json.load(open(os.path.join(A, "manifest.json")))
 hexc = lambda h: np.array([int(h[i:i+2], 16) / 255 for i in (1, 3, 5)])
 S, CW, CH, AX, AY = 1.5, 240, 330, 120, 270

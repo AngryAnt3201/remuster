@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { blankWallet, creditPurchaseIn, earnIn, normalizeWallet, spendIn } from "../src/economy/wallet";
+import { blankWallet, creditPurchaseIn, earnIn, normalizeWallet, spendIn } from "../engine/economy/wallet";
 
 describe("wallet", () => {
   it("earns and spends whole positive amounts only", () => {

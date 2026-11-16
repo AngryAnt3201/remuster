@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_AI, TACTICS, applyPlan, planTurn } from "../src/core/ai";
-import { ACTS, LEVELS, rosterAt } from "../src/core/campaign";
-import { levelConfig, objectiveMet, objectiveText, puzzleConfig, puzzleStars, starsFor, type Objective } from "../src/core/content";
-import { UNITS, UNIT_KINDS, inZone } from "../src/core/defs";
+import { DEFAULT_AI, TACTICS, applyPlan, planTurn } from "../engine/core/ai";
+import { ACTS, LEVELS, rosterAt } from "../engine/core/campaign";
+import { levelConfig, objectiveMet, objectiveText, puzzleConfig, puzzleStars, starsFor, type Objective } from "../engine/core/content";
+import { UNITS, UNIT_KINDS, inZone } from "../engine/core/defs";
 import {
   BOONS, MEND_HP, boardValue, boonChoices, duelConfig, endDuel, gauntletFoe, newRun, rivalMods, runMods, takeBoon,
-} from "../src/core/gauntlet";
-import { Match, type RoundReport } from "../src/core/match";
-import { PUZZLES, SOLUTIONS } from "../src/core/puzzles";
-import { Battle } from "../src/core/battle";
+} from "../engine/core/gauntlet";
+import { Match, type RoundReport } from "../engine/core/match";
+import { PUZZLES, SOLUTIONS } from "../engine/core/puzzles";
+import { Battle } from "../engine/core/battle";
 import { fromStart, naive, pieceCost, playPuzzle, solve } from "../tools/solver";
 
 describe("campaign", () => {

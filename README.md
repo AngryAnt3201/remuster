@@ -23,11 +23,11 @@ Upgrade a placed unit to rank 2 and 3; sell for half of what it cost. Unspent go
 
 ## The AI
 
-`src/core/ai.ts`. An `AIProfile` sets **difficulty** (how many plans it tests in simulation, how sharply it counters, how often it blunders), **aggression** (formation depth, damage vs defence), **tactic** (balanced, swarm, fortress, artillery, ambush, blitz, siege), **economy** (bank for interest and upgrades vs spend), **rerolls** and **spread** (formation width). Hard AIs simulate each candidate draft and formation against your visible board plus a guess at what you'll add; buried mines stay hidden from it. Tune them in-game under Skirmish (AI lab), including AI-vs-AI.
+`engine/core/ai.ts`. An `AIProfile` sets **difficulty** (how many plans it tests in simulation, how sharply it counters, how often it blunders), **aggression** (formation depth, damage vs defence), **tactic** (balanced, swarm, fortress, artillery, ambush, blitz, siege), **economy** (bank for interest and upgrades vs spend), **rerolls** and **spread** (formation width). Hard AIs simulate each candidate draft and formation against your visible board plus a guess at what you'll add; buried mines stay hidden from it. Tune them in-game under Skirmish (AI lab), including AI-vs-AI.
 
 ## Modes
 
-- **Campaign**: acts of six levels with a boss at the end of each, a new unit unlocked along the way, three stars per level. The current level, act and puzzle counts come from `src/core/counts.ts` (`npm run release:config` prints them).
+- **Campaign**: acts of six levels with a boss at the end of each, a new unit unlocked along the way, three stars per level. The current level, act and puzzle counts come from `engine/core/counts.ts` (`npm run release:config` prints them).
 - **Gauntlet**: one health pool against rival after rival; your army carries over and each win brings a boon.
 - **Breakpoint**: one-battle puzzles against a fixed visible board with fixed gold; win, then win cheaper for stars.
 - **Skirmish**: any AI profile, any health, or watch two AIs.
@@ -36,7 +36,7 @@ Upgrade a placed unit to rank 2 and 3; sell for half of what it cost. Unspent go
 
 ```
 npm install
-npm run dev          # http://localhost:5180 (deep links: ?level=3 ?puzzle=2 ?lab ?watch ?gauntlet)
+npm run dev          # http://localhost:5300 (deep links: ?level=3 ?puzzle=2 ?lab ?watch ?gauntlet)
 npm test             # sim, match, AI, content
 npm run build
 npm run ios:sim      # build the iOS app for the simulator (Capacitor, no signing)
@@ -46,7 +46,7 @@ node tools/shot.mjs "/?level=1" out.png   # phone-size screenshot of the dev ser
 node tools/e2e.mjs <dir>                  # full AI-vs-AI match in the browser
 ```
 
-Code: `src/core` is pure and deterministic (battle sim, match, AI, content); `src/render` draws it on a canvas; `src/ui` is the HUD and screens.
+Code: `base/src/core` is pure and deterministic (battle sim, match, AI, content); `base/src/render` draws it on a canvas; `base/src/ui` is the HUD and screens.
 
 ## Release (App Store)
 

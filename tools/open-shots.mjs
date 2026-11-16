@@ -5,7 +5,7 @@ import { chromium, devices } from "playwright";
 import { mkdirSync } from "node:fs";
 
 const out = process.argv[2] ?? "outputs/review/open";
-const port = process.env.PORT ?? "5180";
+const port = process.env.PORT ?? "5300";
 mkdirSync(out, { recursive: true });
 const base = `http://localhost:${port}/`;
 // A free player who has cleared Acts 1-4 (24 levels): Act 5 is next, and was behind the Full Army before.

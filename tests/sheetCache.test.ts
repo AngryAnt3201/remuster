@@ -1,7 +1,7 @@
-// The tinted sheet cache's eviction policy (src/render/sprites.ts pickEvictions): a byte budget, least recently used
+// The tinted sheet cache's eviction policy (base/src/render/sprites.ts pickEvictions): a byte budget, least recently used
 // first, never what the current battle preloaded (pinned), what was drawn in the last few seconds or what is loading.
 import { describe, expect, it } from "vitest";
-import { SHEET_BUDGET, SHEET_RECENT_MS, pickEvictions, type CacheEntry } from "../src/render/sprites";
+import { SHEET_BUDGET, SHEET_RECENT_MS, pickEvictions, type CacheEntry } from "../base/src/render/sprites";
 
 const MB = 1024 * 1024;
 const e = (id: string, mb: number, used: number, pinned = false): CacheEntry => ({ id, bytes: mb * MB, used, pinned });

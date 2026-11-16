@@ -1,8 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { ACTS, LEVELS } from "../src/core/campaign";
-import { ACT_MAPS, MAP_SIZE } from "../src/ui/mapdata";
-import { mapForAct, nodeFractions, nodePositions, pathUpTo, pointAt } from "../src/ui/maplayout";
+import { ACTS, LEVELS } from "../engine/core/campaign";
+import { ACT_MAPS, MAP_SIZE } from "../base/src/ui/mapdata";
+import { mapForAct, nodeFractions, nodePositions, pathUpTo, pointAt } from "../base/src/ui/maplayout";
 
 describe("campaign act maps", () => {
   it("has a painted map for each of the ten acts, and one for every act in ACTS", () => {
@@ -17,7 +17,7 @@ describe("campaign act maps", () => {
 
   it("ships every map image at the generated size", () => {
     for (const m of ACT_MAPS) {
-      const f = `public/${m.image}`;
+      const f = `base/public/${m.image}`;
       expect(existsSync(f), f).toBe(true);
       const b = readFileSync(f);
       // JPEG SOF0/SOF2 marker holds height then width

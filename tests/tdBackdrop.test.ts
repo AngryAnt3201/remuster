@@ -1,14 +1,14 @@
-// Bastion backdrops (art/td/render_td.py -> public/td): rendered through the TD camera's ground layout from the sim's
+// Bastion backdrops (art/td/render_td.py -> base/public/td): rendered through the TD camera's ground layout from the sim's
 // own road and pad geometry, and pixel-checked after the render (pads read as stone, the road centre as dirt, the
 // verge just past the sim's road edge as not-dirt). These tests hold the shipped render to the current sim.
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { MAP_DEFS, getMap } from "../src/core/td/maps";
-import { TD_SQUASH, TD_TEX_M, TD_TEX_PPU } from "../src/render/tdCamera";
-import type { TdBackdropManifest } from "../src/render/tdView";
+import { MAP_DEFS, getMap } from "../engine/core/td/maps";
+import { TD_SQUASH, TD_TEX_M, TD_TEX_PPU } from "../base/src/render/tdCamera";
+import type { TdBackdropManifest } from "../base/src/render/tdView";
 
-const DIR = join(__dirname, "..", "public", "td");
+const DIR = join(__dirname, "..", "base", "public", "td");
 const man = JSON.parse(readFileSync(join(DIR, "manifest.json"), "utf8")) as TdBackdropManifest;
 
 describe("bastion backdrops", () => {

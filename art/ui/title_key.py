@@ -3,7 +3,7 @@ same unit builders and toon kit as the sprites, so the title matches the game. T
 colours read on the title better than the Ascended white and gold.
 
     blender -b --factory-startup -P art/ui/title_key.py -- [--res 1206x2622] [--samples 32] [--out path.png]
-    npm run art:title        (renders, then writes public/ui/title-key.webp with cwebp)
+    npm run art:title        (renders, then writes base/public/ui/title-key.webp with cwebp)
 
 Composition is for a portrait phone (19.5:9): sky + keeps behind the logo (top quarter), the clash in the
 band between the logo and the menu (about 30-61% down), meadow under the buttons.

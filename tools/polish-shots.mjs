@@ -1,9 +1,9 @@
 // Phone-size review shots for the Meadow polish pass (units at board scale, late-act courtyards, airborne VFX order,
-// title key art): PORT=5180 node tools/polish-shots.mjs <outdir> <tag> [only,comma,separated]
+// title key art): PORT=5300 node tools/polish-shots.mjs <outdir> <tag> [only,comma,separated]
 // Writes <outdir>/<name>-<tag>.png. Battles use ?level=N with the AI deploying your side, then Fight.
 import { chromium, devices } from "playwright";
 const [, , outDir = "outputs/review/polish", tag = "after", only = ""] = process.argv;
-const port = process.env.PORT || 5180;
+const port = process.env.PORT || 5300;
 const want = only ? new Set(only.split(",")) : null;
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ ...devices["iPhone 13"], viewport: { width: 390, height: 844 }, screen: { width: 390, height: 844 }, deviceScaleFactor: 2 });
@@ -21,7 +21,7 @@ async function battle(name, level, times) {
   const page = await open(`/?level=${level}`);
   await page.waitForTimeout(2500);
   await page.evaluate(async () => {
-    const ai = await import("/src/core/ai.ts");
+    const ai = await import("/engine/core/ai.ts");
     const g = window.__game, m = g.match;
     await Promise.all(g.plans ?? []);
     const me = { ...ai.DEFAULT_AI, difficulty: 0.85, aggression: 0.5, tactic: "balanced" };

@@ -45,9 +45,9 @@ Air: `harrier` is the only flyer. A flyer can be hit only by bodies with a range
 ## Art contract (Blender → sprites)
 - Sprites: top-down orthographic, unit FACING +X (to the right of the image), transparent background, no baked ground shadow (the game draws its own), lit from above so rotation looks right.
 - Pixels per world unit: 120 (manifest says so). Image square, unit centred.
-- Files: `public/sprites/<kind>/t<tier>_<team>_<pose>.png`, team = `tide` (player, #3fd0c9) or `ember` (rival, #ff6a4d), pose = `idle` or `attack`. Spawned bodies: tier 1 only.
-- Portraits (cards, menus): 3/4 view, `public/portraits/<kind>_t<tier>.png`, 256×256, tide team.
-- `public/sprites/manifest.json`: `{ "ppu": 120, "units": { "<kind>": { "size": <px>, "tiers": [1,2,3,4], "poses": ["idle","attack"] } } }`.
+- Files: `base/public/sprites/<kind>/t<tier>_<team>_<pose>.png`, team = `tide` (player, #3fd0c9) or `ember` (rival, #ff6a4d), pose = `idle` or `attack`. Spawned bodies: tier 1 only.
+- Portraits (cards, menus): 3/4 view, `base/public/portraits/<kind>_t<tier>.png`, 256×256, tide team.
+- `base/public/sprites/manifest.json`: `{ "ppu": 120, "units": { "<kind>": { "size": <px>, "tiers": [1,2,3,4], "poses": ["idle","attack"] } } }`.
 
 ## App Store
 - Bundle id `co.inflect.muster`, iPhone only, portrait, no accounts, no data collected, no tracking, offline.

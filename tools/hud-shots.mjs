@@ -5,7 +5,7 @@ import { chromium, devices } from "playwright";
 import { mkdirSync } from "node:fs";
 
 const [, , tag = "after", only = ""] = process.argv;
-const port = process.env.PORT || 5180;
+const port = process.env.PORT || 5300;
 const host = process.env.HOST || "127.0.0.1";
 const want = only ? new Set(only.split(",")) : null;
 const out = "outputs/review/polish2/hud";
@@ -52,7 +52,7 @@ async function still(name, save, path, { wait = 2500, click, after = 900 } = {})
 }
 
 const deployAI = async (p) => p.evaluate(async () => {
-  const ai = await import("/src/core/ai.ts");
+  const ai = await import("/engine/core/ai.ts");
   const g = window.__game, m = g.match;
   await Promise.all(g.plans ?? []);
   const me = { ...ai.DEFAULT_AI, difficulty: 0.85, aggression: 0.5, tactic: "balanced" };
@@ -174,13 +174,13 @@ await battle();
 await still("daily", "free", "?daily");
 if (tag !== "before") await still("daily-streak", "streak", "?daily");
 await still("paywall", "free", "?tab=modes", { click: ".gauntlet-btn" }); // [home] modes live on the Modes tab
-// The shared currency pill (src/ui/currency.ts): coin and gem counters on a plate.
+// The shared currency pill (base/src/ui/currency.ts): coin and gem counters on a plate.
 if (!skip("currency-pill") && tag !== "before") {
   const p = await page("free");
   await p.goto(`http://${host}:${port}/?barracks`);
   await p.waitForTimeout(1800);
   await p.evaluate(async () => {
-    const cur = await import("/src/ui/currency.ts");
+    const cur = await import("/base/src/ui/currency.ts");
     const bar = document.createElement("div");
     bar.style.cssText = "position:fixed;left:0;right:0;top:0;z-index:99;display:flex;gap:10px;justify-content:center;padding:70px 12px 18px;background:#3f7d34";
     bar.append(cur.currencyPill("coins"), cur.currencyPill("gems"));

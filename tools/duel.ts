@@ -5,9 +5,9 @@ import { spawn } from "node:child_process";
 import { cpus } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { Match } from "../src/core/match";
-import { planTurn, applyPlan, DEFAULT_AI, type AIProfile } from "../src/core/ai";
-import type { UnitKind } from "../src/core/defs";
+import { Match } from "../engine/core/match";
+import { planTurn, applyPlan, DEFAULT_AI, type AIProfile } from "../engine/core/ai";
+import type { UnitKind } from "../engine/core/defs";
 
 export function play(seed: number, a: AIProfile, b: AIProfile) {
   const m = new Match({ seed });

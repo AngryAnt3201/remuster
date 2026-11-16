@@ -2,15 +2,15 @@
 // and the sinks. Pure rules plus the mock store, so no StoreKit or device save is needed.
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
-import { ACTS, LEVELS } from "../src/core/campaign";
+import { ACTS, LEVELS } from "../engine/core/campaign";
 import {
   ACHIEVEMENTS, COIN_BUNDLES, EARN, GEM_PACKS, GEM_PACK_PREFIX, RALLY_GEMS, STREAK_MILESTONES, applyRally, bestValue, blankRewards, canRally,
   claimIn, coinBonus, gemsFor, normalizeRewards, packBonus, rewardsOwed, type EarnSave,
-} from "../src/economy/gems";
-import { blankWallet, creditPurchaseIn, spendIn } from "../src/economy/wallet";
-import { GemShop } from "../src/store/gems";
-import { MockStore } from "../src/store/mock";
-import { STARTER, type Purchase } from "../src/store/types";
+} from "../engine/economy/gems";
+import { blankWallet, creditPurchaseIn, spendIn } from "../engine/economy/wallet";
+import { GemShop } from "../engine/store/gems";
+import { MockStore } from "../engine/store/mock";
+import { STARTER, type Purchase } from "../engine/store/types";
 
 const ctx = { levels: LEVELS, acts: ACTS.length };
 const blankSave = (): EarnSave => ({ campaign: {}, puzzles: {}, gauntlet: { best: 0, runs: 0 }, daily: { streak: 0, bestStreak: 0, wins: 0 } });

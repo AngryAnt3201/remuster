@@ -8,7 +8,7 @@ import { chromium, devices } from "playwright";
 
 const arg = (k, d) => process.argv.find((a) => a.startsWith(`--${k}=`))?.split("=").slice(1).join("=") ?? d;
 const root = new URL("..", import.meta.url).pathname;
-const BASE = `http://localhost:${process.env.PORT || 5180}`;
+const BASE = `http://localhost:${process.env.PORT || 5300}`;
 const OUT = arg("out", `${root}outputs/review/polish2/keeps`);
 const TAG = arg("tag", "after");
 const ONLY = new Set(arg("only", TAG === "before" ? "battle,states" : "battle,boss,states,collapse,lose").split(","));
@@ -25,7 +25,7 @@ async function game({ seed = 11, rounds = 3, arena = 1, boss = false, names = ["
   await page.goto(`${BASE}/?lab`);
   await page.waitForSelector(".screen");
   await page.evaluate(async ({ seed, rounds, arena, boss, names }) => {
-    const [{ GameScreen }, ai, defs, store] = await Promise.all([import("/src/ui/game.ts"), import("/src/core/ai.ts"), import("/src/core/defs.ts"), import("/src/save.ts")]);
+    const [{ GameScreen }, ai, defs, store] = await Promise.all([import("/base/src/ui/game.ts"), import("/engine/core/ai.ts"), import("/engine/core/defs.ts"), import("/engine/save.ts")]);
     store.save((s) => { s.seen = Object.keys(defs.UNITS); s.settings = { ...s.settings, sound: false, haptics: false }; });
     const app = document.getElementById("app");
     window.__game?.destroy?.();

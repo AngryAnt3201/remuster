@@ -1,5 +1,5 @@
 """Bastion backdrops: one Blender render per tower-defence map in the Sunlit Meadow style (the arenas' kit, palette,
-toon shading, grade and sunlight), through the TD camera (src/render/tdCamera.ts).
+toon shading, grade and sunlight), through the TD camera (base/src/render/tdCamera.ts).
 
     npx vite-node art/td/export_maps.ts      # sim geometry -> art/td/build/maps.json
     nice -n 10 blender -b --factory-startup -P art/td/render_td.py -- [--only meadow] [--quick]
@@ -9,8 +9,8 @@ pitched so sin(elevation) = 0.8 (53.13 deg). A ground point (x, y) lands on back
     X = (x + MARGIN) * PPU,  Y = (y + MARGIN) * PPU * 0.8
 which is the same layout as the ground texture tdView.ts bakes (TEX_M, TEX_PPU), so the game draws it unchanged.
 The road ribbon and pads are built from the sim's own smoothed road points and pad list (maps.json), and after the
-render every pad centre and road sample is checked on the pixels; the result goes in public/td/manifest.json and
-tests/tdBackdrop.test.ts holds it to the sim. Output: public/td/<map>_<i>.webp horizontal slices + manifest.json.
+render every pad centre and road sample is checked on the pixels; the result goes in base/public/td/manifest.json and
+tests/tdBackdrop.test.ts holds it to the sim. Output: base/public/td/<map>_<i>.webp horizontal slices + manifest.json.
 Shapes and palettes are original, built from primitives.
 """
 import argparse
@@ -26,12 +26,12 @@ ART = os.path.dirname(HERE)
 ROOT = os.path.dirname(ART)
 sys.path.insert(0, ART)
 sys.path.insert(0, os.path.join(ART, "arenas"))
-OUT = os.path.join(ROOT, "public", "td")
+OUT = os.path.join(ROOT, "base", "public", "td")
 BUILD = os.path.join(HERE, "build")
 
-SQUASH = 0.8  # src/render/tdCamera.ts TD_SQUASH
-MARGIN = 3.5  # src/render/tdView.ts TEX_M
-PPU = 72  # src/render/tdView.ts TEX_PPU
+SQUASH = 0.8  # base/src/render/tdCamera.ts TD_SQUASH
+MARGIN = 3.5  # base/src/render/tdView.ts TEX_M
+PPU = 72  # base/src/render/tdView.ts TEX_PPU
 SLICES = 4
 
 THEMES = {

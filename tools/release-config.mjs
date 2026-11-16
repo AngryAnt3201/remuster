@@ -5,7 +5,7 @@
 //   store/IAP.md                 the Starter Pack and gem pack fields for App Store Connect, from metadata.json inAppPurchase/gemPacks
 //   site/*.html, store/RELEASE-CHECKLIST.md   the old store name, email and site URL are replaced with the new ones,
 //                                and <span data-count="units">..</span> in site/*.html gets the current count
-// Copy placeholders: {{name}} plus the content counts from src/core ({{units}}, {{levels}}, {{acts}}, {{actsWord}}, ...,
+// Copy placeholders: {{name}} plus the content counts from base/src/core ({{units}}, {{levels}}, {{acts}}, {{actsWord}}, ...,
 // see tools/content-counts.ts), so the listing never quotes stale numbers.
 // Also checks App Store length limits. Run: npm run release:config (ios:release and ios:release:dry run it too).
 import { execFileSync } from "node:child_process";
@@ -89,7 +89,7 @@ if (meta.nameOptions) meta.nameOptions.chosen = app.storeName;
 write(metaPath, JSON.stringify(meta, null, 2) + "\n");
 
 const counts = contentCounts();
-console.log(`  counts from src/core: ${Object.entries(counts).map(([k, v]) => `${k} ${v}`).join(", ")}`);
+console.log(`  counts from base/src/core: ${Object.entries(counts).map(([k, v]) => `${k} ${v}`).join(", ")}`);
 const fill = (s) => fillCounts((s ?? "").replaceAll("{{name}}", app.storeName), counts);
 const iap = meta.inAppPurchase;
 const gems = meta.gemPacks;
@@ -143,10 +143,10 @@ const srcText = (() => {
 const NO_IAP = /no (in-app )?purchases|no in-app purchase/i;
 need(!(iap && NO_IAP.test(listed)), "store copy still says there are no purchases, but metadata.json lists an in-app purchase");
 if (iap) copyNeed(srcText.includes(iap.productId), `copy sells ${iap.displayName} but no source file mentions ${iap.productId} yet (the StoreKit item has not landed)`);
-if (/daily challenge/i.test(listed)) copyNeed(/daily/i.test(srcText), "copy promises a Daily Challenge but src/ has no daily mode yet");
-if (/\bact 8\b/i.test(listed)) copyNeed(counts.acts >= 8, `copy promises Act 8 but src/core/campaign.ts has ${counts.acts} acts`);
-if (/\bact 10\b/i.test(listed)) copyNeed(counts.acts >= 10, `copy promises Act 10 but src/core/campaign.ts has ${counts.acts} acts`);
-if (/four new units/i.test(listed)) copyNeed(counts.units >= 28, `copy promises four new units but src/core/defs.ts has ${counts.units}`);
+if (/daily challenge/i.test(listed)) copyNeed(/daily/i.test(srcText), "copy promises a Daily Challenge but base/src/ has no daily mode yet");
+if (/\bact 8\b/i.test(listed)) copyNeed(counts.acts >= 8, `copy promises Act 8 but engine/core/campaign.ts has ${counts.acts} acts`);
+if (/\bact 10\b/i.test(listed)) copyNeed(counts.acts >= 10, `copy promises Act 10 but engine/core/campaign.ts has ${counts.acts} acts`);
+if (/four new units/i.test(listed)) copyNeed(counts.units >= 28, `copy promises four new units but engine/core/defs.ts has ${counts.units}`);
 need(!/,\s/.test(meta.keywords), "keywords: no spaces after commas (they waste characters)");
 const nameWords = new Set(`${meta.name} ${meta.subtitle}`.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
 const dupes = meta.keywords.toLowerCase().split(",").filter((k) => nameWords.has(k.trim()));
@@ -272,7 +272,7 @@ if (iap) {
 
 Generated from \`store/metadata.json\` (\`inAppPurchase\`, \`gemPacks\`) by \`npm run release:config\`. Edit that, not this file.
 Free to play, every level open: every campaign act, the Gauntlet, every Breakpoint puzzle, the Daily Challenge and Skirmish are free. Nothing is locked behind a purchase; purchases only speed you up.
-**${iap.displayName}** is a one-time offer: a ${iap.type.toLowerCase()} the app sells once per player (the Shop hides it after it's bought). It pays a fixed pack of gems, coins and unit cards (\`src/store/starter.ts\`), credited once per App Store transaction and only then finished, so an interrupted purchase is credited on the next launch.
+**${iap.displayName}** is a one-time offer: a ${iap.type.toLowerCase()} the app sells once per player (the Shop hides it after it's bought). It pays a fixed pack of gems, coins and unit cards (\`engine/store/starter.ts\`), credited once per App Store transaction and only then finished, so an interrupted purchase is credited on the next launch.
 The app reads the price from the App Store (StoreKit 2), so changing the price here never needs a new build.
 **No Restore Purchases.** Every product is a consumable, so there is nothing to restore and the app has no Restore button.
 **Removed:** the old Full Army non-consumable (\`co.inflect.muster.fullarmy\`) is gone from the app. It was never created in App Store Connect; don't create it.
@@ -334,7 +334,7 @@ function gemSection() {
 ## 4. Gem packs (five consumables, 15 min)
 
 Gems are the optional premium currency: free players earn them by playing, and these packs sell them.
-The app decides how many gems each product id gives (\`src/economy/gems.ts\`) and shows StoreKit's own price, so prices can change here without a new build.
+The app decides how many gems each product id gives (\`engine/economy/gems.ts\`) and shows StoreKit's own price, so prices can change here without a new build.
 Each pack is credited once per App Store transaction and only then finished, so an interrupted purchase is credited on the next launch.
 No Restore Purchases: gems are consumables and are used up when spent.
 
@@ -408,7 +408,7 @@ function offerSection() {
   return `
 ## 6. Special offers (four consumable price tiers, 15 min)
 
-Limited-time bundles in the Shop (gems + coins + cards for a named unit + one chest), 2 or 3 at a time, rotating every 2 days, each buyable once while it's up. They sell through these four generic price tiers: the game decides and shows each bundle's contents (\`src/store/offers.ts\`), so the App Store description stays generic and bundles can change without touching App Store Connect. The chest inside is random with its odds one tap away (Odds button on the offer). Credited once per transaction and only then finished.
+Limited-time bundles in the Shop (gems + coins + cards for a named unit + one chest), 2 or 3 at a time, rotating every 2 days, each buyable once while it's up. They sell through these four generic price tiers: the game decides and shows each bundle's contents (\`engine/store/offers.ts\`), so the App Store description stays generic and bundles can change without touching App Store Connect. The chest inside is random with its odds one tap away (Odds button on the offer). Credited once per transaction and only then finished.
 
 For each row: **+** > Type **${offers.type}**, the Reference Name and Product ID, **Create**, then fill the page.
 

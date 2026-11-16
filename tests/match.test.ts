@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { applyPlan, DEFAULT_AI, planTurn, type AIProfile } from "../src/core/ai";
-import { ASCEND_ROUND, UNITS, ZONE_DEPTH, incomeFor, inZone, rankDmg, rankHp, roundBase, supplyFor, toLocal, upgradeCost } from "../src/core/defs";
-import { Match, interestFor } from "../src/core/match";
+import { applyPlan, DEFAULT_AI, planTurn, type AIProfile } from "../engine/core/ai";
+import { ASCEND_ROUND, UNITS, ZONE_DEPTH, incomeFor, inZone, rankDmg, rankHp, roundBase, supplyFor, toLocal, upgradeCost } from "../engine/core/defs";
+import { Match, interestFor } from "../engine/core/match";
 
 describe("match", () => {
   it("pays income plus interest and rolls a shop of four", () => {

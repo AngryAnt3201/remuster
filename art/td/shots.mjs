@@ -1,6 +1,6 @@
 // Before/after phone shots of the Bastion backdrops (390x844 @2x) from the dev server:
 //   PORT=5391 node art/td/shots.mjs [outDir] [--before]   (default outputs/review/td-art)
-// --before blocks public/td so the old procedural ground draws. Per map: zoomed out, zoomed in, mid-wave, and the
+// --before blocks base/public/td so the old procedural ground draws. Per map: zoomed out, zoomed in, mid-wave, and the
 // ?tddebug overlay (sim road edges in magenta, pad rings in cyan) over the render.
 import { chromium, devices } from "playwright";
 import { mkdirSync } from "node:fs";

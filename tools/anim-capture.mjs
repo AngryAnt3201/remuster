@@ -1,7 +1,7 @@
 // A short battle capture for reviewing unit motion: stages a mirror battle with the given kinds (ranks 1-4), records
 // it with the DevTools screencast at phone size, and converts it to <out>.mp4 and <out>.gif (ffmpeg), plus a still.
 //   node tools/anim-capture.mjs <out-prefix> [kinds, comma separated] [seconds] [port] [zoom]
-// Needs the dev server: npx vite --host 127.0.0.1 --port 5180. zoom (e.g. 2) crops the middle of the board and scales
+// Needs the dev server: npx vite --host 127.0.0.1 --port 5300. zoom (e.g. 2) crops the middle of the board and scales
 // it up so single units can be judged at a glance. Prints console errors.
 import { chromium, devices } from "playwright";
 import { execFileSync } from "node:child_process";
@@ -9,7 +9,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const [, , out = "captures/anim", kindsArg = "", secs = "5", port = "5180", zoom = "1"] = process.argv;
+const [, , out = "captures/anim", kindsArg = "", secs = "5", port = "5300", zoom = "1"] = process.argv;
 const W = 390, H = 844;
 const vdir = mkdtempSync(join(tmpdir(), "anim-cap-"));
 const browser = await chromium.launch();
@@ -24,7 +24,7 @@ await page.waitForFunction(() => window.__game, null, { timeout: 60000 });
 await page.evaluate(async (kinds) => {
   const g = window.__game;
   await Promise.all(g.plans ?? []);
-  const { UNITS } = await import("/src/core/defs.ts");
+  const { UNITS } = await import("/engine/core/defs.ts");
   const ks = kinds.length ? kinds : Object.keys(UNITS).slice(0, 8);
   let id = 5000;
   for (const s of [0, 1]) {
@@ -33,7 +33,7 @@ await page.evaluate(async (kinds) => {
       rank: 1 + ((i + s) % 4), spent: 3,
     }));
   }
-  const sp = await import("/src/render/sprites.ts");
+  const sp = await import("/base/src/render/sprites.ts");
   await sp.loadSprites();
   for (const s of [0, 1]) sp.preload([...ks, "mite", "thrall", "turret", "decoy", "queen", "golemling"], s);
   g.refreshHud?.();

@@ -1,9 +1,9 @@
 // Breakpoint puzzle solver: random drafts plus local search over the deterministic sim. Shared by tests and tools.
-import { DEFAULT_AI, TACTICS, applyPlan, planTurn, type AIProfile } from "../src/core/ai";
-import { puzzleConfig, type PuzzleDef } from "../src/core/content";
-import { ASCEND_ROUND, MAX_RANK, UNITS, W, ZONE_DEPTH, toLocal, toWorld, type UnitKind } from "../src/core/defs";
-import { Match, type StartPiece } from "../src/core/match";
-import { Rng } from "../src/core/rng";
+import { DEFAULT_AI, TACTICS, applyPlan, planTurn, type AIProfile } from "../engine/core/ai";
+import { puzzleConfig, type PuzzleDef } from "../engine/core/content";
+import { ASCEND_ROUND, MAX_RANK, UNITS, W, ZONE_DEPTH, toLocal, toWorld, type UnitKind } from "../engine/core/defs";
+import { Match, type StartPiece } from "../engine/core/match";
+import { Rng } from "../engine/core/rng";
 
 export interface Gene { kind: UnitKind; lx: number; depth: number; rank: number; }
 

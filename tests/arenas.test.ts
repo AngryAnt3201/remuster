@@ -1,12 +1,12 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { LEVELS } from "../src/core/campaign";
-import { H, W } from "../src/core/defs";
-import { ARENA_COUNT, arenaAct, backdropRect, propRect, propVariant, type ArenaManifest } from "../src/render/arena";
-import { Camera, DIST, TILT } from "../src/render/camera";
+import { LEVELS } from "../engine/core/campaign";
+import { H, W } from "../engine/core/defs";
+import { ARENA_COUNT, arenaAct, backdropRect, propRect, propVariant, type ArenaManifest } from "../base/src/render/arena";
+import { Camera, DIST, TILT } from "../base/src/render/camera";
 
-const DIR = join(__dirname, "..", "public", "arenas");
+const DIR = join(__dirname, "..", "base", "public", "arenas");
 const man = JSON.parse(readFileSync(join(DIR, "manifest.json"), "utf8")) as ArenaManifest;
 const NAMES = ["Borderlands", "Ash Fields", "Hollow Wood", "Iron Pass", "High Keep", "Frozen Reach", "Sky Throne", "Mirelight Fen", "Saltwind Coast", "Crownfall Citadel"];
 

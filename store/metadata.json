@@ -1,5 +1,5 @@
 {
-  "_readme": "App Store Connect listing for Muster. Fields marked in _synced are rewritten from app.config.json by `npm run release:config`, which also regenerates store/LISTING.md and store/IAP.md and checks every length limit. In the copy, {{name}} is the store name and {{units}}, {{abilities}}, {{levels}}, {{acts}}, {{actsWord}}, {{bosses}}, {{puzzles}} are counted from src/core (tools/content-counts.ts), so they never go stale. Edit the copy here, then run that command.",
+  "_readme": "App Store Connect listing for Muster. Fields marked in _synced are rewritten from app.config.json by `npm run release:config`, which also regenerates store/LISTING.md and store/IAP.md and checks every length limit. In the copy, {{name}} is the store name and {{units}}, {{abilities}}, {{levels}}, {{acts}}, {{actsWord}}, {{bosses}}, {{puzzles}} are counted from base/src/core (tools/content-counts.ts), so they never go stale. Edit the copy here, then run that command.",
   "_synced": [
     "name",
     "bundleId",
@@ -213,7 +213,7 @@
     "promotionalImage": "None (optional; only needed for App Store promotion or win-back offers)"
   },
   "gemPacks": {
-    "_note": "Consumable gem packs. Generated into store/IAP.md by `npm run release:config`. Gem amounts live in src/economy/gems.ts (GEM_PACKS); prices here are the US base price set in App Store Connect and are never shown by the app (it reads StoreKit's displayPrice).",
+    "_note": "Consumable gem packs. Generated into store/IAP.md by `npm run release:config`. Gem amounts live in engine/economy/gems.ts (GEM_PACKS); prices here are the US base price set in App Store Connect and are never shown by the app (it reads StoreKit's displayPrice).",
     "type": "Consumable",
     "availability": "All countries and regions (same as the app)",
     "familySharing": "Not offered for consumables (the switch isn't shown).",
@@ -265,7 +265,7 @@
     ]
   },
   "warPass": {
-    "_note": "War Pass Premium: a consumable the app sells once per season (30 days, app-enforced). Generated into store/IAP.md by `npm run release:config`. Rewards live in src/progression/pass.ts; the app shows StoreKit's displayPrice.",
+    "_note": "War Pass Premium: a consumable the app sells once per season (30 days, app-enforced). Generated into store/IAP.md by `npm run release:config`. Rewards live in engine/progression/pass.ts; the app shows StoreKit's displayPrice.",
     "productId": "co.inflect.muster.pass",
     "type": "Consumable",
     "referenceName": "War Pass Premium",
@@ -280,7 +280,7 @@
     "reviewNotes": "War Pass Premium is a consumable the app sells once per 30-day season (the app refuses a second purchase in the same season). It adds a second reward track to the season's War Pass: gems, coins, chests, unit cards and a cosmetic keep skin, plus chests unlocking 20% faster. It is retroactive: rewards for tiers already reached become claimable at once. Every player progresses the pass for free through daily quests and wins, and the free track pays every player. Chest rewards show their odds (tap a chest). Nothing in battle changes and no content is locked: every level is free. It is credited once per transaction and only then finished. To find it: title screen > War Pass (or Pass tab), the Premium card below the daily quests."
   },
   "specialOffers": {
-    "_note": "Special offers: four generic consumable price tiers. Which bundle a tier pays is decided by the app (src/store/offers.ts) and shown in the game before purchase; the App Store description stays generic. Generated into store/IAP.md by `npm run release:config`.",
+    "_note": "Special offers: four generic consumable price tiers. Which bundle a tier pays is decided by the app (engine/store/offers.ts) and shown in the game before purchase; the App Store description stays generic. Generated into store/IAP.md by `npm run release:config`.",
     "type": "Consumable",
     "availability": "All countries and regions (same as the app)",
     "familySharing": "Not offered for consumables (the switch isn't shown).",

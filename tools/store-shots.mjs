@@ -1,8 +1,8 @@
 // App Store screenshots for iPhone 6.9" (1320 x 2868, portrait, no alpha) from the dev server.
 //   npm run store:shots                      all scenes, with a caption band, into store/screenshots/
-//   node tools/store-shots.mjs --only=battle,ascended --no-caption --out=some/dir --base=http://127.0.0.1:5180
+//   node tools/store-shots.mjs --only=battle,ascended --no-caption --out=some/dir --base=http://127.0.0.1:5300
 //   node tools/store-shots.mjs --only=iap-review     the Shop screen for the Starter Pack review screenshot (store/IAP.md), no caption
-// Uses the running dev server (npm run dev, port 5180) or starts one for the run. Re-run any time the art changes.
+// Uses the running dev server (npm run dev, port 5300) or starts one for the run. Re-run any time the art changes.
 // Scenes are built through the game's own modules (Vite serves them by URL) and the GameScreen on window.__game,
 // so what you see is the real game UI and renderer; only the setup (rounds played, gold for the Ascend) is scripted.
 import { spawn } from "node:child_process";
@@ -12,7 +12,7 @@ import { contentCounts, fillCounts } from "./counts.mjs";
 
 const arg = (k, d) => process.argv.find((a) => a.startsWith(`--${k}=`))?.split("=").slice(1).join("=") ?? d;
 const root = new URL("..", import.meta.url).pathname;
-const BASE = arg("base", "http://127.0.0.1:5180");
+const BASE = arg("base", "http://127.0.0.1:5300");
 const OUT = arg("out", `${root}store/screenshots`);
 const ONLY = arg("only", "")?.split(",").filter(Boolean);
 const CAPTION = !process.argv.includes("--no-caption");
@@ -34,7 +34,7 @@ const SCENES = [
   // Not a listing screenshot: App Review's screenshot of the Starter Pack purchase. Only runs when asked for by --only.
   { id: "iap-review", extra: true, run: shop },
 ];
-// Counts in captions come from src/core, so they match the game that ships.
+// Counts in captions come from base/src/core, so they match the game that ships.
 const COUNTS = contentCounts();
 for (const s of SCENES) if (s.caption) s.caption = s.caption.map((c) => fillCounts(c, COUNTS));
 
@@ -45,7 +45,7 @@ async function setupMatch(page, { seed = 7, rounds = 3, firstRound = 4, gold = 1
   await page.goto(`${BASE}/?lab`);
   await page.waitForSelector(".screen");
   await page.evaluate(async ({ seed, rounds, firstRound, gold, planNow }) => {
-    const [{ GameScreen }, ai, defs, store] = await Promise.all([import("/src/ui/game.ts"), import("/src/core/ai.ts"), import("/src/core/defs.ts"), import("/src/save.ts")]);
+    const [{ GameScreen }, ai, defs, store] = await Promise.all([import("/base/src/ui/game.ts"), import("/engine/core/ai.ts"), import("/engine/core/defs.ts"), import("/engine/save.ts")]);
     store.save((s) => { s.seen = Object.keys(defs.UNITS); });
     const app = document.getElementById("app");
     window.__game?.destroy?.();
@@ -130,7 +130,7 @@ async function breakpoint(page) {
   await page.goto(`${BASE}/?puzzle=5`);
   await page.waitForFunction(() => window.__game);
   await page.evaluate(async () => {
-    const [defs, store] = await Promise.all([import("/src/core/defs.ts"), import("/src/save.ts")]);
+    const [defs, store] = await Promise.all([import("/engine/core/defs.ts"), import("/engine/save.ts")]);
     store.save((s) => { s.seen = Object.keys(defs.UNITS); });
     const g = window.__game, m = g.match;
     // One unit already placed at the back; the next card is held over the field.
@@ -174,7 +174,7 @@ async function shop(page) {
 async function ensureServer() {
   try { await fetch(BASE); return null; } catch { /* start one */ }
   console.log(`no dev server at ${BASE}; starting one`);
-  const port = new URL(BASE).port || "5180";
+  const port = new URL(BASE).port || "5300";
   const child = spawn("npx", ["vite", "--port", port, "--strictPort", "--host", "127.0.0.1"], { cwd: root, stdio: "ignore" });
   for (let i = 0; i < 60; i++) {
     await new Promise((r) => setTimeout(r, 500));

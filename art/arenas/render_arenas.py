@@ -4,7 +4,7 @@
     npm run art:arenas
 
 Per act this renders, with the shared toon kit (art/muster_art: ink hulls, cel bands, violet shadow tint):
-  - act<n>.jpg: the backdrop through the game's own camera (src/render/camera.ts: pinhole, TILT from straight down,
+  - act<n>.jpg: the backdrop through the game's own camera (base/src/render/camera.ts: pinhole, TILT from straight down,
     DIST from the board centre). A ground point with board-centred (X, Y) lands on the normalised image plane at
     u = X / cz, v = Y cos(tilt) / cz, cz = DIST - Y sin(tilt), the same numbers the game uses, so the game draws the
     image with one scale + offset and the ground lines up with the board exactly on any screen. It holds the ground,
@@ -29,14 +29,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ART = os.path.dirname(HERE)
 ROOT = os.path.dirname(ART)
 sys.path.insert(0, ART)
-OUT = os.path.join(ROOT, "public", "arenas")
+OUT = os.path.join(ROOT, "base", "public", "arenas")
 BUILD = os.path.join(ART, "build", "arenas")
 
 W, H, ZD = 9.0, 14.0, 5.9
-TILT, DIST = 0.64, 30.0  # src/render/camera.ts
+TILT, DIST = 0.64, 30.0  # base/src/render/camera.ts
 VIEW = {"u0": -0.26, "u1": 0.26, "v0": -0.42, "v1": 0.44}  # covers a phone (and most tablets) around the board
 KPX = 2800  # backdrop px per normalised image-plane unit (a phone shows ~1100 css px per unit)
-KEEPS = [(4.5, 1.55), (4.5, H - 0.6)]  # src/render/keeps.ts keepAnchor
+KEEPS = [(4.5, 1.55), (4.5, H - 0.6)]  # base/src/render/keeps.ts keepAnchor
 PROP_X = (-1.6, 1.6)
 PROP_U = (-1.3, 2.5)
 PROP_PPU = 160
@@ -1204,7 +1204,7 @@ def mood(img, kind):
 
 
 def cam_uv(x, y):
-    """The game camera's normalised image plane for a ground point (src/render/camera.ts project with k = 1)."""
+    """The game camera's normalised image plane for a ground point (base/src/render/camera.ts project with k = 1)."""
     X, Y = x - W / 2, y - H / 2
     cz = DIST - Y * math.sin(TILT)
     return X / cz, (Y * math.cos(TILT)) / cz

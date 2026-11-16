@@ -2,16 +2,16 @@
 // cancelled, failed and Ask to Buy, offer rotation, one buy per offer, and the honest value maths.
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
-import { GEM_PACKS } from "../src/economy/gems";
-import { blankPass, creditPremiumIn, hasPremium } from "../src/progression/pass";
-import { ConsumableShop } from "../src/store/consumable";
-import { MOCK_PRODUCTS, MockStore } from "../src/store/mock";
+import { GEM_PACKS } from "../engine/economy/gems";
+import { blankPass, creditPremiumIn, hasPremium } from "../engine/progression/pass";
+import { ConsumableShop } from "../engine/store/consumable";
+import { MOCK_PRODUCTS, MockStore } from "../engine/store/mock";
 import {
   OFFER_IDS, OFFER_TEMPLATES, OFFER_TIERS, OFFER_WINDOW_MS, blankOffers, creditOfferIn, intendIn, ladderRate, offerBought,
   offerCards, offerGems, offerPayout, offerValueX, offersFor, windowAt, windowEnd,
-} from "../src/store/offers";
-import { PASS } from "../src/store/types";
-import { SEASON_EPOCH } from "../src/progression/pass";
+} from "../engine/store/offers";
+import { PASS } from "../engine/store/types";
+import { SEASON_EPOCH } from "../engine/progression/pass";
 
 function kv() {
   const m = new Map<string, string>();

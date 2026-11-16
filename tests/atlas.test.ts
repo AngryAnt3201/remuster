@@ -1,12 +1,12 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { BODY_EXTRA, UNITS } from "../src/core/defs";
-import { TILT, mirror8 } from "../src/render/camera";
-import { clipIndex, decodePalette, tintIndexed, tintPalette, type Manifest } from "../src/render/sprites";
-import { animFor, idleJitter } from "../src/render/units";
+import { BODY_EXTRA, UNITS } from "../engine/core/defs";
+import { TILT, mirror8 } from "../base/src/render/camera";
+import { clipIndex, decodePalette, tintIndexed, tintPalette, type Manifest } from "../base/src/render/sprites";
+import { animFor, idleJitter } from "../base/src/render/units";
 
-const DIR = join(__dirname, "..", "public", "atlas");
+const DIR = join(__dirname, "..", "base", "public", "atlas");
 const man = JSON.parse(readFileSync(join(DIR, "manifest.json"), "utf8")) as Manifest;
 const ANIMS = ["idle", "walk", "attack", "death"] as const;
 /** Kinds with a special move (art/muster_art/style.py CAST). */
@@ -93,7 +93,7 @@ describe("character atlases", () => {
     }
   });
 
-  it("stay small enough for the app budget (public/atlas under 45 MB, no stray files)", () => {
+  it("stay small enough for the app budget (base/public/atlas under 45 MB, no stray files)", () => {
     let total = 0;
     for (const f of readdirSync(DIR)) total += statSync(join(DIR, f)).size;
     expect(total).toBeLessThan(45e6);

@@ -1,14 +1,14 @@
 // Free-play pace: what a player who never pays reaches by the end of each act, from campaign cards and coins alone
 // (no chests, no shop), upgrading greedily with what they hold. Compare with the foe curve (EXPECTED_LEVEL_BY_ACT).
 //   npx vite-node tools/progression-pace.ts           REPLAYS=2 (replay wins per level, e.g. losses retried and stars chased)
-import { LEVELS } from "../src/core/campaign";
-import type { UnitKind } from "../src/core/defs";
-import { MAX_LEVEL } from "../src/core/levels";
-import { RARITY } from "../src/progression/collection";
+import { LEVELS } from "../engine/core/campaign";
+import type { UnitKind } from "../engine/core/defs";
+import { MAX_LEVEL } from "../engine/core/levels";
+import { RARITY } from "../engine/progression/collection";
 import {
   CAMPAIGN_WIN, DECK_SIZE, EXPECTED_LEVEL_BY_ACT, FIRST_CLEAR, STAR_COINS, STARTER_KINDS, WIN_XP, campaignCards, commanderLevel, levelCap,
   upgradeCards, upgradeCoins, upgradeXp,
-} from "../src/progression/economy";
+} from "../engine/progression/economy";
 
 const replays = Number(process.env.REPLAYS ?? 2);
 /** Coins from other modes (a scored Daily ~230, Skirmish up to 300, Gauntlet rivals) over a day of ~6 campaign levels. */

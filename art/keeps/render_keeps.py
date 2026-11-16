@@ -3,8 +3,8 @@
     blender -b --factory-startup -P art/keeps/render_keeps.py -- [--samples 16] [--states intact,ruined]
     npm run art:keeps
 
-Writes public/keeps/<variant>_<state>.webp (tide, ember and the boss levels' ember_boss; intact, cracked, burning,
-ruined and fallen) and public/keeps/manifest.json; needs cwebp on the PATH. Post-processing (ink silhouette, glow
+Writes base/public/keeps/<variant>_<state>.webp (tide, ember and the boss levels' ember_boss; intact, cracked, burning,
+ruined and fallen) and base/public/keeps/manifest.json; needs cwebp on the PATH. Post-processing (ink silhouette, glow
 halo for embers, 2x downsample) runs inside Blender with numpy, so no Pillow is needed.
 
 The keep is built in the shared art kit (art/muster_art/kit.py): unlit toon shading, inverted-hull outlines,
@@ -14,16 +14,16 @@ bands, rim, key light and the contract camera (elevation, ppu); MUSTER_STYLE=<id
 the v2 look. The manifest records which look was rendered. It is seen from the south at a 3/4 angle so it stands upright on
 the board, and every state shares one canvas and one ground anchor so the game can swap them in place.
 
-States, driven in game by commander hp / max hp (src/render/keeps.ts):
+States, driven in game by commander hp / max hp (base/src/render/keeps.ts):
   intact   full keep, lit braziers, pennant flying
   cracked  stones knocked out, cracks, merlons fallen, torn pennant
   burning  roof caved in and charred, windows lit from inside, scorch on the stone (flames are added in game)
   ruined   the tower broken off, rubble, snapped banner pole on the ground (smoke is added in game)
   fallen   what is left once the commander is defeated: the plinth under a heap of rubble (the game drops the
-           standing keep into it, src/render/keeps.ts collapsePose)
-[skins] Cosmetic skins for the player's keep (src/progression/cosmetics.ts KEEP_SKINS), one at a time:
+           standing keep into it, base/src/render/keeps.ts collapsePose)
+[skins] Cosmetic skins for the player's keep (engine/progression/cosmetics.ts KEEP_SKINS), one at a time:
     blender -b --factory-startup -P art/keeps/render_keeps.py -- --skin frost   (frost, ember, gilded, shadow, blossom)
-writes public/keeps/skins/<name>/<state>.webp on the default keeps' canvas and anchors (so the game swaps them in
+writes base/public/keeps/skins/<name>/<state>.webp on the default keeps' canvas and anchors (so the game swaps them in
 place) and leaves the default keeps and manifest alone. Each skin restyles the stone, roof, trim and banners and adds
 its own props (snow and icicles, lava and braziers, gold crown and royal banners, ghost lanterns, blossom trees).
 The boss variant (ember_boss) has darker stone, a crimson roof with a crown of gold spikes, gold-spiked turrets,
@@ -46,7 +46,7 @@ from mathutils import Matrix, Vector  # noqa: E402
 
 from muster_art import kit as K  # noqa: E402
 
-OUT = os.path.join(ROOT, "public", "keeps")
+OUT = os.path.join(ROOT, "base", "public", "keeps")
 RAW = os.path.join(ART, "build", "keeps")
 STATES = ("intact", "cracked", "burning", "ruined", "fallen")
 # what gets rendered: each team, plus the boss levels' variant of the rival keep
@@ -1030,7 +1030,7 @@ def main():
 
 
 def render_skin(name, states, st, k, kp, w, h, span_x, c):
-    """[skins] The player's keep in a cosmetic skin, on the default canvas: public/keeps/skins/<name>/<state>.webp."""
+    """[skins] The player's keep in a cosmetic skin, on the default canvas: base/public/keeps/skins/<name>/<state>.webp."""
     global SKIN
     SKIN = dict(SKINS[name], name=name, finial=skin_finial(name))
     M = Mats({**kp, **{x: v for x, v in SKINS[name].items() if x not in ("halo", "crown", "torn")}})

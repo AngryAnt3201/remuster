@@ -1,5 +1,5 @@
 // Keep and round-end assault frames from the dev server, for review:
-//   node tools/keep-shots.mjs [--base=http://127.0.0.1:5180] [--out=outputs/keeps] [--seed=11] [--rounds=4] [--lose]
+//   node tools/keep-shots.mjs [--base=http://127.0.0.1:5300] [--out=outputs/keeps] [--seed=11] [--rounds=4] [--lose]
 // --lose strips your army to one piece before the shot round, so the rival marches on your keep instead.
 // Fast-forwards a skirmish built by the game's AI, fights a round on screen, and shoots the battle, the march,
 // the hit on the keep and the bar draining. Also writes a deploy frame per keep damage state.
@@ -8,7 +8,7 @@ import { chromium } from "playwright";
 
 const arg = (k, d) => process.argv.find((a) => a.startsWith(`--${k}=`))?.split("=").slice(1).join("=") ?? d;
 const root = new URL("..", import.meta.url).pathname;
-const BASE = arg("base", "http://127.0.0.1:5180");
+const BASE = arg("base", "http://127.0.0.1:5300");
 const OUT = arg("out", `${root}outputs/keeps`);
 const SEED = Number(arg("seed", "11")), ROUNDS = Number(arg("rounds", "4")), LOSE = process.argv.includes("--lose");
 mkdirSync(OUT, { recursive: true });
@@ -22,7 +22,7 @@ page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 await page.goto(`${BASE}/?lab`);
 await page.waitForSelector(".screen");
 await page.evaluate(async ({ seed, rounds, lose }) => {
-  const [{ GameScreen }, ai, defs, store] = await Promise.all([import("/src/ui/game.ts"), import("/src/core/ai.ts"), import("/src/core/defs.ts"), import("/src/save.ts")]);
+  const [{ GameScreen }, ai, defs, store] = await Promise.all([import("/base/src/ui/game.ts"), import("/engine/core/ai.ts"), import("/engine/core/defs.ts"), import("/engine/save.ts")]);
   store.save((s) => { s.seen = Object.keys(defs.UNITS); });
   const app = document.getElementById("app");
   window.__game?.destroy?.();

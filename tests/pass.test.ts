@@ -3,15 +3,15 @@
 import { describe, expect, it } from "vitest";
 import {
   QUESTS_PER_DAY, blankQuests, claimQuestIn, normalizeQuests, progressIn, questsFor, rollIn, type QuestSave,
-} from "../src/progression/quests";
+} from "../engine/progression/quests";
 import {
   CROWN_XP, CROWN_XP_DAILY_CAP, FREE_TRACK, MAX_XP, PREMIUM_TRACK, SEASON_EPOCH, SEASON_MS, SKIP_TIER_GEMS, TIERS, XP_PER_TIER,
   addXpIn, blankPass, cardTarget, claimIn, claimable, claimableCount, creditPremiumIn, crownXpIn, normalizePass, seasonAt,
   seasonEnd, seasonIn, seasonStart, skipCost, skipIn, themeOf, tierOf, trackGems,
-} from "../src/progression/pass";
-import { chestUnlockFactor, setChestUnlockFactor } from "../src/progression/passEvents";
-import { CHESTS, blankChests, startIn } from "../src/progression/chests";
-import { KEEP_SKINS } from "../src/progression/cosmetics";
+} from "../engine/progression/pass";
+import { chestUnlockFactor, setChestUnlockFactor } from "../engine/progression/passEvents";
+import { CHESTS, blankChests, startIn } from "../engine/progression/chests";
+import { KEEP_SKINS } from "../engine/progression/cosmetics";
 
 describe("daily quests", () => {
   it("are three different kinds, the same for everyone on a date, and change from day to day", () => {

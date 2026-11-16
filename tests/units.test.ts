@@ -1,9 +1,9 @@
 // The twelve v2 units, the four 1.1 units, the flying and burrowing layers, and every unit's Ascended (rank 4) ability.
 import { describe, expect, it } from "vitest";
-import { Battle, type BattleEvent, type Body } from "../src/core/battle";
-import { ABILITIES, BODY_EXTRA, H, UNITS, UNIT_KINDS, W, rankHp, type BodyKind, type Piece, type Side, type UnitKind } from "../src/core/defs";
-import { DEFAULT_AI, POWER, TACTICS, draftArmy } from "../src/core/ai";
-import { LEVELS, rosterAt } from "../src/core/campaign";
+import { Battle, type BattleEvent, type Body } from "../engine/core/battle";
+import { ABILITIES, BODY_EXTRA, H, UNITS, UNIT_KINDS, W, rankHp, type BodyKind, type Piece, type Side, type UnitKind } from "../engine/core/defs";
+import { DEFAULT_AI, POWER, TACTICS, draftArmy } from "../engine/core/ai";
+import { LEVELS, rosterAt } from "../engine/core/campaign";
 
 let nid = 1;
 const P = (kind: UnitKind, side: Side, x: number, y: number, rank = 1): Piece => ({ id: nid++, kind, side, x, y, rank, spent: UNITS[kind].cost });

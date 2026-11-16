@@ -43,19 +43,19 @@
     "trim": true,
     "anchor": "feet: the ground contact point of the body centre, stored per frame in the atlas json",
     "team": "mask",
-    "image": "public/atlas/<kind>/t<tier>.webp",
-    "mask": "public/atlas/<kind>/t<tier>_mask.webp",
-    "meta": "public/atlas/<kind>/t<tier>.json",
+    "image": "base/public/atlas/<kind>/t<tier>.webp",
+    "mask": "base/public/atlas/<kind>/t<tier>_mask.webp",
+    "meta": "base/public/atlas/<kind>/t<tier>.json",
     "neutral_team": { "main": "#c8c8c8", "dark": "#6e6e6e", "light": "#f2f2f2" }
   },
   "arena": {
-    "ground": "public/arena/<act>/ground.webp, the flat ground only (no tall props), covers the board plus margins at the contract camera",
-    "props": "public/arena/<act>/props.webp atlas + props.json: tall props and obstacles as depth-sorted sprites with a ground anchor and a collision radius",
-    "keep": "public/arena/keep/<state>.webp, states 100, 66, 33, 0 per team via mask",
+    "ground": "base/public/arena/<act>/ground.webp, the flat ground only (no tall props), covers the board plus margins at the contract camera",
+    "props": "base/public/arena/<act>/props.webp atlas + props.json: tall props and obstacles as depth-sorted sprites with a ground anchor and a collision radius",
+    "keep": "base/public/arena/keep/<state>.webp, states 100, 66, 33, 0 per team via mask",
     "keep_anchor": { "x": 4.5, "y": -0.9, "r": 1.1, "note": "player keep mirrors to y = 14.9" }
   },
   "vfx": {
-    "sheets": "public/vfx/<name>.webp + <name>.json, square frames, frame count and fps per sheet",
+    "sheets": "base/public/vfx/<name>.webp + <name>.json, square frames, frame count and fps per sheet",
     "blend": "the active style picks additive or normal for glows (style.vfx.blend)"
   },
   "budget_mb": { "app": 120, "units": 60, "arenas": 22, "vfx": 10, "ui": 12, "code_and_fonts": 6 }

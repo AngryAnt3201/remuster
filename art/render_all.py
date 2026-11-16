@@ -10,10 +10,10 @@ Battle frames (docs/ART-V3-ATLAS.md): the diorama camera from art/muster_art/sty
 Three passes per frame: colour with team parts in neutral white, the team mask (R=main, G=dark, B=light) and,
 for Ascended, the emissive-only glow pass. Raw renders land in art/build/v3/<kind>/t<tier>/; then
 art/post.py (system python3 + Pillow + numpy) inks, blooms, downsamples and art/pack_atlas.py packs them
-into public/atlas/<kind>_t<tier>.png + _m.png with public/atlas/manifest.json and contact sheets in
+into base/public/atlas/<kind>_t<tier>.png + _m.png with base/public/atlas/manifest.json and contact sheets in
 art/contact/.
 
---portraits also re-renders the 3/4 card portraits (public/portraits, tide colours) in the v2 framing.
+--portraits also re-renders the 3/4 card portraits (base/public/portraits, tide colours) in the v2 framing.
 """
 import argparse
 import json

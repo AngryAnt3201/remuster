@@ -2,7 +2,7 @@
 // render is built from the exact points the sim walks. Run: npx vite-node art/td/export_maps.ts
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { MAP_DEFS, ROAD_HALF, getMap } from "../../src/core/td/maps";
+import { MAP_DEFS, ROAD_HALF, getMap } from "../../engine/core/td/maps";
 
 const out: Record<string, unknown> = {};
 for (const def of MAP_DEFS) {

@@ -9,7 +9,7 @@ is built procedurally in Blender (`art/muster_art/units.py`) and rendered as upr
     blender ... -P art/render_all.py -- --resume --no-post   # finish an interrupted render (skips kind/tier with meta.json)
     python3 art/post.py --resume                  # post only bodies whose raw render is newer than their post
     python3 art/pack_atlas.py --only ranger       # repack some kinds into the existing manifest
-    python3 art/anim_preview.py --only ranger     # animated previews from public/atlas
+    python3 art/anim_preview.py --only ranger     # animated previews from base/public/atlas
 
 `post.py` and `pack_atlas.py` need Pillow and numpy (`/usr/local/bin/python3` has them on Jack's Mac; put it first
 on PATH when running `npm run art`).
@@ -31,7 +31,7 @@ What a direction sets: `outline.color` -> `INK`, `outline.hull` -> `OUTLINE` (0 
 -> `SPEC`, `shading.bloom` -> `GLOW_GAIN` (relative to meadow's 0.7), `light.key` / `rim.dir` (Blender world) ->
 `KEY` / `RIM_DIR` (camera space), `rim.*` -> `RIM_*`, `team` -> `TEAMS`, `palette` -> `PALETTE` (`parts.Pal`
 materials). The camera and frame plan never change with a direction, because `CAMERA_EL`, `DIRS` and `ANIMS` are what
-`src/render/camera.ts` and `tests/atlas.test.ts` check against (the direction contract's 55 / 35 degree elevations
+`base/src/render/camera.ts` and `tests/atlas.test.ts` check against (the direction contract's 55 / 35 degree elevations
 are not used for characters).
 
 `render_all.py` writes the style into every raw `meta.json`. `post.py` (and `pack_atlas.py`, which imports it) posts
@@ -40,7 +40,7 @@ styles, so a partial re-render can't ink one unit in another direction's colours
 The shipped atlases are `"style": "v2"` until the full re-render after the pick.
 
 - Camera: orthographic, pitched `CAMERA_EL` = 53.3 degrees below the horizon, which is 90 degrees minus
-  `TILT` (0.64 rad) in `src/render/camera.ts`, so a sprite's ground ellipse matches the board's.
+  `TILT` (0.64 rad) in `base/src/render/camera.ts`, so a sprite's ground ellipse matches the board's.
 - `PPU` = 128 atlas pixels per world unit, rendered at `SS` = 2x and box-downsampled.
 - Toon ramp (3 cel bands), key light from the upper front, rim light from behind (`RIM_*`), inverted-hull
   outlines in 3D plus a 3 px ink silhouette added in post.
@@ -103,16 +103,16 @@ foot should stay on its tick) and `<kind>.png` (every frame of every clip on one
 ## Team colour and files
 
 Team parts render in neutral white plus a mask with the coverage of team main (R), dark (G) and light (B). The runtime
-tints with the active direction's team colours (`TEAM` in `src/render/palette.ts`):
+tints with the active direction's team colours (`TEAM` in `base/src/render/palette.ts`):
 
     rgb = colour * (1 + R*(main - 1) + G*(dark - 1) + B*(light - 1))
 
 `pack_atlas.py` quantises colour and mask together into one palette per sheet (128 entries + transparent), so a sheet
 ships as a single 8-bit image of palette indices and the tint runs on the palette (`tintPalette`, `tintIndexed` in
-`src/render/sprites.ts`): one lookup per pixel, once per sheet and team.
+`base/src/render/sprites.ts`): one lookup per pixel, once per sheet and team.
 
-- `public/atlas/<kind>_t<tier>.webp`: palette indices in the red channel (lossless WebP), 0 = transparent.
-- `public/atlas/manifest.json`:
+- `base/public/atlas/<kind>_t<tier>.webp`: palette indices in the red channel (lossless WebP), 0 = transparent.
+- `base/public/atlas/manifest.json`:
 
       { version: 4, style, ppu, el, dirs, dir8, anims, impact: { attack, cast }, teams: { tide, ember },
         units: { <kind>: { tiers: [1..4], radius } },
@@ -151,4 +151,4 @@ Never evicted: sheets pinned by `preload()` for the current battle (game.ts pins
 and what it spawns, as each fight starts; the roster warm-up at level start is unpinned) and sheets drawn in the last
 3 s on the current screen. `pickEvictions` is the pure policy (tests/sheetCache.test.ts); `node tools/sprite-mem.mjs`
 plays ten levels back to back in headless WebKit and prints the peak (385.5 MiB unbounded, 255.9 MiB budgeted). Card portraits stay in
-`public/portraits`.
+`base/public/portraits`.

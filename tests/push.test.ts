@@ -1,6 +1,6 @@
-// The camera push-in and the slow-motion finish (src/render/juice.ts).
+// The camera push-in and the slow-motion finish (base/src/render/juice.ts).
 import { describe, expect, it } from "vitest";
-import { FINAL_PUSH, FINAL_SLOW, FINAL_SLOW_FOR, Juice, kickFor, pushEnv } from "../src/render/juice";
+import { FINAL_PUSH, FINAL_SLOW, FINAL_SLOW_FOR, Juice, kickFor, pushEnv } from "../base/src/render/juice";
 
 const find = () => undefined;
 const step = (j: Juice, secs: number) => { for (let t = 0; t < secs - 1e-9; t += 1 / 60) j.update(1 / 60); };

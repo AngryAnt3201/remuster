@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { EDGE, H, W, ZONE_DEPTH } from "../src/core/defs";
+import { EDGE, H, W, ZONE_DEPTH } from "../engine/core/defs";
 
 // The v3 art contract and style directions (art/style/, docs/ART-V3.md). Every Blender renderer and,
 // later, the game's renderer read these, so their shape and camera maths are pinned here.
@@ -105,7 +105,7 @@ describe("art contract", () => {
 
 describe("style in the app", () => {
   it("loads the active direction and every choice", async () => {
-    const { STYLE, STYLE_IDS, styleById } = await import("../src/render/style");
+    const { STYLE, STYLE_IDS, styleById } = await import("../base/src/render/style");
     expect(STYLE.id).toBe(active.direction);
     expect([...STYLE_IDS].sort()).toEqual([...ids].sort());
     for (const id of ids) expect(styleById(id)).toEqual(styles[id]);
@@ -113,7 +113,7 @@ describe("style in the app", () => {
   });
 
   it("drives the game's team and effect colours from the active direction", async () => {
-    const { TEAM, GOLD, HEAL, ZAP, VIOLET } = await import("../src/render/palette");
+    const { TEAM, GOLD, HEAL, ZAP, VIOLET } = await import("../base/src/render/palette");
     const st = styles[active.direction];
     for (const [i, t] of (["tide", "ember"] as const).entries()) {
       expect(TEAM[i].main).toBe(st.team[t].main);
@@ -125,7 +125,7 @@ describe("style in the app", () => {
   });
 
   it("maps a direction to the stylesheet's colour variables", async () => {
-    const { styleVars, rgba } = await import("../src/render/style");
+    const { styleVars, rgba } = await import("../base/src/render/style");
     for (const id of ids) {
       const v = styleVars(styles[id]);
       expect(v["--tide"]).toBe(styles[id].team.tide.main);

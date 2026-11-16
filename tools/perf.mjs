@@ -4,7 +4,7 @@
 // battle (sim + effects + draw per 60 Hz frame) whose syncFps is the CPU-side ceiling. A desktop proxy, not the
 // simulator: on a loaded machine the rAF gap measures the machine, so compare syncFrameMs against a baseline build.
 import { chromium, devices } from "playwright";
-const [, , port = "5180", throttle = "1", secs = "8", level = "1"] = process.argv;
+const [, , port = "5300", throttle = "1", secs = "8", level = "1"] = process.argv;
 // PERF_GPU=1 runs new headless Chromium with GPU raster (Metal via ANGLE); the default headless shell may raster in software.
 const browser = await chromium.launch(process.env.PERF_GPU ? { channel: "chromium", args: ["--enable-gpu", "--use-angle=metal", "--ignore-gpu-blocklist", "--enable-gpu-rasterization"] } : {});
 const ctx = await browser.newContext({ ...devices["iPhone 13"], viewport: { width: 402, height: 874 }, screen: { width: 402, height: 874 }, deviceScaleFactor: 3 });

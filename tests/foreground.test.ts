@@ -1,12 +1,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { H, W, ZONE_DEPTH } from "../src/core/defs";
-import { ARENA_COUNT, backdropRect, type ArenaManifest } from "../src/render/arena";
-import { Camera } from "../src/render/camera";
-import { FG_FADED, easeAlphas, fadeTargets, fgCells, glintSpots, sceneFigures, sideSpots, unitBox } from "../src/render/foreground";
+import { H, W, ZONE_DEPTH } from "../engine/core/defs";
+import { ARENA_COUNT, backdropRect, type ArenaManifest } from "../base/src/render/arena";
+import { Camera } from "../base/src/render/camera";
+import { FG_FADED, easeAlphas, fadeTargets, fgCells, glintSpots, sceneFigures, sideSpots, unitBox } from "../base/src/render/foreground";
 
-const DIR = join(__dirname, "..", "public", "arenas");
+const DIR = join(__dirname, "..", "base", "public", "arenas");
 const man = JSON.parse(readFileSync(join(DIR, "manifest.json"), "utf8")) as ArenaManifest;
 
 describe("arena foreground", () => {
@@ -83,7 +83,7 @@ describe("arena foreground", () => {
 
 describe("foreground redraw region", () => {
   it("clips a cell to the figures under it, and skips cells with none", async () => {
-    const { clipTo } = await import("../src/render/foreground");
+    const { clipTo } = await import("../base/src/render/foreground");
     const cell = { x: 0, y: 0, w: 100, h: 100 };
     expect(clipTo(cell, [{ x: 90, y: 40, w: 30, h: 20 }])).toEqual({ x: 90, y: 40, w: 10, h: 20 });
     expect(clipTo(cell, [{ x: 10, y: 10, w: 10, h: 10 }, { x: 50, y: 60, w: 10, h: 10 }])).toEqual({ x: 10, y: 10, w: 50, h: 60 });

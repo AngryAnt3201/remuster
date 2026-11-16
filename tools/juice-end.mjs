@@ -13,7 +13,7 @@ await page.goto(`http://localhost:${port}/?level=${level}`);
 await page.waitForFunction(() => window.__game, null, { timeout: 120000 });
 await page.waitForTimeout(2000);
 await page.evaluate(async () => {
-  const ai = await import("/src/core/ai.ts");
+  const ai = await import("/engine/core/ai.ts");
   const g = window.__game, m = g.match;
   await Promise.all(g.plans ?? []);
   const me = { ...ai.DEFAULT_AI, difficulty: 0.95, aggression: 0.6, tactic: "balanced" };

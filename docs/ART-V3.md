@@ -9,7 +9,7 @@ v3 moves battles from a straight-down board to a 3/4 diorama while the sim stays
 | `meadow.json`, `dusk.json`, `toy.json` | one style direction each: numbers and colours only | free to tune |
 | `active.json` | which direction renders by default | set once Jack picks |
 
-`tests/style.test.ts` pins the contract to the sim (`W`, `H`, `ZONE_DEPTH` in `src/core/defs.ts`), checks
+`tests/style.test.ts` pins the contract to the sim (`W`, `H`, `ZONE_DEPTH` in `engine/core/defs.ts`), checks
 the ground projection inverts exactly, checks the facing mirror table and checks all three directions fill
 the same parameter slots, so a renderer written against one works with the others.
 
@@ -67,13 +67,13 @@ colours. Without the flag the shipped v2 look is kept, so today's sprites only c
 
 ### Using a direction in the app
 
-`src/render/style.ts` imports the same files: `STYLE` is the active direction, `styleById(id)` any of the
+`base/src/render/style.ts` imports the same files: `STYLE` is the active direction, `styleById(id)` any of the
 three, `CONTRACT` the contract. Already wired:
 
-- `src/render/palette.ts` takes the team colours (`TEAM`, glow and zone tints) and the effect tints `GOLD`,
+- `base/src/render/palette.ts` takes the team colours (`TEAM`, glow and zone tints) and the effect tints `GOLD`,
   `HEAL`, `ZAP`, `VIOLET` from `team.*` and `vfx.*`, so the canvas renderers (`board.ts`, `units.ts`, `fx.ts`)
   follow the direction.
-- `src/main.ts` calls `applyStyleVars` at boot: the stylesheet's `--tide`, `--tide-d`, `--ember`,
+- `base/src/main.ts` calls `applyStyleVars` at boot: the stylesheet's `--tide`, `--tide-d`, `--ember`,
   `--ember-d` and `--gold` come from the direction, every `ui.*` slot is exposed as `--ui-<slot>` and the
   outline colour as `--style-ink` for the UI kit. `<html data-style="meadow">` names the active one.
 
@@ -111,22 +111,22 @@ and every Blender renderer then use it; re-render with `npm run art -- --style a
 
 ### Atlases
 
-- `public/atlas/<kind>/t<tier>.webp` (PNG fallback), `t<tier>_mask.webp` team mask, `t<tier>.json` with
+- `base/public/atlas/<kind>/t<tier>.webp` (PNG fallback), `t<tier>_mask.webp` team mask, `t<tier>.json` with
   per-frame rects and the feet anchor. Max 2048 px, 2 px padding, trimmed.
 - Team colour comes from the mask at draw time (neutral grey bakes, `neutral_team` in the contract).
 
 ### Arenas and keeps
 
-- `public/arena/<act>/ground.webp`: flat ground only, covering the board plus margins at the contract camera.
-- `public/arena/<act>/props.webp` + `props.json`: tall props and obstacles as depth-sorted sprites with a
+- `base/public/arena/<act>/ground.webp`: flat ground only, covering the board plus margins at the contract camera.
+- `base/public/arena/<act>/props.webp` + `props.json`: tall props and obstacles as depth-sorted sprites with a
   ground anchor and a collision radius. Obstacles are built on their collision circles (the sign-off page's
   "Show collision + zones" overlay draws circles from game coordinates on top of the render as the check).
-- `public/arena/keep/<state>.webp`: keep states 100, 66, 33, 0 via the team mask. Enemy keep anchor
+- `base/public/arena/keep/<state>.webp`: keep states 100, 66, 33, 0 via the team mask. Enemy keep anchor
   `(4.5, -0.9)` radius 1.1, the player's mirrors to `y = 14.9`.
 
 ### VFX
 
-- `public/vfx/<name>.webp` + `<name>.json`: square frames, frame count and fps per sheet. Glow blend mode comes
+- `base/public/vfx/<name>.webp` + `<name>.json`: square frames, frame count and fps per sheet. Glow blend mode comes
   from the active direction (`vfx.blend`).
 
 ### Budget (MB)
