@@ -179,7 +179,7 @@ export const mite: UnitDef = { weight: "light", build: (m, p) => blot(m, p, 0.12
 export const queen: UnitDef = { weight: "mid", build: (m, p) => blot(m, p, 0.2, true) };
 
 // ------------------------------------------------------------------------------------------------ emplacements
-/** Great Crossbow: a long black bow arm across a timber trestle, a bolt as long as a man, a shield board in front. */
+/** Great Bow: a long black bow arm across a timber trestle, a bolt as long as a man, a shield board in front. */
 export const ballista: UnitDef = {
   weight: "heavy", fixed: true,
   build(m, p) {

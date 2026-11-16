@@ -80,9 +80,9 @@ Every unit: a heavy dark silhouette, its side's colour flat on one big area, one
 | grenadier | **Pot Thrower** | stout, a round clay bomb held high, overarm throw |
 | shade | **Night Blade** | all black, hooded, twin short blades; colour only on the scarf |
 | lancer | **Charger** | horse and rider, a long levelled spear, a team back-banner |
-| ballista | **Great Crossbow** | a long bow arm on a timber frame, a big bolt |
+| ballista | **Great Bow** | a long bow arm on a timber frame, a big bolt |
 | hive | **Inkwell** | a squat lidded ink jar whose lid lifts to spill blots |
-| storm | **Thunder Drummer** | an arc of drums over his back, crackling drumsticks |
+| storm | **Drummer** | an arc of drums over his back, crackling drumsticks |
 | golem | **Stone Warden** | the biggest body: two stacked boulders bound with rope, heavy fists |
 | sapper | **Burrower** | straw raincoat, a mattock, a little lamp |
 | harrier | **War Crane** | a crane, wings wide in the side's colour, a small body and long neck |

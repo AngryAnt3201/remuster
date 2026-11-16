@@ -608,3 +608,80 @@ html, body { background: var(--paper); color: var(--k-ink); }
 :root input[type="range"] { accent-color: var(--seal); }
 :root .td-banner, :root .td-intro { color: var(--k-ink); }
 .ink-petal { border-radius: 60% 40% 60% 40% !important; }
+
+/* ---------------------------------------------------------------- second pass: what the first screenshots showed */
+/* home: the title and caption start under the two floating caskets; the seal's ring is one brushed circle */
+:root .ink-stage { padding-top: 86px; }
+.ink-title b { font-size: 34px; line-height: 1.04; }
+:root .hm-arena.ink-caption { max-height: 78%; margin-top: 0; }
+:root .btn.hm-play.ink-seal-btn::after { inset: -13px; border: 0; border-radius: 0; opacity: 0.85; rotate: 0deg; animation: ink-turn 40s linear infinite;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 100 100'%3E%3Cfilter id='t' x='-10%25' y='-10%25' width='120%25' height='120%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.09' numOctaves='2' seed='5'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='2.4'/%3E%3C/filter%3E%3Cg fill='none' stroke='%231d1a17' stroke-linecap='round' filter='url(%23t)'%3E%3Cpath d='M50 5.5a44.5 44.5 0 1 1-31 12.600' stroke-width='3.600'/%3E%3Cpath d='M19 18.100a44.500 44.500 0 0 1 14-9' stroke-width='1.300' stroke-dasharray='3 2.500'/%3E%3C/g%3E%3C/svg%3E") center / 100% 100% no-repeat; }
+@keyframes ink-turn { to { rotate: 360deg; } }
+:root .ink-seal-btn .hm-play-word { font-size: 23px; letter-spacing: 0.08em; padding-left: 0.08em; text-transform: uppercase; }
+/* results */
+:root .results .result-stats span, :root .result-stats span { background: none; border: 0; border-bottom: 1.5px solid var(--k-ink); font: 400 10.5px/1.2 var(--display); letter-spacing: 0.14em; color: var(--k-muted); padding: 6px 4px 9px; }
+:root .result-stats b { letter-spacing: 0.04em; }
+:root .results.won .result-stats span:nth-child(2) b { color: var(--tide); } :root .results.lost .result-stats span:nth-child(3) b { color: var(--seal-d); }
+:root .objectives li, :root .results .objectives li { background: none; border: 0; border-bottom: 1px solid rgba(29, 26, 23, 0.22); padding: 8px 4px; font: 400 14px/1.2 var(--font); color: var(--k-muted); }
+:root .objectives li.met, :root .results .objectives li.met { background: none; border: 0; border-bottom: 1px solid rgba(29, 26, 23, 0.22); color: var(--k-ink); }
+:root .objectives li:not(.met) .star { color: rgba(29, 26, 23, 0.16); }
+:root .result-crest, :root .result-crest .icon, :root .results.lost .result-crest .icon { color: var(--wash-lt); filter: none; }
+:root .results.won .result-crest .icon { color: var(--seal); filter: none; }
+:root .result-stars .star { filter: none; }
+:root .reward-total span, :root .reward-strip .reward-total span { color: var(--k-muted); letter-spacing: 0.1em; }
+:root .reward-strip { margin-top: 2px; }
+:root .rival-line, :root .results blockquote, :root .results .quote { border-left: 3px solid var(--k-ink); background: none; font-family: var(--font); font-style: italic; }
+/* switches: a small box that takes a seal when on */
+:root .toggle .switch { width: 22px; height: 22px; padding: 0; border: 2px solid var(--k-ink); background: none; display: grid; place-items: center; }
+:root .toggle .switch b { position: static; width: 12px; height: 12px; transform: none; background: none; }
+:root .toggle.on .switch b { background: var(--seal); rotate: 45deg; }
+:root .btn.toggle { display: flex; justify-content: space-between; align-items: center; }
+/* the unit popover and tips: slips with a brushed tail */
+:root .pop::before { display: none; }
+:root .pop.theirs { border-image-source: var(--im-sheet); }
+:root .pop.theirs .pop-head b { color: var(--seal-d); }
+:root .pop-head b { letter-spacing: 0.1em; }
+:root .pop-rank, :root .pop.rank-2 .pop-rank, :root .pop.rank-3 .pop-rank, :root .pop.rank-4 .pop-rank { color: var(--k-muted); letter-spacing: 0.1em; }
+:root .pop.rank-4 .pop-rank { color: var(--seal); }
+:root .pop-lv { background: var(--k-ink); color: #f7f1e1; letter-spacing: 0.08em; }
+:root .pop-stats, :root .pop-ability, :root .b-card .pop-ability { background: none; border: 0; border-top: 1px solid rgba(29, 26, 23, 0.25); border-bottom: 1px solid rgba(29, 26, 23, 0.25); font-family: var(--font); font-weight: 400; }
+:root .pop-ability b { color: var(--k-ink); letter-spacing: 0.08em; }
+:root .pop-ability.on { background: none; border-color: var(--seal); }
+:root .pop-ability.on b { color: var(--seal); }
+:root .pop-text, :root .tip span { font-family: var(--font); font-weight: 400; }
+/* thumbnails drawn in code (Contest arenas, Gatewatch maps): washed to ink on the sheet */
+:root .ar-thumb, :root .td-thumb { filter: grayscale(1) contrast(1.15) brightness(1.18); mix-blend-mode: multiply; border: 1.5px solid rgba(29, 26, 23, 0.5); }
+:root .ar-arena { background: none; border: 0; }
+/* the map */
+:root .map-trail path, :root .map-trail circle, :root .map-trail { stroke: var(--k-ink); fill: var(--k-ink); }
+:root .star-total, :root .map-head .pill { border: 0; background: none; border-bottom: 1.5px solid var(--k-ink); color: var(--k-ink); }
+:root .act-dots i, :root .act-dot { background: rgba(29, 26, 23, 0.2); border: 0; } :root .act-dots i.on, :root .act-dot.on { background: var(--seal); }
+/* long titles: the head makes room */
+:root .screen-head h1 { font-size: 20px; letter-spacing: 0.1em; }
+:root .ribbon > b { max-width: 100%; }
+:root .sheet .ribbon > b, :root .panel .ribbon > b { letter-spacing: 0.12em; font-size: 20px; padding: 6px 22px 8px; }
+/* shop offer cells */
+:root .of-item, :root .starter-item, :root .gem-card-art { background: none; border: 0; }
+
+/* the seal's ring fills its own box (the base .btn::after is a gloss strip a third of the button tall) */
+:root .btn.hm-play.ink-seal-btn::after { left: -13px; right: -13px; top: -13px; bottom: -13px; height: auto; width: auto; }
+/* switches: an inked box, filled with seal red when on */
+:root .toggle .switch b { display: none; }
+:root .toggle.on .switch { background: var(--seal); border-color: var(--seal-d); }
+
+/* third pass: the last rarity hues */
+:root .pr-card, :root .pr-cards.r-rare .pr-card, :root .pr-cards.r-epic .pr-card, :root .pr-cards.r-legendary .pr-card { background: var(--sheet); border: 1.5px solid var(--k-ink); }
+:root .pr-cards.r-rare .pr-card { border-bottom: 3px solid #8a6f2e; } :root .pr-cards.r-epic .pr-card { border-bottom: 3px solid var(--k-ink); } :root .pr-cards.r-legendary .pr-card { border-bottom: 3px solid var(--seal); }
+:root .ch-deal small, :root .ch-deal .ar-rar, :root .ch-deal [class*="rar"] { color: var(--rd, var(--k-muted)); letter-spacing: 0.14em; }
+:root .ch-deal-n { background: var(--k-ink); color: #f7f1e1; right: -6px; }
+:root .ch-deal-done { color: var(--k-muted); }
+
+/* a locked scene: a slip of paper laid over the map */
+:root .map-lock { background: none; border: 3px solid transparent; border-image: var(--im-sheet) 22 fill / 22px / 7px stretch; color: var(--k-ink); }
+:root .map-lock b { font: 400 18px/1.2 var(--display); letter-spacing: 0.12em; color: var(--k-ink); } :root .map-lock small { color: var(--k-muted); font-family: var(--font); font-style: italic; }
+:root .map-lock .node-lock, :root .node-lock { filter: brightness(0.2); }
+:root .act-gate-title { letter-spacing: 0.12em; } :root .act-gate-buy > span small { background: rgba(0, 0, 0, 0.18); }
+/* Gatewatch */
+:root .td-follow, :root .td-speed { letter-spacing: 0.04em; padding-left: 4px; padding-right: 4px; font-size: 14px; }
+:root .td-follow.on { border-image-source: var(--im-seal); border-image-slice: 14 fill; color: #fbf1e4; }
+:root .td-screen canvas:not(.board):not(.td-board) { filter: none; }

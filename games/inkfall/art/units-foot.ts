@@ -236,7 +236,7 @@ export const medic: UnitDef = {
   },
 };
 
-/** Thunder Drummer: a hoop of drums arched over his back, a stick in each hand; the blow is a dry-brush bolt. */
+/** Drummer: a hoop of drums arched over his back, a stick in each hand; the blow is a dry-brush bolt. */
 export const storm: UnitDef = {
   weight: "mid",
   build(m, p) {

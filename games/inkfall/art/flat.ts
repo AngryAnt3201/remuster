@@ -76,7 +76,7 @@ const PAINT: NonNullable<VfxArt["paint"]> = {
 const MODELS: NonNullable<VfxArt["models"]> = {
   // an arrow: a dark shaft, a pale steel head, white fletching
   arrow: (m) => { m.cylinder([-1.6, 0, 0], [1.3, 0, 0], 0.08, P.ink, 0.08, { segs: 5 }); m.cone([1.25, 0, 0], [1.9, 0, 0], 0.2, P.steel, { segs: 4 }); m.group(() => { for (const s of [1, -1]) m.poly([[-1.1, 0, 0], [-1.8, 0, s * 0.34], [-1.9, 0, 0]], P.white); }); },
-  // the Great Crossbow's bolt: thicker, a broad head, a tag of paper streaming behind
+  // the Great Bow's bolt: thicker, a broad head, a tag of paper streaming behind
   bolt: (m) => { m.cylinder([-1.7, 0, 0], [1.2, 0, 0], 0.11, P.ink, 0.11, { segs: 5 }); m.group(() => { m.cone([1.1, 0, 0], [1.95, 0, 0], 0.28, P.steel, { segs: 4 }); m.cone([1.2, 0, 0], [0.9, 0, 0], 0.28, P.steel, { segs: 4 }); }); m.poly([[-1.3, 0, 0.05], [-1.95, 0, 0.42], [-1.9, 0, 0.0]], P.white); },
   bomb: (m, f) => { m.with(() => { m.rotY(f * 90); bombPot(m, 0.3, f % 2 ? P.flame : P.ember); }); },
   // the Cask Runner's cask

@@ -6,7 +6,7 @@ import type { ArenaArt, ArenaDef } from "../../../artkit/arena";
 import type { Painter, Pt } from "../../../artkit/paint";
 import { rgba } from "../../../artkit/paint";
 import type { Model } from "../../../artkit/toon3d";
-import { TONE, blob, blossom, dabs, dry, enso, line, mist, mountains, paper, pool, stroke, tuft, wash } from "./ink";
+import { TONE, blob, blossom, dabs, dry, enso, line, mist, mountains, paper, pool, seal, stroke, tuft, wash } from "./ink";
 import { S, bales, bamboo, bridge, cloudBank, crag, drum, fence, house, jar, kiln, lotus, pagoda, pine, plum, postLantern, reeds, rock, stoneLantern, torii, wall } from "./scenery";
 import { PAPER } from "./style";
 
@@ -78,17 +78,25 @@ function scene(d: Scene): ArenaDef {
       // mountains beyond the far edge, painted flat like the top of a scroll
       mountains(p, -8, 17, -5.6, 7.5, d.peaks[0], d.peaks[1] * 0.55, { peaks: 4, mist: 0.9 });
       mist(p, -8, 17, -5.4, 1.6, 0.85);
-      mountains(p, -8, 17, -1.7, 4.6, d.peaks[0], d.peaks[1], { peaks: 6, mist: 0.82 });
-      mist(p, -8, 17, -1.5, 1.0, 0.9);
+      mountains(p, -8, 17, -2.6, 4.6, d.peaks[0], d.peaks[1] * 0.8, { peaks: 6, mist: 0.82 });
+      mist(p, -8, 17, -2.5, 1.0, 0.9);
+      // the nearest range stands right behind the far hall, where a phone still shows it under the HUD
+      mountains(p, -8, 17, -0.72, 2.5, d.peaks[0], Math.min(0.95, d.peaks[1] * 1.25), { peaks: 9, mist: 0.9, rough: 0.5 });
+      mist(p, -8, 17, -0.66, 0.5, 0.95);
       d.extra?.(p);
       // the field: one faint wash with a wet edge, so the board reads as a place on the sheet
       wash(p, [[-0.42, -0.42], [W + 0.42, -0.42], [W + 0.42, H + 0.42], [-0.42, H + 0.42]], d.field[0], d.field[1], { bleed: 0.3, rim: 0.5, smooth: false });
+      // one loaded brush stroke down each side of the field, dry at the tail: the picture's own frame
+      stroke(p, [[-0.5, -0.3], [-0.46, 3.5], [-0.52, 7], [-0.47, 10.5], [-0.5, 14.4]], 0.16, TONE.ink, 0.6, { taper: 0.7, dry: 0.45, lead: 0.04 });
+      stroke(p, [[W + 0.5, 14.4], [W + 0.46, 10.5], [W + 0.52, 7], [W + 0.47, 3.5], [W + 0.5, -0.3]], 0.16, TONE.ink, 0.6, { taper: 0.7, dry: 0.45, lead: 0.04 });
       // the road from hall to hall
       wash(p, [[3.85, -2.4], [5.15, -2.4], [5.2, 17], [3.8, 17]], TONE.teaLt, 0.34, { bleed: 0.14, rim: 0.2, smooth: false });
       for (const x of [3.82, 5.18]) dry(p, [x, -1.6], [x + p.rand(-0.03, 0.03), 16.6], 0.07, TONE.mid, 0.34, 4);
       paintStrip(p, d.strip);
       // a brushed ring under each hall
       for (const [kx, ky] of KEEPS) { pool(p, kx, ky, 1.8, 1.42, PAPER, 0.85, { bleed: 0.16, rim: 0 }); pool(p, kx, ky, 1.66, 1.3, TONE.teaLt, 0.3, { bleed: 0.1, rim: 0.4, jitter: 0.05 }); enso(p, kx, ky, 1.72, 1.34, 0.17, TONE.ink, 0.62, p.rand(0, 6)); }
+      // the painter's seal, pressed in the far right corner of the sheet
+      seal(p, W + 0.02, -0.02, 0.5, TONE.seal, 3);
       // marks: sparse on the field (it stays calm under the armies), thicker outside it
       const mk = (x: number, y: number, a: number) => { const t = d.mark === "both" ? p.r() < 0.5 : d.mark === "tuft"; t ? tuft(p, x, y, p.rand(0.14, 0.24), d.marks, a) : dabs(p, x, y, p.rand(0.1, 0.18), d.marks, a); };
       p.scatter(0, 0, W, H, 34, (x, y) => mk(x, y, 0.3), (x, y) => Math.abs(x - 4.5) > 0.9 && (y < STRIP0 - 0.3 || y > STRIP1 + 0.3) && KEEPS.every(([kx, ky]) => Math.hypot(x - kx, y - ky) > 2));
@@ -103,7 +111,7 @@ function scene(d: Scene): ArenaDef {
         add({ build: pick(d.side), x: x + (r() - 0.5) * 0.5, y: y + (r() - 0.5) * 0.4, yaw: 60 + r() * 60, shadow: 0.5 });
       }
       // the far end, either side of the road
-      d.far.forEach((b, i) => { const n = d.far.length, x = -2.4 + (i / Math.max(1, n - 1)) * (W + 4.8); if (Math.abs(x - 4.5) > 1.4) add({ build: b, x, y: -1.7 - (i % 2) * 0.6, yaw: 90, shadow: 0.7 }); });
+      d.far.forEach((b, i) => { const n = d.far.length, x = -2.4 + (i / Math.max(1, n - 1)) * (W + 4.8); if (Math.abs(x - 4.5) > 1.4) add({ build: b, x, y: -1.9 - (i % 2) * 0.6, yaw: 90, shadow: 0.7 }); });
       // and the rest of the sheet, for wide screens
       for (let i = 0; i < 46; i++) {
         const x = -7.5 + r() * 24, y = -3.6 + r() * 23;
