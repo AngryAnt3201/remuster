@@ -2,7 +2,7 @@
 // simulating the coming battle against what it can see of your board (plus a guess at what you'll add).
 import { Battle, canHitAir } from "./battle";
 import {
-  ASCEND_ROUND, MAX_RANK, UNITS, UNIT_KINDS, W, ZONE_DEPTH, clampToZone, toWorld, upgradeCost,
+  ASCEND_ROUND, MAX_RANK, UNITS, UNIT_KINDS, W, ZONE_DEPTH, clampToZone, toLocal, toWorld, upgradeCost,
   type Piece, type Role, type Side, type UnitKind,
 } from "./defs";
 import { Match } from "./match";
@@ -307,7 +307,7 @@ const LOBBERS = new Set<UnitKind>(["grenadier", "bombard", "thorn", "hive", "gra
  */
 export function shelter(side: Side, layout: { id: number; x: number; y: number }[], pieces: Piece[], terrain: Block[], rng: Rng) {
   const back = side === 0 ? 1 : -1; // toward this side's own edge
-  const spots = (kinds: (k: Block["kind"]) => boolean, gap: number) => {
+  const spots = (kinds: (k: Block["kind"]) => boolean, gap: number, front: number) => {
     const out: { x: number; y: number; used: boolean }[] = [];
     for (const b of terrain) {
       if (!kinds(b.kind)) continue;
@@ -316,12 +316,13 @@ export function shelter(side: Side, layout: { id: number; x: number; y: number }
       for (let i = 0; i < n; i++) {
         const x = b.x - b.w / 2 + (b.w * (i + 0.5)) / n;
         const c = clampToZone(side, x, y, 0.3);
-        if (Math.abs(c.x - x) < 1e-6 && Math.abs(c.y - y) < 1e-6) out.push({ x, y, used: false });
+        // Inside the zone, and (for walls) not right at its front edge, where a soft unit would be the front line.
+        if (Math.abs(c.x - x) < 1e-6 && Math.abs(c.y - y) < 1e-6 && toLocal(side, x, y).depth <= ZONE_DEPTH - front) out.push({ x, y, used: false });
       }
     }
     return out;
   };
-  const cover = spots((k) => k === "cover", 0.45), walls = spots((k) => k === "wall" || k === "building" || k === "barricade", 0.6);
+  const cover = spots((k) => k === "cover", 0.45, 0), walls = spots((k) => k === "wall" || k === "building" || k === "barricade", 0.6, 1.4);
   for (const l of layout) {
     const p = pieces.find((q) => q.id === l.id);
     if (!p) continue;
