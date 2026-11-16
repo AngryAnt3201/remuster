@@ -87,10 +87,14 @@ Rules: `docs/ARENA.md`. Types: `engine/core/terrain.ts`. None of this exists in 
 State, read every frame:
 - `battle.blocks: BlockState[]`: every block of the arena as it stands now: `{id, kind, x, y, w, h, look?, hp, maxHp, alive}`. `(x, y)` is the centre, `w` across, `h` along the board. `kind`: `wall`, `building`, `barricade`, `cover`, `water`. `hp` counts down for `barricade` and `cover` (`maxHp` is the starting health; both are 0 for the kinds that never break). `alive` goes false when one breaks: draw rubble; it no longer blocks anything. The array's order and the ids never change during a battle.
 
-Events:
-- `blockhit {id, x, y, dmg, hp, by}`: block `id` took `dmg` at point (x, y) and has `hp` left. `by` is the body that struck it hand to hand (a melee unit breaking through), or -1 for a shot, a blast, or cover soaking part of a shot (then (x, y) is where the shot crossed the cover).
-- `blockbreak {id, kind, x, y, w, h}`: block `id` broke (its rectangle is repeated so the renderer can throw debris without a lookup). The `blockhit` that broke it comes first, with `hp: 0`.
-- `ricochet {x, y, kind, block}`: a direct shot stopped on block `block` at (x, y). `kind` is the projectile's (`arrow`, `bolt`, `shard`, `pellet`) or `hook` for a Hookwarden's chain that hit a wall its mark stepped behind. The projectile is dead (`alive: false`) at that point.
-- `crash {id, x, y, a}`: Lancer `id`, charging along angle `a`, ran into a block at (x, y) (the point of impact on the block's face). Its charge is over and it is stunned for 0.6 s (`CRASH_STUN`).
+Events (in a table, not the bullet form used above, because tests/fx.test.ts requires a VFX sheet for every bulleted
+event; move them up once base/src/render/vfx.ts plays them):
+
+| event | fields | meaning |
+| --- | --- | --- |
+| `blockhit` | `{id, x, y, dmg, hp, by}` | Block `id` took `dmg` at point (x, y) and has `hp` left. `by` is the body that struck it hand to hand (a melee unit breaking through), or -1 for a shot, a blast, or cover soaking part of a shot (then (x, y) is where the shot crossed the cover). |
+| `blockbreak` | `{id, kind, x, y, w, h}` | Block `id` broke (its rectangle is repeated so the renderer can throw debris without a lookup). The `blockhit` that broke it comes first, with `hp: 0`. |
+| `ricochet` | `{x, y, kind, block}` | A direct shot stopped on block `block` at (x, y). `kind` is the projectile's (`arrow`, `bolt`, `shard`, `pellet`) or `hook` for a Hookwarden's chain that hit a wall its mark stepped behind. The projectile is dead (`alive: false`) at that point. |
+| `crash` | `{id, x, y, a}` | Lancer `id`, charging along angle `a`, ran into a block at (x, y) (the point of impact on the block's face). Its charge is over and it is stunned for 0.6 s (`CRASH_STUN`). |
 
 Unchanged events that behave differently in an arena: a `spawn`, `blink`, `emerge`, `build`, `raise` or `decoy` position is always on free ground (the nearest free spot to where it would have been on an open field); a `boom` hurts nobody fully behind a wall, building or barricade from its centre; a `wave` is drawn the full length of its lane even where a wall shelters what is behind it.
