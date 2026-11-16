@@ -10,7 +10,6 @@ site/.vercel
 art/arenas/build
 .claude/worktrees
 dist-games
-games/*/art/preview
 *.todo.json
 .wrangler
 infra/.local
@@ -23,3 +22,7 @@ video/public/vo
 video/public/fonts
 video/src/clips.json
 tools/music/out
+
+# art previews: keep the overview strips, not the per-unit sheets (regenerate with: npm run bake -- <game> --preview)
+games/*/art/preview/*
+!games/*/art/preview/_*.webp

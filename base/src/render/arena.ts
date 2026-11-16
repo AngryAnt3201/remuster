@@ -19,6 +19,8 @@ export interface ArenaAct {
   /** The foreground (foreground.ts): border canopy drawn over units, same frame as the backdrop, cut into cells
    *  given as [x, y, w, h] fractions of the backdrop. Optional: older manifests have none. */
   fg?: { file: string; cells: [number, number, number, number][] };
+  /** The act's own ambient life (ambient.ts AmbientCfg). Absent: the built-in mix for its obstacle family. */
+  ambient?: import("./ambient").AmbientCfg;
 }
 export interface ArenaManifest {
   version: number;

@@ -101,13 +101,13 @@ export class ArenaLayers {
 
   /** Ambient life in the air, over the units: motes, butterflies and the flock (ambient.ts). Off in calm mode. */
   overhead(ctx: CanvasRenderingContext2D, a: Arena, cam: Camera, time: number, calm = false) {
-    const cfg = AMBIENT[a.info.obstacle];
+    const cfg = a.info.ambient ?? AMBIENT[a.info.obstacle];
     if (cfg && !calm) this.life.air(ctx, cfg, cam, time);
   }
 
   /** Ambient motion on the ground, under the units. */
   ambient(ctx: CanvasRenderingContext2D, a: Arena, cam: Camera, time: number, calm = false) {
-    const cfg = AMBIENT[a.info.obstacle];
+    const cfg = a.info.ambient ?? AMBIENT[a.info.obstacle];
     if (cfg && !calm) this.life.ground(ctx, cfg, cam, time);
     if (a.info.obstacle === "fenlamp") this.shimmer(ctx, cam, time);
     else if (a.info.obstacle === "obelisk") this.clouds(ctx, a, cam, time);

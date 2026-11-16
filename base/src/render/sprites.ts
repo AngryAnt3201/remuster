@@ -13,8 +13,13 @@ export type Anim = "idle" | "walk" | "attack" | "death" | "cast";
 type Rect = [x: number, y: number, w: number, h: number, ax: number, ay: number, s?: number];
 interface Sheet {
   w: number; h: number; anims: Record<string, Rect[][] | string>;
-  /** base64 palette, 7 bytes per entry: r, g, b, a, then the team mask (main, dark, light coverage); entry 0 is clear. */
+  /** base64 palette, 7 bytes per entry: r, g, b, a, then the team mask (main, dark, light coverage); entry 0 is clear.
+   *  Not used by "mask" sheets. */
   pal: string;
+  /** "mask": a full-colour sheet for games baked with artkit (artkit/README.md). <key>.webp is twice the sheet's
+   *  height: the sheet with team parts in white, over its team mask (red = team main, green = dark, blue = light),
+   *  tinted at load with the manifest's own team colours. Absent: palette indices tinted through `pal`. */
+  fmt?: "mask";
   /** World units the body travels per walk cycle at true scale (0 = not measured). */
   stride?: number;
   /** Motion class: heavy bodies wind up longer and raise dust as they step; light ones are snappy. */
@@ -35,6 +40,8 @@ export interface Manifest {
   impact?: Partial<Record<Anim, number>>;
   /** The team colours the atlases were rendered beside (the runtime tints with the active direction's, TEAM). */
   teams: Record<"tide" | "ember", TeamCols>;
+  /** True: tint with `teams` above, the colours this game's atlases were made for, not the base style's TEAM. */
+  ownTeams?: boolean;
   /** The style direction the atlases were rendered in ("v2" = the built-in look). */
   style?: string;
   units: Record<string, { tiers: number[]; radius: number }>;
@@ -184,6 +191,21 @@ export function tintIndexed(idx: Uint8ClampedArray, lut: Uint8ClampedArray, out:
   }
 }
 
+/** Tint a "mask" sheet: `src` is the colour sheet (team parts white) followed by its mask (the same size again);
+ *  each pixel is multiplied by 1 + R*(main-1) + G*(dark-1) + B*(light-1), as tintPalette does per entry. */
+export function tintMasked(src: Uint8ClampedArray, team: TeamCols, out: Uint8ClampedArray) {
+  const [km, kd, kl] = [hex(team.main), hex(team.dark), hex(team.light)].map((c) => c.map((v) => (v - 1) / 255));
+  const n = out.length;
+  for (let i = 0; i < n; i += 4) {
+    const a = src[i + 3];
+    if (!a) continue;
+    const r = src[n + i], g = src[n + i + 1], b = src[n + i + 2];
+    if (r + g + b < 12) { out[i] = src[i]; out[i + 1] = src[i + 1]; out[i + 2] = src[i + 2]; }
+    else for (let c = 0; c < 3; c++) out[i + c] = src[i + c] * (1 + r * km[c] + g * kd[c] + b * kl[c]);
+    out[i + 3] = a;
+  }
+}
+
 function pixels(img: HTMLImageElement): ImageData {
   const c = document.createElement("canvas");
   c.width = img.naturalWidth; c.height = img.naturalHeight;
@@ -204,9 +226,12 @@ function buildSheet(key: string, side: Side) {
     .then((img) => {
       const src = pixels(img);
       img.src = "";
-      const out = new ImageData(src.width, src.height);
-      // the active direction's team colours, so units match the rest of the app even before a re-render
-      tintIndexed(src.data, tintPalette(decodePalette(sheet.pal), TEAM[side]), out.data);
+      const out = new ImageData(src.width, sheet.fmt === "mask" ? src.height >> 1 : src.height);
+      // the active direction's team colours, so units match the rest of the app even before a re-render (or the
+      // game's own, if its manifest says so)
+      const cols = manifest!.ownTeams ? manifest!.teams[side === 0 ? "tide" : "ember"] : TEAM[side];
+      if (sheet.fmt === "mask") tintMasked(src.data, cols, out.data);
+      else tintIndexed(src.data, tintPalette(decodePalette(sheet.pal), cols), out.data);
       const c = document.createElement("canvas");
       c.width = out.width; c.height = out.height;
       c.getContext("2d")!.putImageData(out, 0, 0);
