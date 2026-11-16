@@ -27,14 +27,16 @@ export const SCENES: Record<string, Scene> = {
   // The hero shot: two full, varied armies meeting in the middle. Melee lines, a cavalry charge down the right,
   // lightning and bombs over the top, fliers diving on the back lines.
   clash: {
-    arena: 1, seed: 20261116, names: ["You", "Rival"], title: "Clash",
+    arena: 1, seed: 2, names: ["You", "Rival"], title: "Clash",
     armies: [
-      [["bulwark", 4.5, 5.3, 2], ["blades", 3.1, 5.4, 2], ["blades", 5.9, 5.4, 2], ["pikeman", 1.8, 5.0], ["lancer", 7.7, 4.4, 2],
-        ["golem", 4.5, 4.1, 2], ["ranger", 2.6, 2.9, 2], ["ranger", 6.4, 2.9, 2], ["storm", 4.5, 2.6, 3], ["grenadier", 3.4, 1.7, 2],
-        ["medic", 5.6, 1.9], ["harrier", 0.9, 3.2, 2], ["ballista", 7.9, 1.2, 2], ["lion", 4.5, 3.4, 4]],
-      [["hook", 4.5, 5.3, 2], ["ravager", 3.0, 5.3, 2], ["duelist", 6.0, 5.3, 2], ["keg", 1.6, 4.6], ["keg", 7.4, 4.6],
-        ["outrider", 0.9, 3.4, 2], ["rime", 3.0, 2.8, 2], ["tide", 6.0, 2.8, 3], ["bombard", 4.5, 1.0, 2], ["hive", 7.8, 1.6, 2],
-        ["grave", 2.0, 1.8], ["banner", 4.5, 3.6, 2], ["shade", 8.0, 4.2, 2], ["griffin", 1.2, 2.2, 4]],
+      [["bulwark", 3.4, 5.4, 3], ["bulwark", 5.6, 5.4, 3], ["blades", 2.0, 5.3, 2], ["blades", 7.0, 5.3, 2], ["pikeman", 4.5, 5.0, 3],
+        ["lancer", 8.1, 4.4, 3], ["golem", 4.5, 4.0, 3], ["ranger", 2.6, 2.9, 3], ["ranger", 6.4, 2.9, 3], ["storm", 4.5, 2.6, 3],
+        ["grenadier", 3.4, 1.7, 2], ["medic", 5.6, 1.9, 2], ["medic", 2.2, 1.6, 2], ["harrier", 0.9, 3.2, 2], ["ballista", 7.9, 1.2, 2],
+        ["banner", 4.5, 3.3, 2], ["lion", 6.6, 4.2, 4]],
+      [["hook", 4.5, 5.3, 3], ["bulwark", 2.8, 5.4, 2], ["ravager", 6.2, 5.3, 2], ["duelist", 7.4, 5.2, 2], ["golem", 4.5, 4.1, 2],
+        ["keg", 1.4, 4.6], ["keg", 8.0, 4.4], ["outrider", 0.9, 3.4, 2], ["rime", 3.0, 2.8, 2], ["tide", 6.0, 2.8, 3],
+        ["bombard", 4.5, 1.0, 2], ["hive", 7.8, 1.6, 2], ["grave", 2.0, 1.8, 2], ["banner", 4.5, 3.4, 2], ["shade", 8.0, 3.4, 2],
+        ["medic", 5.4, 1.8, 2], ["griffin", 1.2, 2.2, 4]],
     ],
   },
   // A smaller, readable fight for close-ups: three against three.
@@ -58,7 +60,7 @@ export const SCENES: Record<string, Scene> = {
   // Arena mode: the same kind of fight, but around houses, a hall and barricades. Shots stop on walls, the charge
   // has to go round, bombs come over the roofs and the barricades get smashed.
   arena: {
-    arena: 10, seed: 4242, names: ["You", "Rival"], title: "Old Village", terrain: "old-village",
+    arena: 10, seed: 41, names: ["You", "Rival"], title: "Old Village", terrain: "old-village",
     armies: [
       [["bulwark", 4.5, 5.3, 2], ["blades", 2.6, 5.2, 2], ["golem", 6.3, 5.0, 3], ["lancer", 0.9, 4.6, 2], ["ranger", 3.4, 3.0, 2],
         ["ranger", 5.6, 3.0, 2], ["grenadier", 2.2, 2.2, 3], ["bombard", 6.8, 1.2, 2], ["storm", 4.5, 2.2, 3], ["harrier", 8.0, 3.4, 2],
