@@ -1372,7 +1372,7 @@ export class Battle {
       const t = this.nearestEnemy(b, { taunt: false });
       if (!t) return [0, 0];
       const a = Math.atan2(t.y - b.y, t.x - b.x);
-      if (this.nav && !this.nav.clear(b.x, b.y, t.x, t.y, b.radius - NAV_TOL)) {
+      if (this.nav && this.chargeBlocked(b, t)) {
         // No straight run at anyone: trot round the blocks to where there is one.
         if (hyp(b.vx, b.vy) > 0.3) b.face = turnToward(b.face, Math.atan2(b.vy, b.vx), 5 * dt);
         b.t = Math.min(b.t, 0.2);
@@ -1424,6 +1424,18 @@ export class Battle {
     const sp = Math.max(0.6, b.speed * 0.45 * (1 - b.t));
     if (b.t > 0.85) { b.state = "aim"; b.t = 0; }
     return [Math.cos(b.face) * sp, Math.sin(b.face) * sp];
+  }
+
+  /** Would a straight run from `b` up to `t` hit a block first (its body sampled along the line, a little fattened). */
+  private chargeBlocked(b: Body, t: Body): boolean {
+    const dx = t.x - b.x, dy = t.y - b.y, d = hyp(dx, dy);
+    const run = d - t.radius - b.radius;
+    if (run <= 0.05) return false;
+    for (let s = 0.15; s < run + 0.15; s += 0.15) {
+      const u = Math.min(s, run);
+      if (this.nav!.hitsGround(b.x + (dx / d) * u, b.y + (dy / d) * u, b.radius + 0.02)) return true;
+    }
+    return false;
   }
 
   /** Fixed. Turns slowly and looses a bolt that goes through every enemy in its line. */
