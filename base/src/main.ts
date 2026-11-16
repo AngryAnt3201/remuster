@@ -31,7 +31,8 @@ import { rallyOffer, shopCounters, shopView, showRewards } from "./ui/gemshop";
 import { armyLevel, migrateArmy } from "@engine/progression/troops";
 import { underLevelledHint } from "./ui/army";
 // [progression] troop levels, coin rewards and the Barracks (src/progression, src/ui/barracks.ts)
-import { arenaLadder, awardArena, awardCampaign, awardDaily, awardGauntletRival, awardSkirmish, nextArenaMatch, settleLegacyCoins, withLevels } from "@engine/progression/troops";
+import { onlineArenaFinish, onlineArenaForfeit, onlineArenaMatch, startOnline, trackMatchEnd, trackScreen } from "./online";
+import { arenaLadder, settleArena, awardArena, awardCampaign, awardDaily, awardGauntletRival, awardSkirmish, nextArenaMatch, settleLegacyCoins, withLevels } from "@engine/progression/troops";
 import { LEAGUES, arenaById, arenaUnlocked, leagueProgress, trophyChange, type ArenaDef } from "@engine/core/arena";
 import { ARENA_BACKDROP, TERRAIN } from "./game/terrain";
 import { foeLevelForAct } from "@engine/progression/economy";
@@ -549,6 +550,7 @@ function arenaThumb(a: ArenaDef, px = 54) {
 function arena() {
   clear();
   here = arena;
+  trackScreen("arena");
   const s = arenaLadder(), p = leagueProgress(s.trophies), next = nextArenaMatch();
   const gain = trophyChange(s, true);
   screen("arena-screen", header("Arena", title),
@@ -576,7 +578,7 @@ function arena() {
           el("span", { class: "ar-foe" }, [`vs ${next.foe.name}, ${next.foe.title} · level ${next.foe.level}`]),
         ]),
       ]),
-      btn(el("span", {}, ["Battle", el("small", {}, [` +${gain} / ${trophyChange(s, false)}`])]), "primary big", () => playArena()),
+      btn(el("span", {}, ["Battle", el("small", {}, [` +${gain} / ${trophyChange(s, false)}`])]), "primary big", () => void playArena()),
     ]),
     el("div", { class: "ar-list" }, LEAGUES.map((l) => el("div", { class: `panel ar-row ${s.best >= l.trophies ? "" : "locked"}` }, [
       el("div", { class: "ar-row-head" }, [el("b", {}, [l.name]), el("small", {}, [s.best >= l.trophies ? "Unlocked" : `${l.trophies} trophies`])]),
@@ -587,27 +589,32 @@ function arena() {
   );
 }
 
-function playArena(o: { arena?: string; seed?: number } = {}) {
+async function playArena(o: { arena?: string; seed?: number } = {}) {
   clear();
-  const next = nextArenaMatch(o);
+  // With a backend the server issues the match and verifies the result; deep links and offline play stay local.
+  const srv = o.arena || o.seed !== undefined ? null : await onlineArenaMatch();
+  const next = srv ?? nextArenaMatch(o);
   game = new GameScreen(app, {
     cfg: next.cfg, foe: next.foe.ai, mode: "arena", title: next.arena.name,
     arena: ARENA_BACKDROP[next.arena.id], marks: next.arena.marks,
     intro: `${next.arena.name} · vs ${next.foe.name}`,
-    onEnd: (m) => {
+    onEnd: async (m) => {
       const won = m.winner === 0;
-      const end = awardArena(next, won);
+      const verified = srv ? await onlineArenaFinish(srv, m) : null;
+      const end = verified ? settleArena(next, verified) : awardArena(next, won); // one or the other, never both
+      trackMatchEnd("arena", won, m.played);
       const r = end.result;
       results(m, {
         heading: won ? "Victory" : m.winner === 1 ? "Defeat" : "Draw",
         note: `${r.delta >= 0 ? "+" : ""}${r.delta} trophies · ${r.trophies} now${r.promoted ? ` · promoted to ${r.to.name}` : r.streak > 1 ? ` · ${r.streak} in a row` : ""}`,
-        primary: ["Next battle", () => playArena()],
+        primary: ["Next battle", () => void playArena()],
         secondary: ["Arena", arena],
       });
       attachReward(end.reward, barracks);
       if (end.chest) chestEarned(end.chest);
     },
-    onQuit: arena,
+    // Walking out of a ladder match the server issued is a loss (otherwise a match could be retried until won).
+    onQuit: () => { if (srv) void onlineArenaForfeit(srv).finally(arena); else arena(); },
   });
 }
 
@@ -849,7 +856,8 @@ async function boot() {
   settleRewards(); // [gems] pay free gems for progress made before gems existed
   startPass(); settleQuests(); // [pass] quest + pass XP listeners, Premium's chest perk, yesterday's unclaimed quests
   migrateArmy(); // [progression] once: old saves move to the card collection (found units, new-scale levels)
-  settleLegacyCoins(); // [progression] coins for campaign clears made before troop levels existed
+  settleLegacyCoins(); // [progression]
+  startOnline(() => { if (!game) here?.(); }); // [online] accounts, cloud save, analytics: a no-op without VITE_REMUSTER_API coins for campaign clears made before troop levels existed
   await Promise.all([initNative(), loadSprites(), font]);
   window.addEventListener("pointerdown", () => { unlockAudio(); resumeMusic(); }, { once: true });
   // Dev only: play any level from a script without a reload (tools/sprite-mem.mjs plays several back to back).
@@ -866,7 +874,7 @@ async function boot() {
   if (q.has("lab")) return skirmish();
   if (q.has("daily")) return daily();
   // [arena] ?arena opens the ladder, ?arena=<id> plays that arena (engine/core/arena.ts ids).
-  if (q.has("arena")) return q.get("arena") ? playArena({ arena: q.get("arena")!, seed: 7 }) : arena();
+  if (q.has("arena")) return q.get("arena") ? void playArena({ arena: q.get("arena")!, seed: 7 }) : arena();
   if (q.has("barracks") || q.has("army")) return barracks(); // [progression]
   if (q.has("shop")) return shopScreen();
   // [home] ?tab=shop|army|battle|modes|pass opens a tab; ?settings opens the settings sheet over Battle.
