@@ -1,10 +1,10 @@
-// How this game draws Arena terrain (engine/core/terrain.ts blocks, engine/core/arena.ts looks). The renderer
-// (../render/terrain.ts) builds every wall, house, tower, crate stack and pond from these colours and shapes, so a
-// game re-themes its arenas by shadowing this one file (games/<id>/src/game/terrain.ts): adobe and saloons, brass
-// boilers, neon barriers. A game that wants something the shapes can't do shadows ../render/terrain.ts instead.
+// Pixelkeep's Arena terrain: tile-map buildings on the five-level console palette. Red brick walls, plaster huts
+// with red roofs, grey stone towers with blue caps, green hedges for barricades, crates, and blue water tiles.
+// The battle canvas is a low-resolution pixel screen (src/render/board.ts), so these come out as fat pixels.
 //
-// Each look: `h` height in world units (a unit is about 0.6 tall), three face colours (top, the face toward the
-// player, the side face), a trim colour for edges and details, and optionally a roof and a surface detail.
+// The renderer (../render/terrain.ts) builds every wall, house, tower, crate stack and pond from these colours and
+// shapes. Each look: `h` height in world units (a unit is about 0.6 tall), three face colours (top, the face toward
+// the player, the side face), a trim colour for edges and details, and optionally a roof and a surface detail.
 
 export type Roof = "flat" | "gable" | "cone" | "crenel";
 export type Detail = "brick" | "plank" | "house" | "stake" | "log" | "crate" | "rail";
@@ -35,35 +35,39 @@ export interface TerrainStyle {
   spark: string;
 }
 
-const stone = { top: "#b9b2a4", front: "#8d8778", side: "#726d61", trim: "#5a564d" };
-const timber = { top: "#b98a55", front: "#8f6238", side: "#734c2b", trim: "#4f331c" };
+const brick = { top: "#ff8080", front: "#bf4040", side: "#802020", trim: "#400000" };
+const stone = { top: "#ffffff", front: "#bfbfbf", side: "#808080", trim: "#404040" };
+const wood = { top: "#ffbf80", front: "#bf8040", side: "#804000", trim: "#402000" };
+const hut = { top: "#ffffff", front: "#ffffbf", side: "#bfbf80", trim: "#804000", roofLit: "#ff4040", roofDark: "#bf0000", glow: "#ffff40" };
 
 export const TERRAIN: TerrainStyle = {
-  ink: "#231c18",
+  ink: "#101018",
   looks: {
-    wall: { h: 0.95, ...stone, roof: "crenel", detail: "brick" },
-    building: { h: 1.0, top: "#e9dcc0", front: "#cdbb98", side: "#a8977a", trim: "#6d5a43", roof: "gable", roofLit: "#c2553c", roofDark: "#8f3a2a", detail: "house", glow: "#ffd98a" },
-    house: { h: 1.0, top: "#e9dcc0", front: "#cdbb98", side: "#a8977a", trim: "#6d5a43", roof: "gable", roofLit: "#c2553c", roofDark: "#8f3a2a", detail: "house", glow: "#ffd98a" },
-    hall: { h: 1.25, top: "#ddd3bd", front: "#b9ad93", side: "#978c75", trim: "#5d5241", roof: "gable", roofLit: "#4f6f9c", roofDark: "#364e72", detail: "house", glow: "#ffe2a0" },
-    tower: { h: 2.1, ...stone, roof: "cone", roofLit: "#4f6f9c", roofDark: "#364e72", detail: "brick", glow: "#ffd98a" },
-    barricade: { h: 0.5, ...timber, detail: "stake" },
-    logs: { h: 0.45, top: "#a97b4b", front: "#7f5631", side: "#684526", trim: "#3f2a17", detail: "log" },
-    crates: { h: 0.55, top: "#d2a565", front: "#a87a42", side: "#8b6233", trim: "#5d3f1f", detail: "crate" },
-    cover: { h: 0.5, top: "#d2a565", front: "#a87a42", side: "#8b6233", trim: "#5d3f1f", detail: "crate" },
-    fence: { h: 0.5, top: "#c79a62", front: "#9c6f3f", side: "#7f5830", trim: "#523720", detail: "rail" },
+    wall: { h: 0.95, ...brick, roof: "crenel", detail: "brick" },
+    building: { h: 1.0, ...hut, roof: "gable", detail: "house" },
+    house: { h: 1.0, ...hut, roof: "gable", detail: "house" },
+    hall: { h: 1.3, ...stone, roof: "gable", roofLit: "#4080ff", roofDark: "#0040bf", detail: "house", glow: "#ffff40" },
+    tower: { h: 2.1, ...stone, roof: "cone", roofLit: "#4080ff", roofDark: "#0040bf", detail: "brick", glow: "#ffff40" },
+    barricade: { h: 0.55, top: "#80ff40", front: "#40bf40", side: "#008000", trim: "#004000", detail: "stake" },
+    logs: { h: 0.45, ...wood, detail: "log" },
+    crates: { h: 0.55, top: "#ffbf80", front: "#ffbf40", side: "#bf8000", trim: "#804000", detail: "crate" },
+    cover: { h: 0.5, top: "#ffbf80", front: "#ffbf40", side: "#bf8000", trim: "#804000", detail: "crate" },
+    fence: { h: 0.5, top: "#ffffff", front: "#bfbfbf", side: "#808080", trim: "#404040", detail: "rail" },
   },
-  water: { deep: "#2f6f9f", shallow: "#58a6c9", foam: "rgba(235,250,255,0.75)", bank: "rgba(60,45,30,0.45)" },
-  gate: "rgba(240,225,190,0.28)",
-  bridge: { deck: "#a47a4a", plank: "#7a5630", rail: "#5d3f1f" },
-  rubble: "#5a4a3a",
-  dust: "#cdbf9f",
-  spark: "#ffe9a8",
+  water: { deep: "#0040bf", shallow: "#4080ff", foam: "#ffffff", bank: "#004000" },
+  gate: "rgba(255,255,255,0.3)",
+  bridge: { deck: "#bf8040", plank: "#804000", rail: "#402000" },
+  rubble: "#804040",
+  dust: "#ffbf80",
+  spark: "#ffff80",
 };
 
-/** Which of the game's battlefield backdrops (public/arenas/act<N>) each Arena-mode arena is fought on. */
+/** Which of the game's battlefield backdrops (public/arenas/act<N>) each Arena-mode arena is fought on:
+ *  1 Grassy Plains, 2 Magma Fields, 3 Deep Woods, 4 Crystal Cave, 5 Castle Yard, 6 Frost Field, 7 Cloud Top,
+ *  8 Murk Marsh, 9 Sandy Shore, 10 Dark Keep. */
 export const ARENA_BACKDROP: Record<string, number> = {
-  "twin-gates": 1, "the-crossing": 3, "crate-yard": 2,
-  courtyard: 5, watchtowers: 4, "barricade-pass": 6,
-  "old-village": 10, "the-fens": 9, "long-lane": 7,
-  bastions: 5, "broken-bridge": 3, switchback: 6,
+  "twin-gates": 5, "the-crossing": 1, "crate-yard": 4,
+  courtyard: 10, watchtowers: 6, "barricade-pass": 3,
+  "old-village": 1, "the-fens": 8, "long-lane": 5,
+  bastions: 9, "broken-bridge": 3, switchback: 2,
 };

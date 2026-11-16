@@ -1,46 +1,82 @@
-// This game's sound effects, as recipes for the little synth in ../audio/sfx.ts (WebAudio, no files).
-// Each sound is a list of layers played together:
-//   ["tone",  wave, startHz, endHz, seconds, loudness, delaySeconds?]        wave: sine | triangle | square | sawtooth
-//   ["noise", seconds, loudness, filter, startHz, endHz, Q?, delaySeconds?]  filter: lowpass | highpass | bandpass
-// The names are fixed (the game asks for them by name); what each one sounds like is entirely the game's choice.
-// A game shadows this file (games/<id>/src/game/sounds.ts) to re-voice everything: gunshots for arrows, steam hisses
-// for heals, a honky-tonk run for a win. `GAPS` is the shortest time between two plays of the same sound, so a big
-// fight doesn't turn to mush.
+// Pixelkeep's sound effects: a console's sound chip. Two square-wave channels, a triangle bass and a noise channel,
+// nothing else. Blows are a short noise burst over a falling square blip, shots are fast upward or downward square
+// sweeps, magic is an arpeggio, and the jingles (buy, upgrade, win, lose, round) are three or four square notes.
+// Recipes for the little synth in ../audio/sfx.ts (WebAudio, no files):
+//   ["tone",  wave, startHz, endHz, seconds, loudness, delaySeconds?]
+//   ["noise", seconds, loudness, filter, startHz, endHz, Q?, delaySeconds?]
+// Square waves are loud for their peak, so levels are kept low: forty of these can play in a second.
 export type Layer =
   | ["tone", OscillatorType, number, number, number, number, number?]
   | ["noise", number, number, BiquadFilterType, number, number, number?, number?];
 
-export const SOUNDS: Record<string, Layer[]> = {
-  // battle
-  slash: [["noise", 0.09, 0.22, "bandpass", 3200, 900, 1.5]],
-  hit: [["noise", 0.05, 0.25, "lowpass", 1800, 400], ["tone", "square", 180, 90, 0.05, 0.05]],
-  clank: [["tone", "triangle", 1300, 900, 0.12, 0.12], ["noise", 0.05, 0.12, "highpass", 4000, 3000]],
-  arrow: [["noise", 0.12, 0.12, "bandpass", 5000, 1500, 3]],
-  bolt: [["tone", "sawtooth", 300, 60, 0.18, 0.12], ["noise", 0.14, 0.2, "bandpass", 2400, 600, 2]],
-  throw: [["tone", "sine", 500, 900, 0.12, 0.06]],
-  pop: [["noise", 0.35, 0.45, "lowpass", 1600, 120], ["tone", "sine", 120, 40, 0.3, 0.3]],
-  boom: [["noise", 0.8, 0.7, "lowpass", 2200, 60], ["tone", "sine", 90, 28, 0.7, 0.55]],
-  slam: [["noise", 0.3, 0.4, "lowpass", 600, 80], ["tone", "sine", 70, 35, 0.3, 0.35]],
-  zap: [["tone", "sawtooth", 1800, 200, 0.16, 0.12], ["noise", 0.18, 0.18, "highpass", 3000, 6000]],
-  heal: [["tone", "sine", 880, 1320, 0.18, 0.06], ["tone", "sine", 1320, 1760, 0.18, 0.04, 0.06]],
-  blink: [["tone", "sine", 300, 1400, 0.16, 0.1]],
-  charge: [["noise", 0.5, 0.2, "lowpass", 400, 150], ["tone", "triangle", 220, 330, 0.25, 0.08]],
-  fuse: [["tone", "square", 1400, 1400, 0.05, 0.06], ["tone", "square", 1400, 1400, 0.05, 0.06, 0.12]],
-  down: [["tone", "triangle", 260, 110, 0.18, 0.08]],
-  squish: [["noise", 0.06, 0.12, "bandpass", 1200, 500, 4]],
-  crumble: [["noise", 0.9, 0.5, "lowpass", 900, 60]],
-  // UI
-  tap: [["tone", "triangle", 660, 760, 0.05, 0.05]],
-  buy: [["tone", "triangle", 880, 880, 0.06, 0.07], ["tone", "triangle", 1320, 1320, 0.08, 0.07, 0.06]],
-  place: [["noise", 0.07, 0.25, "lowpass", 800, 150], ["tone", "sine", 150, 80, 0.08, 0.15]],
-  upgrade: [["tone", "triangle", 660, 660, 0.09, 0.07, 0.0], ["tone", "triangle", 880, 880, 0.09, 0.07, 0.07], ["tone", "triangle", 1100, 1100, 0.09, 0.07, 0.14]],
-  sell: [["tone", "triangle", 900, 500, 0.12, 0.07]],
-  deny: [["tone", "square", 200, 150, 0.12, 0.06]],
-  reroll: [["noise", 0.2, 0.12, "bandpass", 800, 3000, 2]],
-  fight: [["tone", "sawtooth", 110, 220, 0.4, 0.12], ["tone", "sawtooth", 165, 330, 0.4, 0.08]],
-  win: [["tone", "triangle", 523, 523, 0.22, 0.09, 0.0], ["tone", "triangle", 659, 659, 0.22, 0.09, 0.11], ["tone", "triangle", 784, 784, 0.22, 0.09, 0.22], ["tone", "triangle", 1047, 1047, 0.22, 0.09, 0.33]],
-  lose: [["tone", "triangle", 392, 384.2, 0.3, 0.09, 0.0], ["tone", "triangle", 330, 323.4, 0.3, 0.09, 0.16], ["tone", "triangle", 262, 256.8, 0.3, 0.09, 0.32]],
-  round: [["tone", "triangle", 784, 784, 0.1, 0.07], ["tone", "triangle", 1047, 1047, 0.16, 0.07, 0.1]],
-  hurt: [["noise", 0.3, 0.35, "lowpass", 900, 100], ["tone", "sine", 110, 50, 0.3, 0.2]],};
+/** A run of square notes, each `len` long and `gap` apart (an arpeggio or a jingle). */
+const arp = (notes: number[], len: number, gap: number, vol: number, wave: OscillatorType = "square"): Layer[] =>
+  notes.map((f, i): Layer => ["tone", wave, f, f, len, vol, +(i * gap).toFixed(3)]);
 
-export const GAPS: Record<string, number> = { hit: 0.05, slash: 0.06, arrow: 0.07, squish: 0.08, heal: 0.15, down: 0.08, clank: 0.08 };
+// note frequencies
+const C4 = 261.6, E4 = 329.6, G4 = 392, A4 = 440, C5 = 523.3, D5 = 587.3, E5 = 659.3, G5 = 784, A5 = 880, C6 = 1046.5, E6 = 1318.5, G6 = 1568;
+
+export const SOUNDS: Record<string, Layer[]> = {
+  // ---- battle
+  // a sword: a tick of the noise channel and a falling blip
+  slash: [["noise", 0.045, 0.14, "highpass", 5000, 2500], ["tone", "square", 1100, 500, 0.05, 0.035]],
+  // a blow landing: low noise thud and a short square drop
+  hit: [["noise", 0.05, 0.2, "lowpass", 1400, 300], ["tone", "square", 240, 90, 0.06, 0.05]],
+  // a block: two bright square pings
+  clank: [["tone", "square", 1760, 1760, 0.04, 0.045], ["tone", "square", 2349, 2349, 0.06, 0.04, 0.035]],
+  // an arrow: a quick falling chirp
+  arrow: [["tone", "square", 1600, 700, 0.07, 0.04]],
+  // a cannon shot: a square dive and a burst of noise
+  bolt: [["tone", "square", 520, 70, 0.16, 0.07], ["noise", 0.12, 0.18, "lowpass", 2400, 300]],
+  // a throw: a rising whoop
+  throw: [["tone", "square", 330, 990, 0.12, 0.035]],
+  // a small blast
+  pop: [["noise", 0.22, 0.32, "lowpass", 2600, 150], ["tone", "square", 220, 50, 0.2, 0.07]],
+  // the big blast: the noise channel falling all the way down, with a triangle rumble under it
+  boom: [["noise", 0.6, 0.5, "lowpass", 4000, 80], ["tone", "triangle", 110, 30, 0.5, 0.35], ["tone", "square", 180, 40, 0.3, 0.06]],
+  // a heavy landing
+  slam: [["noise", 0.2, 0.34, "lowpass", 700, 80], ["tone", "triangle", 90, 36, 0.24, 0.3]],
+  // lightning: a fast two-note trill, falling
+  zap: [...arp([1976, 1319, 1976, 1319, 988], 0.03, 0.028, 0.04), ["noise", 0.1, 0.08, "highpass", 6000, 3000]],
+  // a heal: three notes up
+  heal: arp([E5, G5, C6], 0.06, 0.05, 0.035),
+  // a warp: an octave leap
+  blink: [["tone", "square", 440, 1760, 0.1, 0.04], ["tone", "square", 1760, 1760, 0.05, 0.03, 0.1]],
+  // a charge: a rising growl on the triangle and a hoof-beat of noise
+  charge: [["tone", "triangle", 110, 330, 0.3, 0.2], ["noise", 0.05, 0.14, "lowpass", 900, 300], ["noise", 0.05, 0.14, "lowpass", 900, 300, 1, 0.12]],
+  // a fuse: two short high beeps
+  fuse: [["tone", "square", 1568, 1568, 0.04, 0.04], ["tone", "square", 1568, 1568, 0.04, 0.04, 0.1]],
+  // a body going down: a falling slide
+  down: [["tone", "square", 520, 110, 0.16, 0.045]],
+  // a slime: a wobble
+  squish: [["tone", "square", 300, 600, 0.04, 0.035], ["tone", "square", 600, 250, 0.05, 0.035, 0.04]],
+  // a building coming apart: noise in three steps down
+  crumble: [["noise", 0.2, 0.34, "lowpass", 1800, 600], ["noise", 0.2, 0.3, "lowpass", 900, 300, 1, 0.16], ["noise", 0.4, 0.3, "lowpass", 500, 60, 1, 0.32], ["tone", "triangle", 90, 30, 0.6, 0.25]],
+  // a keep taking a hit
+  hurt: [["noise", 0.18, 0.3, "lowpass", 1000, 120], ["tone", "square", 196, 98, 0.2, 0.07]],
+  // ---- interface
+  // moving the menu cursor
+  tap: [["tone", "square", 988, 988, 0.03, 0.04]],
+  // a coin: the classic two-note ping
+  buy: [["tone", "square", 988, 988, 0.06, 0.045], ["tone", "square", 1319, 1319, 0.22, 0.045, 0.06]],
+  // setting a unit down
+  place: [["tone", "square", 220, 110, 0.06, 0.06], ["noise", 0.04, 0.12, "lowpass", 800, 200]],
+  // a level up: a fast run up the chord
+  upgrade: arp([C5, E5, G5, C6, E6, G6], 0.06, 0.045, 0.04),
+  // selling: the coin, backwards
+  sell: [["tone", "square", 1319, 1319, 0.06, 0.04], ["tone", "square", 988, 988, 0.12, 0.04, 0.06]],
+  // not allowed: a low double buzz
+  deny: [["tone", "square", 130, 130, 0.07, 0.06], ["tone", "square", 130, 130, 0.1, 0.06, 0.1]],
+  // shuffling the shop: a quick random-sounding run
+  reroll: arp([659, 988, 784, 1175, 880, 1319], 0.03, 0.03, 0.035),
+  // START: a rising fanfare of four notes with a bass note under it
+  fight: [...arp([G4, C5, E5, G5], 0.09, 0.07, 0.05), ["tone", "triangle", 130.8, 130.8, 0.4, 0.2]],
+  // stage clear
+  win: [...arp([C5, E5, G5, C6, G5, C6], 0.11, 0.09, 0.05), ...arp([C4, G4, C5], 0.2, 0.18, 0.14, "triangle")],
+  // game over: a slow fall
+  lose: [...arp([G4, E4, C4, 196, 130.8], 0.2, 0.17, 0.05), ["tone", "triangle", 98, 49, 0.9, 0.16, 0.5]],
+  // a new round
+  round: arp([A4, D5, A5], 0.07, 0.06, 0.045),
+};
+
+export const GAPS: Record<string, number> = { hit: 0.06, slash: 0.07, arrow: 0.08, squish: 0.09, heal: 0.18, down: 0.09, clank: 0.09, zap: 0.12, bolt: 0.08 };
