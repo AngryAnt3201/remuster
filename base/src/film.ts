@@ -88,3 +88,22 @@ export function filmState(scene: string) {
   return (window.__film ??= { scene, ready: false, marks: [], sfx: [] });
 }
 export const filmMark = (name: string) => { window.__film?.marks.push({ name, t: performance.now() }); };
+
+/** `?demo`: a mid-game save for trailers and screenshots (written to this browser's storage before the game loads
+ *  it): two acts cleared, most of the roster found and levelled, a deck, coins, gems and a Silver League ladder. */
+export function seedDemoSave() {
+  const found: UnitKind[] = ["blades", "medic", "mine", "ranger", "bulwark", "pikeman", "lancer", "grenadier", "storm", "golem", "harrier", "ballista",
+    "hook", "keg", "rime", "tide", "banner", "shade", "tinker", "lion", "griffin", "bombard", "duelist", "ravager"];
+  const levels = Object.fromEntries(found.map((k, i) => [k, 2 + ((i * 7) % 6)]));
+  const cards = Object.fromEntries(found.map((k, i) => [k, (i * 13) % 40]));
+  const campaign = Object.fromEntries(Array.from({ length: 17 }, (_, i) => [i + 1, i % 4 === 3 ? 2 : 3]));
+  const save = {
+    campaign, puzzles: { 1: 3, 2: 3, 3: 2, 4: 3, 5: 1 }, gauntlet: { best: 7, runs: 12 }, seen: found,
+    settings: { sound: true, haptics: false, speed: 1 },
+    wallet: { coins: 4280, gems: 365, earned: { coins: 20000, gems: 600 }, spent: { coins: 15720, gems: 235 }, credited: [] },
+    progression: { levels, xp: 1460, v: 2, deck: found.slice(4, 12), legacyPaid: true },
+    collection: { cards, found },
+    arena: { trophies: 268, best: 291, wins: 21, losses: 9, streak: 3, bestStreak: 6, played: 30, arenaWins: { "twin-gates": 6, "the-crossing": 5, "crate-yard": 7, courtyard: 2, watchtowers: 1 } },
+  };
+  try { localStorage.setItem("muster.save.v1", JSON.stringify(save)); } catch { /* private mode */ }
+}

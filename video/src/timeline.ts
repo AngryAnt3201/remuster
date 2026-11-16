@@ -1,6 +1,8 @@
 // The edit, as data. Everything is on the music grid: 144 BPM, 4/4, at 60 fps one beat is exactly 25 frames and one
 // bar exactly 100. `bar` counts from 1; `beats` is a length in beats. The same file drives the picture (Launch.tsx)
-// and the soundtrack (tools/music mix.py reads cuts.json, written from this by `node video/cuts.mjs`).
+// and the soundtrack (tools/music/mix.py reads audio/cuts.json, written from this by video/cuts.mjs).
+// The form follows the tune: intro 1-4, A 5-12, B 13-20, A 21-28, B 29-36 (the climax), break 37-38, last A 39-46,
+// tag 47, held chord 48.
 export const FPS = 60;
 export const BEAT = 25; // frames
 export const BAR = 100; // frames
@@ -37,9 +39,9 @@ export const SECTIONS: Section[] = [
   { name: "intro", bar: 1, bars: 4 },
   { name: "one-battle", bar: 5, bars: 16 },
   { name: "under-the-hood", bar: 21, bars: 8 },
-  { name: "arenas", bar: 29, bars: 10 },
-  { name: "break", bar: 39, bars: 2 },
-  { name: "finale", bar: 41, bars: 8 },
+  { name: "arenas", bar: 29, bars: 8 },
+  { name: "break", bar: 37, bars: 2 },
+  { name: "finale", bar: 39, bars: 8 },
 ];
 
 /** Scene clocks: the bar at which each continuous scene's time 0 falls. */
@@ -59,9 +61,9 @@ export const SHOTS: Shot[] = [
   // bars 21-24: all six at once (drawn by the grid, not as shots); bars 25-28: every game's front door
   ...cycle(ALL, 8).map((g, i): Shot => ({ bar: 25 + i * 0.5, beats: 2, game: g, clip: i < 6 ? "home" : "army", t: 0.6 })),
   // arenas: a title over the first bar, then one arena battle across the games
-  ...cycle(ALL, 10, 0).map((g, i): Shot => ({ bar: 29 + i, beats: 4, game: g, clip: "arena", tag: i > 0 && i < 6 })),
+  ...cycle(ALL, 8, 0).map((g, i): Shot => ({ bar: 29 + i, beats: 4, game: g, clip: "arena", tag: i > 0 && i < 6 })),
   // finale: every two beats, the best moments of everything
-  ...cycle(ALL, 12, 1).map((g, i): Shot => ({ bar: 41 + i * 0.5, beats: 2, game: g, clip: ["clash", "siege", "arena"][i % 3], t: [6.2, 4.0, 5.0, 9.4, 7.5, 8.2, 12.0, 10.4, 11.0, 14.6, 12.8, 13.4][i] })),
+  ...cycle(ALL, 16, 1).map((g, i): Shot => ({ bar: 39 + i * 0.5, beats: 2, game: g, clip: ["clash", "siege", "arena"][i % 3], t: [6.2, 4.0, 5.0, 9.4, 7.5, 8.2, 12.0, 10.4, 11.0, 14.6, 12.8, 13.4, 16.0, 14.2, 15.0, 17.5][i] })),
 ];
 
 /** The prompts typed on screen: start typing at `bar`, finished and sent by `send`, which is the cut. */
@@ -80,8 +82,8 @@ export const CAPTIONS: { bar: number; beats: number; lines: string[]; big?: bool
   { bar: 21, beats: 15, lines: ["We run the game.", "You own the look."] },
   { bar: 29, beats: 4, lines: ["New mode", "ARENAS"], big: true },
   { bar: 31, beats: 8, lines: ["Walls. Cover. Choke points."], y: 0.16 },
-  { bar: 39, beats: 4, lines: ["One game."], big: true },
-  { bar: 40, beats: 4, lines: ["Make it yours."], big: true },
+  { bar: 37, beats: 4, lines: ["One game."], big: true },
+  { bar: 38, beats: 4, lines: ["Make it yours."], big: true },
 ];
 
 /** Which style of the theme tune plays from each bar (the soundtrack follows the picture). */
@@ -93,6 +95,6 @@ export function musicCuts(): [number, string][] {
     if (cuts[cuts.length - 1][1] !== style) cuts.push([s.bar, style]);
   }
   // the grid, the break and the ending belong to the base theme
-  return [...cuts.filter(([b]) => b < 21 || (b >= 25 && b < 39) || (b >= 41 && b < 47)), [21, "fantasy"], [39, "fantasy"], [47, "fantasy"]]
+  return [...cuts.filter(([b]) => b < 21 || (b >= 29 && b < 37) || (b >= 39 && b < 46)), [21, "fantasy"], [37, "fantasy"], [46, "fantasy"]]
     .sort((a, b) => a[0] - b[0]).filter((c, i, all) => i === 0 || all[i - 1][1] !== c[1]) as [number, string][];
 }

@@ -827,8 +827,9 @@ async function boot() {
   // iOS keeps WebAudio running behind a backgrounded app unless it is suspended
   document.addEventListener("visibilitychange", () => { const c = audioContext(); if (c) void (document.hidden ? c.suspend() : c.resume()); });
   applyStyleVars(document.documentElement);
-  const s = load();
   const q = new URLSearchParams(location.search);
+  if (q.has("demo")) (await import("./film")).seedDemoSave(); // [film] a mid-game save for trailers, before anything loads the save
+  const s = load();
   // ?style=meadow|dusk|toy picks the kit palette; ?safe=59,34 fakes iPhone safe areas in a desktop browser.
   applyUIStyle(q.get("style"));
   if (q.has("safe")) {
