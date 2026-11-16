@@ -1,4 +1,4 @@
-# Muster: Tactics: in-app purchases (Starter Pack and gem packs)
+# Remuster: in-app purchases (Starter Pack and gem packs)
 
 Generated from `store/metadata.json` (`inAppPurchase`, `gemPacks`) by `npm run release:config`. Edit that, not this file.
 Free to play, every level open: every campaign act, the Gauntlet, every Breakpoint puzzle, the Daily Challenge and Skirmish are free. Nothing is locked behind a purchase; purchases only speed you up.
@@ -14,7 +14,7 @@ Until it says **Active**, the purchase cannot be sold and App Review cannot buy 
 
 ## 1. Create the purchase (3 min)
 
-Apps > Muster: Tactics > Monetization > **In-App Purchases** > **+**
+Apps > Remuster > Monetization > **In-App Purchases** > **+**
 
 | Field | Enter | Limit |
 | --- | --- | --- |
@@ -45,10 +45,10 @@ Starter Pack is a one-time offer: a consumable that pays 1,200 gems, 6,000 coins
 
 The purchase's status should now read **Ready to Submit**. If it says Missing Metadata, one of the fields above is empty.
 
-## 2. Submit it with version 1.1.0
+## 2. Submit it with version 1.0.0
 
 Apple requires the first in-app purchase to go to review together with a new app version.
-On the iOS App > 1.1.0 page, scroll to **In-App Purchases and Subscriptions** > **+** > tick **Starter Pack** > Done.
+On the iOS App > 1.0.0 page, scroll to **In-App Purchases and Subscriptions** > **+** > tick **Starter Pack** > Done.
 Then submit the version as usual (`store/RELEASE-CHECKLIST.md` step 7). The purchase and the build are reviewed together.
 
 ## 3. Test it before submitting (optional, 5 min)
@@ -63,7 +63,7 @@ The app decides how many gems each product id gives (`engine/economy/gems.ts`) a
 Each pack is credited once per App Store transaction and only then finished, so an interrupted purchase is credited on the next launch.
 No Restore Purchases: gems are consumables and are used up when spent.
 
-For each row: Apps > Muster: Tactics > Monetization > **In-App Purchases** > **+** > Type **Consumable**, then the Reference Name and Product ID, **Create**, then fill the page.
+For each row: Apps > Remuster > Monetization > **In-App Purchases** > **+** > Type **Consumable**, then the Reference Name and Product ID, **Create**, then fill the page.
 
 | Product ID | Reference Name | Price (US base) | Display Name | Description |
 | --- | --- | --- | --- | --- |
@@ -93,7 +93,7 @@ Gems are a consumable premium currency. Each pack gives the fixed number of gems
 ```
 474/4000.
 
-Then on the 1.1.0 version page, **In-App Purchases and Subscriptions** > **+**: tick all five gem packs as well as the Starter Pack.
+Then on the 1.0.0 version page, **In-App Purchases and Subscriptions** > **+**: tick all five gem packs as well as the Starter Pack.
 
 Test: the simulator's `ios/App/Muster.storekit` already lists the five packs (US$0.99 to US$49.99), so buy, cancel, Ask to Buy and failure all work without an account. Debug > StoreKit > Manage Transactions shows each pack finished once its gems are saved.
 
@@ -101,7 +101,7 @@ Test: the simulator's `ios/App/Muster.storekit` already lists the five packs (US
 
 A consumable the app sells **once per 30-day season** (the app refuses a second purchase in the same season; if one ever arrives anyway, say an old Ask to Buy approved late, it pays 450 gems instead). It adds the season's premium reward track and is retroactive: tiers already reached become claimable at once. Credited once per App Store transaction and only then finished.
 
-Apps > Muster: Tactics > Monetization > **In-App Purchases** > **+** > Type **Consumable**.
+Apps > Remuster > Monetization > **In-App Purchases** > **+** > Type **Consumable**.
 
 | Field | Enter | Limit |
 | --- | --- | --- |
@@ -160,6 +160,6 @@ Special offers are limited-time bundles shown in the Shop: 2 or 3 at a time, rot
 ```
 662/4000.
 
-Then on the 1.1.0 version page, **In-App Purchases and Subscriptions** > **+**: tick War Pass Premium and the four offer tiers too.
+Then on the 1.0.0 version page, **In-App Purchases and Subscriptions** > **+**: tick War Pass Premium and the four offer tiers too.
 
 Test: `ios/App/Muster.storekit` lists War Pass Premium (US$4.99) and the four tiers (US$1.99 to US$19.99), so buy, cancel, Ask to Buy and failure work in the simulator without an account. On the web, `?pass` and `?shop` with `&store=pending|cancelled|failed|offline` show each state.

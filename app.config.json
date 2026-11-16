@@ -1,12 +1,12 @@
 {
-  "storeName": "Muster: Tactics",
-  "displayName": "Muster",
-  "bundleId": "co.inflect.muster",
+  "storeName": "Remuster",
+  "displayName": "Remuster",
+  "bundleId": "co.inflect.remuster",
   "teamId": "F4ZF9VS4GN",
-  "version": "1.1.0",
+  "version": "1.0.0",
   "build": 1,
   "copyright": "2026 Jack Wakem",
   "supportEmail": "jackwakem@gmail.com",
-  "siteUrl": "https://muster-tactics.vercel.app",
+  "siteUrl": "https://remuster.example",
   "notes": "The one place for the app's name, version and ids. storeName = App Store name (max 30 chars). displayName = label under the home-screen icon (keep it about 12 chars or iOS truncates it). siteUrl = where site/ is deployed (privacy + support URLs). After editing, run: npm run release:config"
 }

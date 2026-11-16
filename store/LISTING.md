@@ -1,19 +1,19 @@
-# Muster: Tactics: App Store listing
+# Remuster: App Store listing
 
 Generated from `store/metadata.json` by `npm run release:config` (name, version and URLs come from `app.config.json`). Edit those, not this file. Copy each block into App Store Connect as is.
 
 ## Name
 
 ```
-Muster: Tactics
+Remuster
 ```
-15/30. Home-screen name under the icon: **Muster** (`displayName` in app.config.json).
+8/30. Home-screen name under the icon: **Remuster** (`displayName` in app.config.json).
 
 Availability, checked 2026-11-06 by searching `https://itunes.apple.com/search?term=<name>&entity=software` (US, AU, GB):
 
 | Name | Status | Note |
 | --- | --- | --- |
-| Muster: Tactics (chosen) | free (no exact match) | Chosen by Jack. Existing 'Muster' apps are social, lifestyle, education and utility apps, none are games. |
+| Muster: Tactics | free (no exact match) | Chosen by Jack. Existing 'Muster' apps are social, lifestyle, education and utility apps, none are games. |
 | Muster: Army Battler | free (no exact match) | Says the genre in the name; strong for search. |
 | Muster & Clash | free (no exact match) | Echoes the in-game tagline build, place, clash. |
 | Muster: Auto Battler | free (no exact match) | Genre term people search for. |
@@ -42,7 +42,7 @@ New: a Daily Challenge for everyone, three new acts and seven new units. Free to
 ```
 Muster an army. Place it. Watch it fight.
 
-Muster: Tactics is a turn-based army battler for one player. Each round you buy units from a shop of four and place them anywhere on your half of the field. Then you press Fight and the battle plays out on its own. Your units stay on the board and come back every round, so your army grows as the match goes on. Lose a round and your commander takes damage. First commander to zero loses.
+Remuster is a turn-based army battler for one player. Each round you buy units from a shop of four and place them anywhere on your half of the field. Then you press Fight and the battle plays out on its own. Your units stay on the board and come back every round, so your army grows as the match goes on. Lose a round and your commander takes damage. First commander to zero loses.
 
 31 UNITS, EACH WITH A MIND OF ITS OWN
 No grid and no lanes: every unit steers freely and fights its own way. Blade Trios surround a target and slash as a pack. Rangers hold their distance and back off when rushed. Lancers charge straight through a line, wheel round and charge again. Shades cloak, blink behind the weakest enemy and strike. Mines lie buried until someone steps too close. Harriers fly over the melee, Sappers tunnel to the backline, Stormcallers chain lightning through tight formations. Where you place them decides the fight.
@@ -70,7 +70,7 @@ PLAYS YOUR WAY
 • No ads, no tracking, no energy
 • Your progress stays on your device
 ```
-3325/4000.
+3318/4000.
 
 ## What's New in This Version
 
@@ -96,17 +96,17 @@ turn based,wargame,battle,tactical,fantasy,medieval,knights,soldiers,puzzle,offl
 
 | Field | Value |
 | --- | --- |
-| Bundle ID | `co.inflect.muster` |
-| SKU | `co.inflect.muster` |
-| Version | 1.1.0 (build 1) |
+| Bundle ID | `co.inflect.remuster` |
+| SKU | `co.inflect.remuster` |
+| Version | 1.0.0 (build 1) |
 | Primary language | English (U.S.) |
 | Category | Games, subcategories Strategy and Casual; no secondary category |
 | Price | Free (USD 0.00), all countries and regions. Free to play, every level open. Optional consumable in-app purchases (a one-time Starter Pack, gem packs, War Pass Premium once per season and special-offer tiers), see store/IAP.md |
 | Copyright | 2026 Jack Wakem |
 | Content rights | No, it does not contain, show, or access third-party content |
-| Support URL | https://muster-tactics.vercel.app/support.html |
-| Privacy Policy URL | https://muster-tactics.vercel.app/privacy.html |
-| Marketing URL | https://muster-tactics.vercel.app |
+| Support URL | https://remuster.example/support.html |
+| Privacy Policy URL | https://remuster.example/privacy.html |
+| Marketing URL | https://remuster.example |
 | Export compliance | Handled in the binary: ITSAppUsesNonExemptEncryption = NO in Info.plist, so App Store Connect does not ask. |
 | Release | Automatically release this version after App Review approval |
 
@@ -164,7 +164,7 @@ Contact: Jack Wakem, jackwakem@gmail.com, phone (fill in: your mobile with count
 Notes:
 
 ```
-Muster: Tactics is a single-player strategy game. No account or sign-in, no ads, no tracking. The game itself never uses the network; the only network use is Apple's own purchase sheet (StoreKit 2).
+Remuster is a single-player strategy game. No account or sign-in, no ads, no tracking. The game itself never uses the network; the only network use is Apple's own purchase sheet (StoreKit 2).
 
 Free to play: every campaign act, the Gauntlet, the Daily Challenge, Skirmish (AI Lab) and every Breakpoint puzzle. Nothing is locked behind a purchase; purchases only speed progress up.
 In-app purchases, all consumables: a one-time Starter Pack (co.inflect.muster.starter), sold once per player and hidden after it's bought, with 1,200 gems, 6,000 coins and 142 unit cards; and five gem packs (co.inflect.muster.gems.pouch, .sack, .coffer, .trove, .hoard). Gems are a premium currency spent on coin bundles (troop upgrades) and a once-per-run Gauntlet Rally. Also War Pass Premium (co.inflect.muster.pass), a consumable sold once per 30-day season that adds the season's premium reward track (title screen > War Pass), and four special-offer price tiers (co.inflect.muster.offer.t1-t4) for limited-time bundles whose fixed gems, coins and cards are shown in the Shop with one chest. Every purchase states its contents; the only random part is a chest's contents, and every chest's odds are shown (Odds button) before it is bought or opened. Gems are also earned free by playing. There are no non-consumables, so there is no Restore Purchases button.

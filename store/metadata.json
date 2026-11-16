@@ -11,7 +11,7 @@
     "marketingUrl",
     "reviewContact.email"
   ],
-  "name": "Muster: Tactics",
+  "name": "Remuster",
   "subtitle": "Auto battler army strategy",
   "subtitleAlternatives": [
     "Build. Place. Clash.",
@@ -23,9 +23,9 @@
   "keywords": "turn based,wargame,battle,tactical,fantasy,medieval,knights,soldiers,puzzle,offline,commander,war",
   "whatsNew": "Daily Challenge: a new board every day, the same for every player, with a streak to keep. Free for everyone.\nThree new acts: Act 8, the Saltwind Coast in Act 9 and the Crownfall Citadel finale in Act 10, with eighteen new levels, three new bosses and an ending.\nSeven new units, each with its own Ascended ability, among them three legendaries: the Griffin Knight, the Tidecaller and the Lionheart.\nFree to play: every act, the Gauntlet and every Breakpoint puzzle are open to everyone. Optional purchases (a one-time Starter Pack and gem packs) only speed you up.\nGems: earn them free from three-star clears, bosses, Daily wins and streaks, or buy a pack in the Shop. Spend them on coins for troop upgrades or a Gauntlet Rally.\nSunlit new art across units, arenas and menus.\nWar Pass: a 30-day season of rewards filled by three daily quests and your wins, free for everyone, with an optional Premium track. Special offers rotate in the Shop.",
   "primaryLanguage": "English (U.S.)",
-  "bundleId": "co.inflect.muster",
-  "sku": "co.inflect.muster",
-  "version": "1.1.0",
+  "bundleId": "co.inflect.remuster",
+  "sku": "co.inflect.remuster",
+  "version": "1.0.0",
   "category": {
     "primary": "Games",
     "primarySubcategories": [
@@ -38,9 +38,9 @@
   "price": "Free (USD 0.00), all countries and regions. Free to play, every level open. Optional consumable in-app purchases (a one-time Starter Pack, gem packs, War Pass Premium once per season and special-offer tiers), see store/IAP.md",
   "copyright": "2026 Jack Wakem",
   "contentRights": "No, it does not contain, show, or access third-party content",
-  "supportUrl": "https://muster-tactics.vercel.app/support.html",
-  "privacyPolicyUrl": "https://muster-tactics.vercel.app/privacy.html",
-  "marketingUrl": "https://muster-tactics.vercel.app",
+  "supportUrl": "https://remuster.example/support.html",
+  "privacyPolicyUrl": "https://remuster.example/privacy.html",
+  "marketingUrl": "https://remuster.example",
   "ageRating": {
     "expected": "9+",
     "_note": "App Store Connect > App Information > Age Rating > Edit. Answer every question with None / No except the one below. If Apple shows a question not listed here, the answer for this game is None / No.",
@@ -158,7 +158,7 @@
   "nameOptions": {
     "checkedOn": "2026-11-06",
     "method": "https://itunes.apple.com/search?term=<name>&entity=software in the US, AU and GB storefronts; 'taken' means a live app with exactly that name (case and punctuation ignored). Names reserved in App Store Connect but not yet live cannot be seen this way; App Store Connect confirms when you create the app record.",
-    "chosen": "Muster: Tactics",
+    "chosen": "Remuster",
     "options": [
       {
         "name": "Muster: Tactics",

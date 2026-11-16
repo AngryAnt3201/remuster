@@ -32,8 +32,8 @@ describe("content counts for the store copy", () => {
 });
 
 describe("release 1.1 listing", () => {
-  it("is version 1.1.0 in app.config.json and the synced metadata", () => {
-    expect(app.version).toBe("1.1.0");
+  it("has a release version in app.config.json, matched by the synced metadata", () => {
+    expect(app.version).toMatch(/^\d+\.\d+\.\d+$/);
     expect(meta.version).toBe(app.version);
   });
 

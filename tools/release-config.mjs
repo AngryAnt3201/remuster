@@ -138,7 +138,7 @@ const listed = [meta.promotionalText, fill(meta.description), fill(meta.reviewNo
 const srcText = (() => {
   const walk = (d) => readdirSync(join(root, d), { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(`${d}/${e.name}`) : /\.(ts|js|swift|storekit)$/.test(e.name) ? [`${d}/${e.name}`] : []));
   const skip = /\/(build|public|Pods|\.build|DerivedData|node_modules)\//;
-  return [...walk("src"), ...(existsSync(join(root, "ios")) ? walk("ios").filter((f) => !skip.test(f)) : [])].map(read).join("\n");
+  return [...walk("engine"), ...walk("base/src"), ...(existsSync(join(root, "ios")) ? walk("ios").filter((f) => !skip.test(f)) : [])].map(read).join("\n");
 })();
 const NO_IAP = /no (in-app )?purchases|no in-app purchase/i;
 need(!(iap && NO_IAP.test(listed)), "store copy still says there are no purchases, but metadata.json lists an in-app purchase");
