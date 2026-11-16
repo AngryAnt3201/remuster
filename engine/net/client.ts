@@ -4,6 +4,10 @@
 // The backend is optional. With no API URL configured (VITE_REMUSTER_API unset) `online()` is false, every call
 // resolves to null, and the game plays fully offline exactly as before. Nothing here throws to its caller: a
 // network failure is the same as being offline.
+import { arenaConfig, type ArenaMatch, type ArenaResult, type ArenaSave } from "../core/arena";
+import type { UnitKind } from "../core/defs";
+import type { MatchRecord } from "../core/ghost";
+import type { Levels } from "../core/levels";
 
 const TOKEN_KEY = "remuster.player.v1";
 export interface Player { id: string; name: string; token: string; }
@@ -106,6 +110,34 @@ export async function reportGame(id: string, reason: string) { return (await cal
 export async function leaderboard(limit = 50): Promise<LadderRow[]> {
   return (await call<{ top: LadderRow[] }>("GET", `/v1/arena/leaderboard?limit=${limit}`, { auth: false })).data?.top ?? [];
 }
+
+// ---------------------------------------------------------------- Arena matches (server-authoritative ladder)
+/** What the player brings to a match (engine/progression/troops.ts arenaLoadout()). The server clamps it. */
+export interface ArenaLoadout { levels?: Levels; roster?: UnitKind[]; hp?: number; }
+/** A match the server issued: its id, its seed and arena, the player's ladder as the server holds it, and the
+ * loadout as the server accepted it. */
+export interface ArenaTicket { id: string; seed: number; arena: string; save: ArenaSave; levels?: Levels; roster?: UnitKind[]; hp: number; }
+export interface ArenaSettled { result: ArenaResult; save: ArenaSave; }
+/** How a result call went. `retry` is true when the server never judged it (unreachable, busy, 5xx): send it again later. */
+export interface ArenaFinish { settled: ArenaSettled | null; retry: boolean; error?: string; }
+
+/** The match the server will rebuild for this ticket. */
+export const ticketMatch = (t: ArenaTicket): ArenaMatch => arenaConfig(t.save, { seed: t.seed, arena: t.arena, levels: t.levels, roster: t.roster, hp: t.hp });
+
+/** Ask the server for the player's next Arena match (the open one again, if there is one). Null when offline. */
+export async function arenaStart(loadout: ArenaLoadout = {}): Promise<ArenaTicket | null> {
+  const r = await call<ArenaTicket>("POST", "/v1/arena/match", { body: loadout });
+  return r.ok && r.data && typeof r.data.id === "string" && r.data.save ? r.data : null;
+}
+async function settle(body: unknown): Promise<ArenaFinish> {
+  const r = await call<ArenaSettled>("POST", "/v1/arena/result", { body });
+  if (r.ok && r.data?.result && r.data.save) return { settled: r.data, retry: false };
+  return { settled: null, retry: r.status === 0 || r.status === 429 || r.status >= 500, error: r.error };
+}
+/** Send a finished match's record (encodeRecord(match)). The server replays it and answers with the result it found. */
+export const arenaFinish = (id: string, record: MatchRecord) => settle({ id, record });
+/** Give up an issued match: it counts as a loss. */
+export const arenaForfeit = (id: string) => settle({ id, forfeit: true });
 
 // ---------------------------------------------------------------- analytics
 const queue: { name: string; props?: unknown; at: number }[] = [];

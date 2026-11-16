@@ -220,14 +220,14 @@ export function arenaRoster(): UnitKind[] {
  * MatchConfig carrying the player's troop levels, units (deck) and keep health. Read-only: call it again and the same
  * match comes back until awardArena() records a result. `seed` re-rolls the opponent and shops; `arena` forces a map.
  */
-export function nextArenaMatch(o: { seed?: number; arena?: string } = {}): ArenaMatch {
+/** What the player brings to an Arena match: troop levels, units (deck) and keep health. The backend is sent this when
+ * it issues a match (engine/net/client.ts arenaStart). */
+export function arenaLoadout(): { levels?: Levels; roster: UnitKind[]; hp: number } {
   const lv = prog().levels;
-  return arenaConfig(ladder(), {
-    ...o,
-    levels: Object.keys(lv).length ? { ...lv } : undefined,
-    roster: arenaRoster(),
-    hp: START_HP + keepBonus(commander()),
-  });
+  return { levels: Object.keys(lv).length ? { ...lv } : undefined, roster: arenaRoster(), hp: START_HP + keepBonus(commander()) };
+}
+export function nextArenaMatch(o: { seed?: number; arena?: string } = {}): ArenaMatch {
+  return arenaConfig(ladder(), { ...o, ...arenaLoadout() });
 }
 export interface ArenaAward {
   /** Coins paid (line items in `parts`), commander XP, and `capTo` when the commander levelled up. */
@@ -237,23 +237,49 @@ export interface ArenaAward {
   /** The chest a win dropped (null on a loss): show it as the other modes do. Do not call winChest() again. */
   chest: WinResult | null;
 }
+/** Pays what an Arena result earns: coins through the wallet (capped per day, counting `earnedToday`), commander XP,
+ * and on a win a chest. Never touches the trophies. */
+function payArena(arenaId: string, result: ArenaResult, earnedToday: number, day: string): ArenaAward {
+  const parts = arenaCoins(result, earnedToday);
+  const coins = parts.reduce((n, [, c]) => n + c, 0);
+  const r = pay({ coins, parts }, `arena ${arenaId}`);
+  // Promotion coins are a one-off and sit outside the daily cap.
+  const capped = parts.filter(([label]) => !label.endsWith("reached")).reduce((n, [, c]) => n + c, 0);
+  if (capped > 0) save((s) => { s.arena = normalizeArena(s.arena); s.arena.day = { day, coins: earnedToday + capped }; });
+  return { reward: result.won ? withXp(r, WIN_XP.arena) : r, result, chest: result.won ? winChest(ARENA_CROWNS) : null };
+}
+const arenaEarned = (day: string) => { const d = ladder().day; return d?.day === day ? d.coins : 0; };
 /**
  * Call once when an Arena match ends (`won` = match.winner === 0). Records the result on the ladder in the save, pays
  * the coins through the wallet (capped per day) and commander XP, and on a win drops a chest through winChest().
  */
 export function awardArena(match: Pick<ArenaMatch, "arena">, won: boolean, now = new Date()): ArenaAward {
-  const day = dateKey(now);
-  const before = ladder();
-  const earnedToday = before.day?.day === day ? before.day.coins : 0;
+  const day = dateKey(now), earnedToday = arenaEarned(day);
   let result!: ArenaResult;
   save((s) => { s.arena = normalizeArena(s.arena); result = finishArena(s.arena, match.arena.id, won); });
-  const parts = arenaCoins(result, earnedToday);
-  const coins = parts.reduce((n, [, c]) => n + c, 0);
-  const r = pay({ coins, parts }, `arena ${match.arena.id}`);
-  // Promotion coins are a one-off and sit outside the daily cap.
-  const capped = parts.filter(([label]) => !label.endsWith("reached")).reduce((n, [, c]) => n + c, 0);
-  if (capped > 0) save((s) => { s.arena = normalizeArena(s.arena); s.arena.day = { day, coins: earnedToday + capped }; });
-  return { reward: won ? withXp(r, WIN_XP.arena) : r, result, chest: won ? winChest(ARENA_CROWNS) : null };
+  return payArena(match.arena.id, result, earnedToday, day);
+}
+/**
+ * The backend's ladder for this player, written over the one in the save (the server is the authority when there is
+ * one). The day's coin count is the device's own and is kept.
+ */
+export function setArenaLadder(server: Partial<ArenaSave>): Readonly<ArenaSave> {
+  save((s) => {
+    const day = normalizeArena(s.arena).day;
+    const next = normalizeArena(server);
+    delete next.day;
+    s.arena = { ...next, ...(day ? { day } : {}) };
+  });
+  return ladder();
+}
+/**
+ * awardArena for a match the backend settled: pays the coins, XP and chest for `result` (the ArenaResult the server
+ * returned) and leaves the trophies alone, because the server already moved them and setArenaLadder() has written its
+ * ladder into the save. Call once per match, instead of awardArena, never as well as it.
+ */
+export function settleArena(match: Pick<ArenaMatch, "arena">, result: ArenaResult, now = new Date()): ArenaAward {
+  const day = dateKey(now);
+  return payArena(match.arena.id, result, arenaEarned(day), day);
 }
 
 /** The army's level for a roster: the average level of its best 8 found units (the "under-levelled" check). */

@@ -10,7 +10,7 @@ import { Match } from "../engine/core/match";
 import { Nav } from "../engine/core/nav";
 import { footprint, freeSpotIn, spotBlocked } from "../engine/core/placement";
 import { blockBottom, blockLeft, blockRight, blockTop, circleHitsBlock } from "../engine/core/terrain";
-import { arenaLadder, awardArena, nextArenaMatch } from "../engine/progression/troops";
+import { arenaLadder, arenaLoadout, arenaRoster, awardArena, nextArenaMatch, setArenaLadder, settleArena } from "../engine/progression/troops";
 import { wallet } from "../engine/economy/wallet";
 import { load, resetSave } from "../engine/save";
 
@@ -305,5 +305,33 @@ describe("arena on the device save", () => {
     for (let i = 0; i < 12; i++) total += awardArena(nextArenaMatch(), true, new Date(2026, 0, 5)).reward.parts.filter(([l]) => !l.endsWith("reached")).reduce((n, [, c]) => n + c, 0);
     expect(total).toBe(ARENA_DAILY_CAP);
     expect(awardArena(nextArenaMatch(), true, new Date(2026, 0, 6)).reward.coins).toBeGreaterThan(0);
+  });
+  it("settleArena pays for a result the server settled without moving the trophies again", () => {
+    const match = nextArenaMatch();
+    expect(arenaLoadout()).toEqual({ levels: undefined, roster: arenaRoster(), hp: START_HP });
+    expect(arenaConfig(arenaLadder(), arenaLoadout()).cfg).toEqual(match.cfg);
+    // The server's verdict: its ladder after a win, and the result finishArena gave it.
+    const server = blankArena();
+    const result = finishArena(server, match.arena.id, true);
+    const coins = wallet().coins;
+    expect(setArenaLadder(server)).toMatchObject({ trophies: 30, wins: 1, played: 1, streak: 1 });
+    const end = settleArena(match, result, new Date(2026, 0, 5));
+    expect(end.result).toBe(result);
+    expect(end.reward).toMatchObject({ coins: 40, xp: 5 });
+    expect(end.chest).not.toBeNull();
+    expect(wallet().coins).toBe(coins + 40);
+    expect(arenaLadder()).toMatchObject({ trophies: 30, wins: 1, played: 1, streak: 1, day: { day: "2026-01-05", coins: 40 } });
+    // The same pay as awardArena gives for the same result, and the daily cap counts both.
+    const local = awardArena(nextArenaMatch(), true, new Date(2026, 0, 5));
+    expect(local.result).toMatchObject({ delta: 32, trophies: 62, streak: 2 });
+    expect(arenaLadder().day).toEqual({ day: "2026-01-05", coins: 40 + local.reward.coins });
+    // A server ladder written in keeps the device's coin count for the day and drops junk.
+    expect(setArenaLadder({ trophies: 22, best: 62, wins: 2, losses: 1, played: 3, streak: 0, bestStreak: 2, arenaWins: { nope: 4 }, day: { day: "1999-01-01", coins: 9 } })).toEqual(
+      { trophies: 22, best: 62, wins: 2, losses: 1, played: 3, streak: 0, bestStreak: 2, arenaWins: {}, day: { day: "2026-01-05", coins: 40 + local.reward.coins } });
+    // A settled loss pays nothing and drops no chest.
+    const lost = settleArena(match, finishArena(blankArena(), match.arena.id, false), new Date(2026, 0, 5));
+    expect(lost.reward.coins).toBe(0);
+    expect(lost.chest).toBeNull();
+    expect(arenaLadder().trophies).toBe(22);
   });
 });

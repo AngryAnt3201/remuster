@@ -74,6 +74,9 @@ export class Match {
   readonly sides: [SideState, SideState];
   readonly cfg: MatchConfig;
   readonly history: RoundReport[] = [];
+  /** What each round's battle was fought with: both sides' pieces as passed to the battle, one entry per round
+   * (engine/core/ghost.ts turns this into the record the backend replays). */
+  readonly log: { round: number; pieces: Piece[] }[] = [];
   private shopRng: [Rng, Rng];
   private nextPiece = 1;
 
@@ -259,6 +262,9 @@ export class Match {
   makeBattle(events = true): Battle {
     this.phase = "battle";
     const pieces = [...this.sides[0].pieces, ...this.sides[1].pieces].map((p) => ({ ...p }));
+    const entry = { round: this.round, pieces: pieces.map((p) => ({ ...p })) };
+    if (this.log.length && this.log[this.log.length - 1].round === this.round) this.log[this.log.length - 1] = entry;
+    else this.log.push(entry);
     return new Battle(pieces, {
       seed: this.battleSeed(),
       obstacles: this.cfg.obstacles,
