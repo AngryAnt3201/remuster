@@ -228,6 +228,32 @@ describe("navigation", () => {
     expect(nav.pts[nav.np * 2 - 1]).toBeGreaterThan(7.25);
     expect(nav.pts[nav.np * 2 - 1]).toBeLessThan(8);
   });
+  it("routes are fair: side 1's route is the exact mirror image of side 0's on every arena", () => {
+    const rng = new Rng(5);
+    let routes = 0;
+    for (const a of ARENAS) {
+      const nav = new Nav(a.blocks);
+      for (let i = 0; i < 12; i++) {
+        const x0 = rng.range(0.8, W - 0.8), y0 = rng.range(8, 13), x1 = rng.range(0.8, W - 0.8), y1 = rng.range(1, 6);
+        const rad = [0.15, 0.25, 0.36, 0.55][i % 4], pen = i % 3 === 0 ? 1 / 32 : 0;
+        if (nav.hitsGround(x0, y0, rad + 0.2) || nav.hitsGround(x1, y1, rad + 0.2)) continue;
+        const ok = nav.path(x0, y0, x1, y1, rad, pen);
+        const mine = { ok, pts: nav.pts.slice(0, nav.np * 2), breach: nav.breach >= 0 ? nav.blocks[nav.breach] : null, partial: nav.partial };
+        const ok2 = nav.path(W - x0, H - y0, W - x1, H - y1, rad, pen, true);
+        expect(ok2).toBe(ok);
+        expect(nav.partial).toBe(mine.partial);
+        expect(nav.np * 2).toBe(mine.pts.length);
+        for (let k = 0; k < mine.pts.length; k += 2) {
+          expect(nav.pts[k]).toBeCloseTo(W - mine.pts[k], 6);
+          expect(nav.pts[k + 1]).toBeCloseTo(H - mine.pts[k + 1], 6);
+        }
+        if (mine.breach) expect(nav.blocks[nav.breach]).toMatchObject({ x: expect.closeTo(W - mine.breach.x, 6), y: expect.closeTo(H - mine.breach.y, 6) });
+        else expect(nav.breach).toBe(-1);
+        routes++;
+      }
+    }
+    expect(routes).toBeGreaterThan(80);
+  });
   it("gaps: open to a body that fits, closed to one that does not", () => {
     const gate = [rect(1, "wall", 0, 6.75, 4, 7.25), rect(2, "wall", 5, 6.75, 9, 7.25)]; // a gate 1.0 wide
     const nav = new Nav(gate);

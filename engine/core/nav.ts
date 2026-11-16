@@ -342,15 +342,15 @@ export class Nav {
     return cy * NX + cx;
   }
   /** The open cell nearest (x, y) within `rings` cells; `softOk` also takes cells only a breakable block closes. */
-  private cellNear(x: number, y: number, rr: number, rings: number, softOk: boolean): number {
+  private cellNear(x: number, y: number, rr: number, rings: number, softOk: boolean, flip = false): number {
     const c0 = this.cellOf(x, y), cx0 = c0 % NX, cy0 = (c0 - cx0) / NX;
     const open = (c: number) => this.hard[c] >= rr && (softOk || this.soft[c] >= rr);
     if (open(c0)) return c0;
     for (let k = 1; k <= rings; k++) {
       let best = -1, bd = Infinity;
-      for (let dy = -k; dy <= k; dy++) for (let dx = -k; dx <= k; dx++) {
-        if (Math.max(Math.abs(dx), Math.abs(dy)) !== k) continue;
-        const cx = cx0 + dx, cy = cy0 + dy;
+      for (let iy = -k; iy <= k; iy++) for (let ix = -k; ix <= k; ix++) {
+        if (Math.max(Math.abs(ix), Math.abs(iy)) !== k) continue;
+        const cx = cx0 + (flip ? -ix : ix), cy = cy0 + (flip ? -iy : iy);
         if (cx < 0 || cy < 0 || cx >= NX || cy >= NY) continue;
         const c = cy * NX + cx;
         if (!open(c)) continue;
@@ -396,13 +396,15 @@ export class Nav {
    * costs, in world units of walking per point of the block's health (0 = never break through): when the cheapest
    * route crosses one, the route stops in front of it and `breach` names it. `partial` is set when the goal can't be
    * reached and the route leads to the nearest point that can. Returns false when the body has nowhere to go.
+   * `flip` runs the search turned half round (pass it for side 1), so on a symmetric arena the two sides' routes are
+   * exact mirror images and ties between equal routes favour neither.
    */
-  path(x0: number, y0: number, x1: number, y1: number, rad: number, pen: number): boolean {
+  path(x0: number, y0: number, x1: number, y1: number, rad: number, pen: number, flip = false): boolean {
     const rr = rad - NAV_TOL, hard = this.hard, soft = this.soft;
     this.np = 0; this.breach = -1; this.partial = false;
-    const s = this.cellNear(x0, y0, rr, 4, false);
+    const s = this.cellNear(x0, y0, rr, 4, false, flip);
     if (s < 0) return false;
-    let g = this.cellNear(x1, y1, rr, 8, pen > 0);
+    let g = this.cellNear(x1, y1, rr, 8, pen > 0, flip);
     if (g < 0) g = this.cellOf(x1, y1);
     const gx = g % NX, gy = (g - gx) / NX;
     const stamp = ++this.stamp, gs = this.gs, par = this.par, seen = this.seen, closed = this.closed;
@@ -422,8 +424,9 @@ export class Nav {
       const hc = h(c);
       if (hc < bh) { bh = hc; best = c; }
       const cx = c % NX, cy = (c - cx) / NX, cSoft = soft[c] < rr;
-      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-        if (!dx && !dy) continue;
+      for (let iy = -1; iy <= 1; iy++) for (let ix = -1; ix <= 1; ix++) {
+        if (!ix && !iy) continue;
+        const dx = flip ? -ix : ix, dy = flip ? -iy : iy;
         const nx = cx + dx, ny = cy + dy;
         if (nx < 0 || ny < 0 || nx >= NX || ny >= NY) continue;
         const n = ny * NX + nx;

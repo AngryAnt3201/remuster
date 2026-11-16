@@ -800,7 +800,7 @@ export class Battle {
     if (stale && now - rt.at >= 0.25) {
       const pen = !isMeleeKind(b.kind) || b.baseDmg <= 0 ? 0 : b.kind === "golem" || b.kind === "keg" ? SIEGE_PEN : BREACH_PEN;
       rt.at = now; rt.ver = nav.ver; rt.gx = gx; rt.gy = gy; rt.i = 0;
-      rt.live = nav.path(b.x, b.y, gx, gy, b.radius, pen);
+      rt.live = nav.path(b.x, b.y, gx, gy, b.radius, pen, b.side === 1);
       rt.n = nav.np; rt.breach = nav.breach; rt.partial = nav.partial;
       for (let i = 0; i < rt.n * 2; i++) pts[i] = nav.pts[i];
     }

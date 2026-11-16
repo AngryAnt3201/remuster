@@ -31,8 +31,8 @@ interface Result extends Task {
 }
 
 const DIFF = Number(process.env.DIFF ?? 0.6);
-/** Bodies that hang back by design: one of these left alive is not a standoff. */
-const SUPPORT = new Set<string>(["medic", "banner", "tinker", "lamp", "grave", "decoy"]);
+/** Bodies that hang back by design, or that a fixed Hive or a Gravecaller keeps sending: one left alive is not a standoff. */
+const SUPPORT = new Set<string>(["medic", "banner", "tinker", "lamp", "grave", "decoy", "mite", "queen", "thrall"]);
 function profile(seed: number, k: number): AIProfile {
   const rng = new Rng(hashSeed("arena-balance", seed, k));
   return { difficulty: DIFF, tactic: TACTICS[rng.int(0, TACTICS.length - 1)], aggression: rng.range(0.25, 0.8), economy: rng.range(0.2, 0.5), spread: rng.range(0.4, 0.8), rerolls: 1 };

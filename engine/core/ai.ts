@@ -221,6 +221,10 @@ const BAND: Record<Role, number> = {
 /** Lays the whole army out in side-local terms, then converts to the board. In an arena (`terrain`) every piece ends
  * on free ground: anything the layout put on a block moves to the nearest free spot in the zone. */
 export function formation(side: Side, pieces: Piece[], theirs: Piece[], ai: AIProfile, rng: Rng, jitter: number, terrain?: Block[]): { id: number; x: number; y: number }[] {
+  // Arenas are symmetric under a half turn, so there side 1 lays out the mirror image of what side 0 would (its left is
+  // the board's right). On an open field both sides use the board's x as before.
+  const turn = !!terrain?.length && side === 1;
+  if (turn) theirs = theirs.map((p) => ({ ...p, x: W - p.x }));
   const front = ZONE_DEPTH * (0.42 + 0.5 * ai.aggression);
   const span = 2.2 + ai.spread * 5.4;
   // Lean toward the side of the board where they are thinner, if it is aggressive and sharp.
@@ -289,6 +293,7 @@ export function formation(side: Side, pieces: Piece[], theirs: Piece[], ai: AIPr
     }
   }
   if (terrain?.length) for (const o of out) {
+    if (turn) o.x = W - o.x;
     const p = pieces.find((q) => q.id === o.id)!;
     const c = freeSpotIn(terrain, side, p.kind, o.x, o.y);
     if (c) { o.x = c.x; o.y = c.y; }

@@ -133,7 +133,7 @@ export const ARENAS: ArenaDef[] = [
   },
   {
     id: "the-fens", name: "The Fens", league: 3,
-    blurb: "Ponds everywhere. Shots fly over the water; the ground between is narrow.",
+    blurb: "Ponds break up the ground. Shots fly over the water; boots go round.",
     blocks: layout(
       [r("water", "pond", 1.25, 9.25, 2.75, 10.5), r("water", "pond", 6.25, 9.0, 7.75, 10.0)],
       [r("water", "pond", 3.5, 6.25, 5.5, 7.75)],
