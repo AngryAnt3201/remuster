@@ -17,3 +17,8 @@ infra/.local
 infra/.secrets.local
 infra/wrangler.toml
 .env.production
+video/out
+video/public/clips
+video/public/vo
+video/public/fonts
+video/src/clips.json
