@@ -326,7 +326,7 @@ export const hook: UnitDef = {
     // woolly chaps: tufts down the legs
     m.at(h.hips, () => { m.group(() => { for (const s of [1, -1]) for (const z of [-0.02, -0.1]) m.sphere([0.03, s * 0.13, z], 0.085, P.fur, { segs: 7 }); }); m.decal(0.02, () => m.torus([0, 0, 0.08], [0.1, 0, 1], 0.2, 0.03, P.hideDk, { segs: 12 })); m.decal(0.035, () => m.box([0.2, 0, 0.08], [0.02, 0.08, 0.06], trim2(t))); });
     m.at(h.chest, () => { m.decal(0.015, () => m.group(() => { for (const s of [1, -1]) m.ellipsoid([0.02, s * 0.12, 0.0], [0.15, 0.09, 0.17], P.hideDk, { segs: 8 }); })); neckerchief(m, P.canvas, 1.26); });
-    m.at(h.head, () => { stetson(m, 0.19, t >= 3 ? P.hideLt : P.hide, P.team, { brim: 1.85, h: 1.05 }); moustache(m, 0.19, P.hair, 0.6); halo(m, p, 0.54); });
+    m.at(h.head, () => { stetson(m, 0.19, t >= 3 ? P.hideLt : P.hide, P.team, { brim: 1.6, h: 1.1 }); moustache(m, 0.19, P.hair, 0.6); halo(m, p, 0.54); });
     // the coil on the hip and the loop
     m.at(h.hips, () => m.torus([0, -0.2, 0.0], [0, 1, 0.2], 0.085, 0.022, P.rawhide, { segs: 10 }));
     const out = Math.max(0, Math.min(1.1, p.blend)), far = p.is("cast") ? 0.95 : 0.62;
@@ -585,8 +585,8 @@ export const keg: UnitDef = {
   weight: "light",
   build(m, p) {
     const t = p.tier;
-    const R = p.mix<V3>([0.1, 0.15, 0.64], [0.36, 0.13, 0.36], { wind: [0.0, 0.15, 0.7] });
-    const L = p.mix<V3>([0.1, -0.15, 0.64], [0.36, -0.13, 0.36], { wind: [0.0, -0.15, 0.7] });
+    const R = p.mix<V3>([0.04, 0.17, 0.76], [0.4, 0.15, 0.36], { wind: [-0.02, 0.17, 0.78] });
+    const L = p.mix<V3>([0.04, -0.17, 0.76], [0.4, -0.15, 0.36], { wind: [-0.02, -0.17, 0.78] });
     const h = poke(m, p, { weight: "light", size: 0.9, bulk: 0.95, handR: R, handL: L, lean: 22, lunge: 1.2, torso: P.team, arms: P.canvas, legs: P.wool, hands: P.skin });
     braces(m, h, P.hideDk, 0.95);
     m.at(h.head, () => {
@@ -594,16 +594,17 @@ export const keg: UnitDef = {
       m.decal(0.02, () => m.group(() => { for (const s of [1, -1]) m.sphere([0.15, s * 0.1, -0.06], 0.018, P.hairRed, { segs: 4 }); }));
     });
     if (p.after) return void puff(m, h.pt([0.4, 0, 0.3]), 0.16, p.hit ? 0.2 : 0.7, P.smokeDk, 3);
-    const mid: V3 = [(h.pR[0] + h.pL[0]) / 2, (h.pR[1] + h.pL[1]) / 2, (h.pR[2] + h.pL[2]) / 2];
-    m.at(frameAt(mid, h.dir([0, 1, 0]), h.dir([0.25, 0, 1])), () => {
-      const r = 0.15 + 0.008 * t, len = 0.3 + 0.01 * t;
-      m.rotY(-90); m.move(0, 0, -len / 2);
-      powderKeg(m, r, len, P.wood, t >= 3 ? trim(t) : P.ironDk);
-      m.decal(0.012, () => m.cylinder([0, 0, len * 0.27], [0, 0, len * 0.73], r * 1.01, P.team, r * 1.01, { segs: 12 }));
-      m.decal(0.02, () => m.cylinder([0, 0, len * 0.44], [0, 0, len * 0.56], r * 1.015, P.red, r * 1.015, { segs: 12 }));
-      m.tube([[0, 0, len], [0.02, 0.02, len + 0.05], [0.05, 0, len + 0.08]], 0.009, P.feltDk, { segs: 4 });
-      m.sphere([0.05, 0, len + 0.09], 0.03 + 0.012 * (p.i % 2), t >= 4 ? P.gloryInk : P.fire, { segs: 6 });
-      m.decal(0.03, () => m.sphere([0.05, 0, len + 0.09], 0.015, P.spark, { segs: 5 }));
+    // the keg rides on his head, lying across; it comes down in front of him for the blow
+    const at = h.pt(p.mix<V3>([0.03, 0, 0.93], [0.42, 0, 0.36], { wind: [-0.03, 0, 0.99] }));
+    m.at(frameAt(at, h.dir([0, 1, 0])), () => {
+      const r = 0.16 + 0.008 * t, len = 0.38 + 0.01 * t, hoop = t >= 3 ? trim(t) : P.ironDk;
+      m.group(() => { m.cylinder([-len / 2, 0, 0], [0, 0, 0], r * 0.8, P.wood, r, { segs: 12 }); m.cylinder([0, 0, 0], [len / 2, 0, 0], r, P.wood, r * 0.8, { segs: 12 }); });
+      for (const x of [-len * 0.36, len * 0.36]) m.torus([x, 0, 0], [1, 0, 0], r * 0.86, r * 0.09, hoop, { segs: 14 });
+      m.torus([0, 0, 0], [1, 0, 0], r * 0.98, r * 0.16, P.team, { segs: 14 });
+      m.decal(0.02, () => { for (const s of [1, -1]) m.cylinder([s * len / 2 - 0.004, 0, 0], [s * len / 2 + 0.004, 0, 0], r * 0.6, P.red, r * 0.6, { segs: 10 }); });
+      m.tube([[0, 0, r * 0.95], [0.02, 0.02, r + 0.05], [0.05, 0, r + 0.08]], 0.009, P.feltDk, { segs: 4 });
+      m.sphere([0.05, 0, r + 0.09], 0.03 + 0.012 * (p.i % 2), t >= 4 ? P.gloryInk : P.fire, { segs: 6 });
+      m.decal(0.03, () => m.sphere([0.05, 0, r + 0.09], 0.015, P.spark, { segs: 5 }));
     });
   },
 };

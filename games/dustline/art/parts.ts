@@ -77,7 +77,8 @@ export function stetson(m: Model, r: number, body: Material = P.hide, band: Mate
       m.cylinder([0, 0, r * 0.06], [0, 0, h], r * 0.82, body, r * 0.66, { segs: 12 });
       m.ellipsoid([0, 0, h], [r * 0.66, r * 0.5, r * 0.14], body, { segs: 10 });
     });
-    m.cylinder([0, 0, r * 0.09], [0, 0, r * 0.3], r * 0.85, band, r * 0.8, { segs: 12 });
+    m.cylinder([0, 0, r * 0.09], [0, 0, r * 0.5], r * 0.86, band, r * 0.775, { segs: 12 });
+    m.decal(0.004, () => m.torus([0, 0, r * 0.1], [0, 0, 1], b * 0.97, r * 0.08, band, { segs: 18 }));
   });
 }
 /** A sombrero: a very wide dished brim and a tall cone crown. */
@@ -89,7 +90,7 @@ export function sombrero(m: Model, r: number, body: Material = P.straw, band: Ma
       m.cylinder([0, 0, r * 0.06], [0, 0, r * 0.95], r * 0.74, body, r * 0.36, { segs: 12 });
       m.sphere([0, 0, r * 0.95], r * 0.36, body, { segs: 8 });
     });
-    m.cylinder([0, 0, r * 0.1], [0, 0, r * 0.34], r * 0.77, band, r * 0.66, { segs: 12 });
+    m.cylinder([0, 0, r * 0.1], [0, 0, r * 0.5], r * 0.78, band, r * 0.6, { segs: 12 });
     m.decal(0.01, () => m.torus([0, 0, r * 0.215], [0, 0, 1], r * wide * 0.97, r * 0.05, band, { segs: 18 }));
   });
 }
@@ -98,7 +99,8 @@ export function flatHat(m: Model, r: number, body: Material = P.black, band: Mat
   m.with(() => {
     m.move(-r * 0.04, 0, r * 0.55).rotY(-5);
     m.group(() => { m.cylinder([0, 0, 0], [0, 0, r * 0.08], r * brim, body, r * brim, { segs: 14 }); m.cylinder([0, 0, r * 0.06], [0, 0, r * 0.62], r * 0.8, body, r * 0.78, { segs: 12 }); });
-    m.cylinder([0, 0, r * 0.08], [0, 0, r * 0.28], r * 0.83, band, r * 0.82, { segs: 12 });
+    m.cylinder([0, 0, r * 0.08], [0, 0, r * 0.42], r * 0.84, band, r * 0.825, { segs: 12 });
+    m.decal(0.004, () => m.torus([0, 0, r * 0.06], [0, 0, 1], r * brim * 0.98, r * 0.075, band, { segs: 18 }));
   });
 }
 /** A derby (bowler): round crown, short curled brim. */
@@ -106,7 +108,8 @@ export function derby(m: Model, r: number, body: Material = P.feltDk, band: Mate
   m.with(() => {
     m.move(-r * 0.05, 0, r * 0.55).rotY(-6);
     m.group(() => { m.cylinder([0, 0, 0], [0, 0, r * 0.1], r * 1.18, body, r * 1.26, { segs: 12 }); m.ellipsoid([0, 0, r * 0.12], [r * 0.82, r * 0.82, r * 0.72], body); });
-    m.cylinder([0, 0, r * 0.1], [0, 0, r * 0.27], r * 0.86, band, r * 0.85, { segs: 12 });
+    m.cylinder([0, 0, r * 0.1], [0, 0, r * 0.4], r * 0.87, band, r * 0.84, { segs: 12 });
+    m.decal(0.004, () => m.torus([0, 0, r * 0.1], [0, 0, 1], r * 1.24, r * 0.075, band, { segs: 16 }));
   });
 }
 /** A tall stovepipe hat. */
@@ -114,7 +117,8 @@ export function stovepipe(m: Model, r: number, h: number, body: Material = P.bla
   m.with(() => {
     m.move(-r * 0.05, 0, r * 0.6).rotY(-6);
     m.group(() => { m.cylinder([0, 0, 0], [0, 0, r * 0.09], r * 1.3, body, r * 1.3, { segs: 12 }); m.cylinder([0, 0, r * 0.07], [0, 0, h], r * 0.74, body, r * 0.82, { segs: 12 }); });
-    m.cylinder([0, 0, r * 0.09], [0, 0, r * 0.3], r * 0.77, band, r * 0.775, { segs: 12 });
+    m.cylinder([0, 0, r * 0.09], [0, 0, r * 0.42], r * 0.775, band, r * 0.785, { segs: 12 });
+    m.decal(0.004, () => m.torus([0, 0, r * 0.08], [0, 0, 1], r * 1.28, r * 0.07, band, { segs: 16 }));
     if (stripes) m.decal(0.006, () => m.group(() => { for (let z = r * 0.5; z < h - r * 0.1; z += r * 0.42) m.cylinder([0, 0, z], [0, 0, z + r * 0.2], r * (0.745 + 0.08 * (z / h)), stripes, r * (0.745 + 0.08 * ((z + r * 0.2) / h)), { segs: 12 }); }));
   });
 }
@@ -131,7 +135,8 @@ export function strawHat(m: Model, r: number, band: Material = P.team, wide = 1.
   m.with(() => {
     m.move(-r * 0.04, 0, r * 0.52).rotY(-5);
     m.group(() => { m.cylinder([0, 0, r * 0.06], [0, 0, 0], r * wide * 0.92, P.straw, r * wide, { segs: 14 }); m.ellipsoid([0, 0, r * 0.1], [r * 0.82, r * 0.82, r * 0.6], P.straw); });
-    m.cylinder([0, 0, r * 0.08], [0, 0, r * 0.26], r * 0.86, band, r * 0.84, { segs: 12 });
+    m.cylinder([0, 0, r * 0.08], [0, 0, r * 0.4], r * 0.87, band, r * 0.83, { segs: 12 });
+    m.decal(0.004, () => m.torus([0, 0, r * 0.04], [0, 0, 1], r * wide * 0.98, r * 0.075, band, { segs: 18 }));
     m.decal(0.006, () => m.torus([0, 0, r * 0.03], [0, 0, 1], r * wide * 0.72, r * 0.03, P.strawDk, { segs: 16 }));
   });
 }

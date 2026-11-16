@@ -17,7 +17,7 @@ const art: GameArt = {
   style: STYLE,
   teams: TEAMS,
   units: pick({ ...foot, ...other }),
-  atlas: { ppu: 112, colors: 56 },
+  atlas: { ppu: 104, colors: 56 },
   arenas: ARENAS,
   keeps: KEEPS,
   vfx: VFX,

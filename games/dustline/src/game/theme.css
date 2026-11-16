@@ -388,7 +388,7 @@ html, body { background: #3a2210; }
 /* ---------------------------------------------------------------- the posse: posters by rarity (newsprint, red ink, purple ink, gold leaf) */
 :root .ar-army { --r-common: #b9a57c; --r-common-d: #6e5a3a; --r-rare: #c2553a; --r-rare-d: #7a2018; --r-epic: #7a5aa8; --r-epic-d: #46305f; --r-legendary: #f2b632; --r-legendary-d: #9a6a12; }
 :root .ar-tile { box-shadow: inset 0 0 0 2px var(--rd), 2px 3px 0 rgba(30, 12, 0, 0.5); }
-:root .ar-name { font-size: 12px; letter-spacing: -0.01em; }
+:root .ar-name { font-size: 10.5px; letter-spacing: -0.02em; text-overflow: clip; }
 :root .ar-lv { border-radius: 2px; background: var(--rd); transform: translateX(-50%) rotate(-3deg); }
 :root .ar-cmd-lv { clip-path: polygon(50% 0, 62% 26%, 93% 25%, 76% 50%, 93% 75%, 62% 74%, 50% 100%, 38% 74%, 7% 75%, 24% 50%, 7% 25%, 38% 26%); background: linear-gradient(135deg, #ffe08a, #e2a93b 50%, #b8741a); color: #2a1608; text-shadow: 0 1px 0 rgba(255, 240, 190, 0.8); width: 62px; height: 62px; box-shadow: none; border: 0; }
 :root .ar-cmd-lv small { font-size: 8px; }
@@ -402,3 +402,26 @@ html, body { background: #3a2210; }
 /* ---------------------------------------------------------------- the rail stands on a dark sill, so screens do not show through it */
 :root .tb-bar.dl-rail { background: linear-gradient(rgba(36, 18, 6, 0) 0 8px, #3a2210 8px, #2c1808); }
 :root .tb-bar.dl-rail::before { content: ""; position: absolute; left: 0; right: 0; top: -18px; height: 26px; background: linear-gradient(rgba(36, 18, 6, 0), rgba(36, 18, 6, 0.6)); pointer-events: none; }
+
+/* ---------------------------------------------------------------- strongboxes: square iron-bound boxes, not candy chests */
+:root .ch-art svg rect { rx: 1px; }
+:root .ch-art .ch-body rect:nth-of-type(2), :root .ch-art .ch-lid path:nth-of-type(2) { fill: var(--ch-b); }
+:root .ch-art .ch-body rect:nth-of-type(n+4), :root .ch-art .ch-lid rect { fill: var(--ch-k); }
+:root .ch-art .ch-body rect:nth-of-type(1), :root .ch-art .ch-lid path:nth-of-type(1), :root .ch-art .ch-lid circle { fill: #2a1608; }
+:root .ch-art .ch-lid path:nth-of-type(3) { stroke: rgba(255, 240, 200, 0.4); }
+:root .ch-wood { --ch-b: #b98a55; --ch-k: #5f3d20; } :root .ch-iron { --ch-b: #5a6068; --ch-k: #2c3038; } :root .ch-gilded { --ch-b: #d9a441; --ch-k: #7a4e1c; }
+:root .ch-royal { --ch-b: #2f5a3c; --ch-k: #e2a93b; } :root .ch-legend { --ch-b: #2b2422; --ch-k: #ffd45e; } :root .ch-free { --ch-b: #cbb58a; --ch-k: #8a6a3a; } :root .ch-crown { --ch-b: #b5372a; --ch-k: #e2a93b; }
+:root .ch-overlay { background: rgba(36, 18, 6, 0.66); }
+:root .ch-overlay.opening { background: radial-gradient(circle at 50% 62%, #8a5a34 0%, #47290f 48%, #1c0e04 100%); }
+:root .ch-slot.empty { border-radius: 2px; background: rgba(30, 14, 4, 0.5); border: 2px dashed rgba(240, 220, 174, 0.3); box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.45); }
+:root .ch-slot-empty { font: 400 9.5px/1.2 var(--display); color: rgba(240, 220, 174, 0.75); text-shadow: 0 1px 0 var(--k-ink); }
+
+/* ---------------------------------------------------------------- Standoff tiles and level tiles: painted boards */
+:root .tile { border-radius: 3px; background: var(--dl-nail) 50% 4px / 8px 8px no-repeat, repeating-linear-gradient(178deg, rgba(255, 255, 255, 0) 0 6px, rgba(255, 240, 200, 0.07) 6px 8px, rgba(0, 0, 0, 0.06) 8px 12px), #b5372a;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.14), inset 0 0 0 3.5px rgba(255, 236, 190, 0.3), 0 4px 0 var(--k-ink); }
+:root .tile.done { background: var(--dl-nail) 50% 4px / 8px 8px no-repeat, repeating-linear-gradient(178deg, rgba(255, 255, 255, 0) 0 6px, rgba(255, 240, 200, 0.07) 6px 8px, rgba(0, 0, 0, 0.06) 8px 12px), #2f5a3c; }
+:root .node.locked, :root .tile.locked { filter: none; opacity: 0.8; }
+:root .tile.locked { background: var(--dl-nail) 50% 4px / 8px 8px no-repeat, repeating-linear-gradient(178deg, rgba(255, 255, 255, 0) 0 6px, rgba(255, 240, 200, 0.07) 6px 8px, rgba(0, 0, 0, 0.06) 8px 12px), #6e4a2c; }
+:root .tile-id { font-size: 25px; color: #fff3d6; }
+:root .tile-name { font-size: 11.5px; color: #fff3d6; }
+:root .tile-crown { border-radius: 2px; }

@@ -544,6 +544,17 @@ export const LEXICON: Record<string, string> = {
   "Map": "Trail",
   // ---- base interface lines the text dump does not list
   "Win a battle": "Win a showdown",
+  // generated rival names (Daily, Manhunt, High Noon): titles and epithets
+  "Dame": "Miss",
+  "Sir": "Mister",
+  "Lady": "Madam",
+  "Brother": "Deacon",
+  "Master": "Trail Boss",
+  "the Wall": "the Barn Door",
+  "the Besieger": "the Dynamiter",
+  "the Swift": "the Quick",
+  "the Unseen": "the Bushwhacker",
+  "the Many": "the Stampede",
   "Free chest": "Free strongbox",
   "Crown chest": "Sheriff's safe",
 };
