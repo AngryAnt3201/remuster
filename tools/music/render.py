@@ -16,6 +16,8 @@ import subprocess
 import sys
 import time
 
+sys.dont_write_bytecode = True
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
@@ -77,7 +79,7 @@ FLAC24 = ["-c:a", "flac", "-sample_fmt", "s32", "-bits_per_raw_sample", "24", "-
 WAV24 = ["-c:a", "pcm_s24le"]
 
 
-def render_checked(style, kind, sr, target, path, codec, peak_limit=-1.0, ceiling=-2.0):
+def render_checked(style, kind, sr, target, path, codec, peak_limit=-1.0, ceiling=-2.5):
     """Render, master, encode, check; if the encoder pushed the true peak over the limit, re-master lower."""
     t0 = time.time()
     X = build(style, kind, sr, target, ceiling)
@@ -88,6 +90,7 @@ def render_checked(style, kind, sr, target, path, codec, peak_limit=-1.0, ceilin
         if X.loop:  # exact periodicity before the lossy encode
             check.seam(y, sr, X.loop_seconds, lossy=False)
         ffmpeg_write(y, sr, path, codec)
+        check.spectrogram(path, f"{style}_{kind}")
         try:
             res = check.check_file(path, target, X.loop_seconds, style, peak_limit)
             break
@@ -100,7 +103,6 @@ def render_checked(style, kind, sr, target, path, codec, peak_limit=-1.0, ceilin
         res["pitch"] = check.pitch(X.pitch_report)
     res.update(loop=round(X.loop_seconds, 6), style=style, kind=kind, ceiling=ceiling, render_s=round(time.time() - t0, 1),
                parts=[p["name"] for p in X.parts])
-    check.spectrogram(path, f"{style}_{kind}")
     print(f"  {style}/{kind}: {res['seconds']}s {res['bytes'] // 1024} KB  {res['lufs']} LUFS  {res['true_peak']} dBTP"
           + (f"  seam {res['seam']}" if "seam" in res else "") + (f"  pitch {res['pitch']}" if "pitch" in res else "")
           + f"  [{res['render_s']}s]", flush=True)

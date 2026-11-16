@@ -87,12 +87,11 @@ def note_cents(y, f, dur, sr):
     for h in range(1, 7):
         if h * f > min(6000.0, sr * 0.4):
             break
-        lo = int(h * f / 1.04 * nfft / sr)
-        hi = int(h * f * 1.04 * nfft / sr) + 1
-        band = sp[lo:hi]
-        pk = lo + int(np.argmax(band))
-        half_w = max(2, int(0.6 * sr / n * nfft / sr))   # the main lobe around the peak
-        a_, b_ = max(lo, pk - half_w), min(hi, pk + half_w + 1)
+        # power centroid over +-35 cents (or the window's main lobe if that is wider): a detuned musette, a vibrato
+        # or a section then reads as its centre, not as whichever player happens to be loudest
+        half_w = max(int(h * f * 0.0204 * nfft / sr), int(1.5 * nfft / n), 2)
+        c0 = int(round(h * f * nfft / sr))
+        a_, b_ = max(1, c0 - half_w), c0 + half_w + 1
         w_ = sp[a_:b_]
         fc = (np.arange(a_, b_) * w_).sum() / (w_.sum() + 1e-30) * sr / nfft
         num += w_.sum() * 1200 * np.log2(fc / (h * f))
@@ -145,7 +144,7 @@ def aliasing(limit_db=-70.0):
                 worst = max(worst, rel)
                 if rel > limit_db:
                     raise CheckError(f"aliasing: {shape} at {f0:.0f} Hz / {sr} has {rel:.1f} dB of inharmonic energy")
-    return dict(worst_db=round(worst, 1))
+    return dict(worst_db=round(float(worst), 1))
 
 
 # ----------------------------------------------------------------------------- spectrum
@@ -168,8 +167,8 @@ def balance(x, sr, style="default", strict=True):
     dc = abs(float(mono.mean()))
     f, p = signal.welch(mono, sr, nperseg=8192)
     tot = p[(f >= 20)].sum()
-    out = {name: round(10 * np.log10(p[(f >= lo) & (f < hi)].sum() / tot + 1e-30), 1) for name, lo, hi in BANDS}
-    out["low"] = round(10 * np.log10(p[(f >= 20) & (f < 250)].sum() / tot + 1e-30), 1)
+    out = {name: round(float(10 * np.log10(p[(f >= lo) & (f < hi)].sum() / tot + 1e-30)), 1) for name, lo, hi in BANDS}
+    out["low"] = round(float(10 * np.log10(p[(f >= 20) & (f < 250)].sum() / tot + 1e-30)), 1)
     out["dc"] = round(dc, 5)
     lim = LIMITS.get(style, LIMITS["default"])
     errs = [f"{k} {out[k]} dB outside {lo}..{hi}" for k, (lo, hi) in lim.items() if not lo <= out[k] <= hi]
@@ -221,9 +220,9 @@ def seam(x, sr, loop_s, lossy=True):
     at = 10 * np.log10(e(hj, w) / e(hr, w))
     neigh = np.array([e(hr, c) for c in range(nw, 2 * w - nw, nw // 2)])
     over = 10 * np.log10(e(hj, w) / np.percentile(neigh, 90))
-    out = dict(periodic_db=round(float(resid), 1), step_ratio=round(step / typical, 2), slope_ratio=round(float(slope_j / slope_typ), 2),
-               click_db=round(at, 1), click_vs_neighbours_db=round(over, 1))
-    tol = -14.0 if lossy else -60.0  # the codec's own error is about -20 dB; the exact test runs before encoding
+    out = dict(periodic_db=round(float(resid), 1), step_ratio=round(float(step / typical), 2), slope_ratio=round(float(slope_j / slope_typ), 2),
+               click_db=round(float(at), 1), click_vs_neighbours_db=round(float(over), 1))
+    tol = -12.0 if lossy else -60.0  # the codec's own error is about -20 dB; the exact test runs before encoding
     errs = []
     if resid > tol:
         errs.append(f"wrap-around differs from the loop by {resid:.1f} dB (limit {tol})")

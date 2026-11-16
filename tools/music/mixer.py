@@ -74,6 +74,7 @@ class Session:
             var = int(rng.integers(0, 3))
             jit = tj * float(np.clip(rng.standard_normal(), -2, 2))
             kw = dict(p["kw"], **extra)
+            pre = kw.pop("pre", 0.0)   # seconds that lead into the hit (whip swoosh, reverse cymbal)
             if p["pitched"]:
                 dur = beats * self.beat
                 key = (p["fn"].__name__, midi, round(dur, 4), vq, var, repr(sorted(kw.items())), sr)
@@ -88,7 +89,6 @@ class Session:
             if p["check"] and p["pitched"] and not any(k in kw for k in ("bend", "slide", "arp", "fall")):
                 import check
                 self.pitch_report.append((p["name"], midi, check.note_cents(y, float(S.hz(midi)), dur, sr), dur))
-            pre = kw.get("pre", 0.0)   # samples that lead into the hit (whip swoosh, reverse cymbal)
             start = int(round((beat * self.beat + jit - pre) * sr))
             if self.loop:
                 start %= self.n

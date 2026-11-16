@@ -304,12 +304,12 @@ def guitar(midi, dur, vel=0.8, var=0):
 def twang(midi, dur, vel=0.8, var=0, whammy=True):
     """Baritone electric: bridge pick, single-coil pickup comb, string goes sharp on the attack, whammy dip."""
     y = _pluck(midi, dur, vel, var, "twang", t60=4.5, damp=0.16, pick=0.085, pickup=0.21, exc=7000, ring=0.35,
-               sharp=14.0, mix=0.7, body=[("peak", 2400, 7, 1.6), ("peak", 900, -3, 1.2), ("hp", 60, 0, 0.7),
+               sharp=14.0, mix=0.7, body=[("peak", 2400, 4, 1.6), ("peak", 900, -2, 1.2), ("hp", 60, 0, 0.7),
                                           ("lp", 6200, 0, 0.7)])
     n = len(y)
     if whammy and dur > 0.55:
         t = np.arange(n) / SR
-        dip = -22 * np.clip((t - 0.25) / 0.3, 0, 1) * (0.5 - 0.5 * np.cos(2 * np.pi * 5.2 * (t - 0.25)))
+        dip = 10 * np.clip((t - 0.25) / 0.3, 0, 1) * np.sin(2 * np.pi * 5.2 * (t - 0.25))
         y = warp(y, 2 ** (dip / 1200))
     return np.tanh(y * 1.6) / 1.2
 
@@ -327,10 +327,10 @@ def harp(midi, dur, vel=0.8, var=0):
 
 def koto(midi, dur, vel=0.8, var=0, bend=0.0, yuri=False):
     """Koto: ivory picks near the bridge, long ring, optional press-bend (oshi-de, cents) and yuri vibrato."""
-    y = _pluck(midi, dur, vel, var, "koto", t60=3.6, damp=0.2, pick=0.07, exc=9000, ring=1.4, rel=0.2, click=0.35,
+    y = _pluck(midi, dur, vel, var, "koto", t60=3.6, damp=0.28, pick=0.07, exc=6000, ring=1.4, rel=0.2, click=0.35,
                mix=0.8, sharp=10.0,
-               body=[("peak", 230, 4, 3), ("peak", 480, 3, 3), ("peak", 1150, 4, 2), ("peak", 3200, 3, 1.5),
-                     ("hp", 90, 0, 0.7)])
+               body=[("peak", 230, 4, 3), ("peak", 480, 3, 3), ("peak", 1150, 4, 2), ("peak", 3200, 2, 1.5),
+                     ("hishelf", 5500, -6, 0.7), ("hp", 90, 0, 0.7)])
     n = len(y)
     if bend or yuri:
         t = np.arange(n) / SR
@@ -343,13 +343,13 @@ def koto(midi, dur, vel=0.8, var=0, bend=0.0, yuri=False):
 
 def shamisen(midi, dur, vel=0.8, var=0, slide=0.0):
     """Shamisen: skin body, short sustain, sawari buzz, the bachi slapping the skin on every stroke."""
-    y = _pluck(midi, dur, vel, var, "shami", t60=1.3, damp=0.22, pick=0.12, exc=8000, ring=0.25, mix=0.7,
+    y = _pluck(midi, dur, vel, var, "shami", t60=1.3, damp=0.3, pick=0.12, exc=5500, ring=0.25, mix=0.7,
                sharp=16.0, f_scale=0.3)
     n = len(y)
     rng = rng_for("shamib", midi, var)
     buzz = hp(np.tanh(6 * y) - np.tanh(6 * y).mean(), 1800) * 0.16
     y = eq(y + buzz, [("peak", 380, 6, 3), ("peak", 760, 5, 3), ("peak", 1500, 5, 2.5), ("hp", 140, 0, 0.7),
-                      ("hishelf", 7000, -3, 0.7)])
+                      ("hishelf", 5000, -7, 0.7)])
     ns = int(0.03 * SR)
     slap = bp(noise(ns, rng), 700, 2600) * decay(ns, 0.02) + 0.8 * np.sin(2 * np.pi * 170 * np.arange(ns) / SR) * decay(ns, 0.03)
     y[:ns] += slap[:min(ns, n)] * 0.45 * vel
@@ -393,7 +393,7 @@ def honkytonk(midi, dur, vel=0.8, var=0, detune=13.0):
     rel = 0.09 if midi < 90 else 0.5
     n = int((hold + rel) * SR)
     t60 = 7.0 * (220.0 / f0) ** 0.55
-    hw = (0.0009 + 0.0022 * (1 - vel)) * (300.0 / f0) ** 0.25
+    hw = (0.0005 + 0.0013 * (1 - vel)) * (300.0 / f0) ** 0.25
     offs = np.array([0.0, detune, -detune * 0.8]) + rng.normal(0, 1.2, 3)
     y = np.zeros(n)
     for o in offs:
@@ -496,10 +496,10 @@ def brass(midi, dur, vel=0.8, var=0, kind="horn"):
 
 # ------------------------------------------------------------------ flutes, whistles
 _FL = {
-    "flute": dict(h=[1, 0.42, 0.2, 0.07, 0.03], breath=0.05, att=0.05, scoop=(-12, 0.03), vib=(5.2, 11, 0.2), chiff=0.25),
+    "flute": dict(h=[1, 0.42, 0.2, 0.07, 0.03], breath=0.09, att=0.05, scoop=(-12, 0.03), vib=(5.2, 11, 0.2), chiff=0.25),
     "piccolo": dict(h=[1, 0.25, 0.08, 0.02], breath=0.04, att=0.035, scoop=(-10, 0.02), vib=(5.6, 9, 0.15), chiff=0.3),
     "whistle": dict(h=[1, 0.035, 0.012], breath=0.035, att=0.06, scoop=(-55, 0.07), vib=(5.6, 22, 0.22), chiff=0.05),
-    "shaku": dict(h=[1, 0.6, 0.34, 0.14, 0.09, 0.04], breath=0.2, att=0.09, scoop=(-90, 0.13), vib=(4.4, 30, 0.45), chiff=0.6),
+    "shaku": dict(h=[1, 0.6, 0.34, 0.14, 0.09, 0.04], breath=0.28, att=0.09, scoop=(-90, 0.13), vib=(4.4, 30, 0.45), chiff=0.6),
     "ocarina": dict(h=[1, 0.08, 0.05], breath=0.06, att=0.04, scoop=(-15, 0.03), vib=(5.0, 8, 0.2), chiff=0.15),
 }
 
@@ -513,6 +513,7 @@ def flute(midi, dur, vel=0.8, var=0, kind="flute", fall=0.0, scoop=None):
     N = int((dur + rel) * SR) + 1
     t = np.arange(N) / SR
     sc, st = P["scoop"] if scoop is None else scoop
+    sc, st = sc * min(1.0, dur / 0.6), min(st, 0.15 * dur)   # short notes cannot afford a slow scoop
     vr, vd, vdel = P["vib"]
     vibc = vibrato(N, vr, vd, vdel, 0.35, rng)
     cents = sc * np.exp(-t / st) + vibc + rng.normal(0, 2)
@@ -555,7 +556,7 @@ def harmonica(midi, dur, vel=0.8, var=0, bend=None):
     y = np.zeros(N)
     for o in (0.0, 7.0):
         y += morph(phase_of(f0 * 2 ** ((cents + o) / 1200), rng.random()), tabs, env * (0.6 + 1.2 * wah) * (0.6 + 0.4 * vel))
-    y = y * env * (0.78 + 0.22 * wah)
+    y = y * env * (0.88 + 0.12 * wah)
     y += bp(noise(N, rng), 1500, 6000) * env * 0.03
     y = eq(y, [("peak", 1150, 6, 2.5), ("peak", 2700, 5, 3), ("hp", 250, 0, 0.7), ("lp", 7500, 0, 0.7)])
     return fade(y * (0.3 + 0.7 * vel) * 0.45, 0.002, 0.008)
@@ -610,7 +611,7 @@ def organ(midi, dur, vel=0.8, var=0, stops="plenum"):
     rel = 0.09
     N = int((dur + rel) * SR) + 1
     t = np.arange(N) / SR
-    ranks = {"plenum": [(0.5, 0.5), (1, 1.0), (2, 0.7), (3, 0.3), (4, 0.5), (6, 0.18), (8, 0.25)],
+    ranks = {"plenum": [(0.5, 0.5), (1, 1.0), (2, 0.8), (3, 0.35), (4, 0.6), (6, 0.3), (8, 0.4), (12, 0.2), (16, 0.15)],
              "flutes": [(1, 1.0), (2, 0.35), (4, 0.12)],
              "reed": [(0.5, 0.6), (1, 1.0), (2, 0.6), (3, 0.45), (4, 0.4), (5, 0.3), (6, 0.25), (8, 0.2)]}[stops]
     y = np.zeros(N)
@@ -680,7 +681,7 @@ def bell(midi, dur, vel=0.8, var=0, kind="glock", ring=None):
         aa = a * (vel ** (0.5 * np.log2(max(r, 1)) + 0.0))
         y += aa * np.sin(2 * np.pi * f * (1 + rng.normal(0, 0.0006)) * t + rng.random() * 6.28) * np.exp(-6.908 * t / (t60 * scale))
         if kind in ("tubular", "gong"):  # beating doublets
-            y += 0.5 * aa * np.sin(2 * np.pi * f * 1.003 * t + rng.random() * 6.28) * np.exp(-6.908 * t / (t60 * scale))
+            y += 0.3 * aa * np.sin(2 * np.pi * f * 1.0017 * t + rng.random() * 6.28) * np.exp(-6.908 * t / (t60 * scale))
     nc = int(0.006 * SR)
     y[:nc] += 0.3 * hp(noise(nc, rng), 2000) * np.linspace(1, 0, nc) ** 2
     y *= np.clip(np.arange(N) / (0.0008 * SR), 0, 1)
@@ -747,13 +748,13 @@ def fmbass(midi, dur, vel=0.8, var=0, index=5.0, ratio=1.0, dec=0.12):
     return fade(np.tanh(1.4 * y) * 0.6 * (0.4 + 0.6 * vel), 0.001, 0.008)
 
 
-def fmbell(midi, dur, vel=0.8, var=0, ratio=3.5, index=3.0, t60=1.4):
+def fmbell(midi, dur, vel=0.8, var=0, ratio=3.0, index=3.0, t60=1.4):
     f0 = float(hz(midi))
     N = int((dur + t60) * SR)
     t = np.arange(N) / SR
     I = index * vel * np.exp(-t / (t60 * 0.25))
-    y = np.sin(2 * np.pi * f0 * t + I * np.sin(2 * np.pi * f0 * ratio * t)) * np.exp(-6.908 * t / (t60 + dur))
-    y += 0.3 * np.sin(2 * np.pi * f0 * 2 * t + 0.5 * I * np.sin(2 * np.pi * f0 * 7 * t)) * np.exp(-6.908 * t / (0.5 * t60))
+    y = np.sin(2 * np.pi * f0 * t + I * np.sin(2 * np.pi * f0 * ratio * 1.0007 * t)) * np.exp(-6.908 * t / (t60 + dur))
+    y += 0.3 * np.sin(2 * np.pi * f0 * 2 * t + 0.5 * I * np.sin(2 * np.pi * f0 * 6.01 * t)) * np.exp(-6.908 * t / (0.5 * t60))
     return fade(y * 0.5 * (0.3 + 0.7 * vel), 0.001, 0.03)
 
 
@@ -819,7 +820,7 @@ def chip_tri(midi, dur, vel=0.8, var=0, drop=0.0, arp=None):
     return y * a * 0.6
 
 
-def chip_noise(dur, vel=0.8, var=0, period=4, dec=0.08, short=False):
+def chip_noise(vel=0.8, var=0, dur=0.1, period=4, dec=0.08, short=False):
     """NES noise channel: LFSR bits clocked at 1.79 MHz / period, 16-level decaying volume."""
     rng = rng_for("cn", period, var, short)
     N = int(dur * SR) + int(0.005 * SR)
@@ -858,13 +859,14 @@ def kick(vel=0.9, var=0, kind="rock"):
     elif kind == "synth":  # 80s electronic kick
         n = int(0.45 * SR)
         y = _sweep(n, 190, 47, 0.028) * decay(n, 0.38)
-        y = np.tanh(2.2 * y) * 0.8 + 0.25 * hp(noise(n, rng), 3000) * decay(n, 0.012)
+        y = np.tanh(2.2 * y) * 0.8 + 0.4 * bp(noise(n, rng), 1500, 6000) * decay(n, 0.014)
     elif kind == "stomp":  # boot on a wooden floor
         n = int(0.3 * SR)
-        y = _sweep(n, 120, 62, 0.02) * decay(n, 0.18) + 0.6 * bp(noise(n, rng), 150, 900) * decay(n, 0.05)
+        y = _sweep(n, 120, 62, 0.02) * decay(n, 0.18) + 0.8 * bp(noise(n, rng), 150, 1800) * decay(n, 0.05)
     else:
         n = int(0.35 * SR)
-        y = _sweep(n, 150, 52, 0.022) * decay(n, 0.28) + 0.3 * hp(noise(n, rng), 2000) * decay(n, 0.008)
+        y = _sweep(n, 150, 52, 0.022) * decay(n, 0.28) + 0.5 * bp(noise(n, rng), 1200, 5000) * decay(n, 0.014)
+        y += 0.25 * _sweep(n, 300, 104, 0.022) * decay(n, 0.1)
         y += 0.2 * lp(noise(n, rng), 400) * decay(n, 0.04)
     return fade(y * (0.3 + 0.7 * vel) * 0.9, 0.0003, 0.01)
 
@@ -875,7 +877,7 @@ def snare(vel=0.8, var=0, kind="orch"):
         n = int(0.28 * SR)
         t = np.arange(n) / SR
         y = 0.6 * np.sin(2 * np.pi * 215 * t) * decay(n, 0.07) + 0.35 * np.sin(2 * np.pi * 395 * t) * decay(n, 0.05)
-        y += 0.9 * bp(noise(n, rng), 1800, 9500) * decay(n, 0.2 * (0.6 + 0.4 * vel)) + 0.3 * hp(noise(n, rng), 5000) * decay(n, 0.03)
+        y += 0.9 * bp(noise(n, rng), 1800, 9500) * decay(n, 0.27 * (0.6 + 0.4 * vel)) + 0.3 * hp(noise(n, rng), 5000) * decay(n, 0.03)
     elif kind == "gated":  # 80s snare, body and bright noise, meant for the gated reverb
         n = int(0.3 * SR)
         y = 0.8 * _sweep(n, 260, 175, 0.02) * decay(n, 0.12) + 0.9 * bp(noise(n, rng), 700, 7500) * decay(n, 0.22)
@@ -911,7 +913,7 @@ _HATF = np.array([2057.0, 2931.0, 3719.0, 4841.0, 5413.0, 6833.0, 8121.0, 9917.0
 
 def hat(vel=0.7, var=0, kind="closed"):
     rng = rng_for("hat", kind, var)
-    L = {"closed": 0.05, "open": 0.35, "pedal": 0.03, "ride": 0.6}[kind]
+    L = {"closed": 0.07, "open": 0.35, "pedal": 0.03, "ride": 0.6}[kind]
     n = int((L + 0.05) * SR)
     t = np.arange(n) / SR
     metal = sum(np.sin(2 * np.pi * f * (1 + 0.004 * var) * t + rng.random() * 6.28) for f in _HATF * (1.25 if kind == "ride" else 1.0))
@@ -997,6 +999,14 @@ def taiko(vel=0.9, var=0, kind="odaiko"):
     return fade(np.tanh(y * 0.9) * (0.2 + 0.8 * vel) * 0.6, 0.0004, 0.02)
 
 
+def tom(vel=0.8, var=0, f=110.0):
+    """Electronic (Simmons-style) tom."""
+    rng = rng_for("tom", f, var)
+    n = int(0.4 * SR)
+    y = _sweep(n, f * 1.9, f, 0.05) * decay(n, 0.32) + 0.25 * bp(noise(n, rng), 400, 5000) * decay(n, 0.04)
+    return fade(np.tanh(1.5 * y) * (0.3 + 0.7 * vel) * 0.7, 0.0003, 0.01)
+
+
 def woodblock(vel=0.8, var=0, f=900.0, t60=0.07):
     rng = rng_for("wb", f, var)
     n = int((t60 + 0.03) * SR)
@@ -1011,7 +1021,7 @@ def tick(vel=0.8, var=0, tock=False):
     return woodblock(vel, var, f=1450.0 if tock else 2300.0, t60=0.022) + 0.0
 
 
-def ratchet(dur=0.25, vel=0.8, var=0):
+def ratchet(vel=0.8, var=0, dur=0.25):
     rng = rng_for("rat", var, round(dur, 3))
     n = int((dur + 0.03) * SR)
     y = np.zeros(n)
@@ -1048,7 +1058,7 @@ def whip(vel=0.9, var=0):
 WHIP_PRE = 0.13  # the crack lands this long after the start of the sample
 
 
-def steam(dur=0.4, vel=0.7, var=0, chuff=False):
+def steam(vel=0.7, var=0, dur=0.4, chuff=False):
     rng = rng_for("steam", var, round(dur, 3), chuff)
     n = int((dur + 0.08) * SR)
     x = noise(n, rng)
@@ -1064,13 +1074,13 @@ def clop(vel=0.8, var=0, hi=False):
     return lp(woodblock(vel, var, f=690.0 if hi else 520.0, t60=0.05), 3500)
 
 
-def revcymbal(dur=1.6, vel=0.8, var=0):
+def revcymbal(vel=0.8, var=0, dur=1.6):
     y = cymbal(vel, var, t60=dur * 1.4)[:int(dur * SR)][::-1].copy()
     r = np.linspace(0, 1, len(y))
     return fade(y * r ** 2, 0.01, 0.004)
 
 
-def riser(dur=1.6, vel=0.8, var=0):
+def riser(vel=0.8, var=0, dur=1.6):
     rng = rng_for("riser", var, round(dur, 3))
     n = int(dur * SR)
     x = noise(n, rng)

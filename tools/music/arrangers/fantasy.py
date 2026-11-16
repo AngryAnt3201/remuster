@@ -8,6 +8,7 @@ NAME = "fantasy"
 
 def arrange(X, F):
     X.reverb = ("hall", dict(rt=2.3, pre=0.025, bright=0.45, seed=11))
+    X.master_eq = [("hishelf", 5000, 3.5, 0.7), ("peak", 110, -1.5, 0.8)]
     calm, dark = F.kind == "home", F.dark
     E, sec = F.energy, F.sec
     is_b = lambda b: sec[b] == "B"
