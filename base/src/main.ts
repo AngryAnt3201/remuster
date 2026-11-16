@@ -717,6 +717,21 @@ function gemDemo(kind: string) {
   rallyOffer(sheetEl, r, duel);
 }
 
+// ---------------------------------------------------------------- [film] scripted battles for video capture
+async function playFilm(name: string, speed: number) {
+  const { SCENES, sceneConfig, filmState, filmMark } = await import("./film");
+  const scene = SCENES[name] ?? SCENES.clash;
+  const st = filmState(name);
+  save((s) => { s.settings.speed = speed || scene.speed || 1; });
+  clear();
+  game = new GameScreen(app, {
+    cfg: sceneConfig(scene), you: { ...DEFAULT_AI, difficulty: 0 }, mode: "watch", title: scene.title, arena: scene.arena,
+    onEnd: () => { filmMark("end"); }, onQuit: title,
+  });
+  st.ready = true;
+  filmMark("start");
+}
+
 // ---------------------------------------------------------------- boot
 const MUSIC_KEY = "remuster.music";
 async function boot() {
@@ -753,6 +768,8 @@ async function boot() {
   // Dev only: play any level from a script without a reload (tools/sprite-mem.mjs plays several back to back).
   if (import.meta.env.DEV) (window as any).__playLevel = (id: number) => { const l = LEVELS.find((x) => x.id === id); if (l) playLevel(l); return !!l; };
   // Deep links for checks: ?level=3, ?puzzle=2, ?lab, ?daily, ?gauntlet, ?watch, ?shop
+  // [film] ?film=<scene>: a scripted battle for the video recorder (src/film.ts, tools/film.mjs)
+  if (q.has("film")) return playFilm(q.get("film") || "clash", Number(q.get("speed")) || 0);
   if (q.has("skin")) await import("./ui/skins").then((m) => m.debugSkin(q.get("skin")!, q.get("keepstate")));
   if (q.has("level")) { const l = LEVELS.find((x) => x.id === Number(q.get("level"))); if (l) return playLevel(l); }
   if (q.has("puzzle")) { const p = PUZZLES.find((x) => x.id === Number(q.get("puzzle"))); if (p) return playPuzzle(p); }
