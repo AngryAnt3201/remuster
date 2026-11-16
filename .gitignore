@@ -13,3 +13,7 @@ dist-games
 games/*/art/preview
 *.todo.json
 .wrangler
+infra/.local
+infra/.secrets.local
+infra/wrangler.toml
+.env.production

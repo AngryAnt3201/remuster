@@ -30,7 +30,9 @@
     "text": "vite-node tools/text-dump.ts",
     "engine:check": "node tools/engine-lock.mjs --check",
     "infra:dev": "vite-node infra/local/server.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "infra:deploy": "node infra/deploy.mjs",
+    "publish": "node tools/publish.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

@@ -1,0 +1,24 @@
+# Written to infra/wrangler.toml by `npm run infra:deploy` with this account's ids filled in.
+name = "remuster-api"
+main = "src/worker.ts"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "remuster"
+database_id = "__D1_ID__"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "GAMES"
+bucket_name = "remuster-games"
+
+[vars]
+ALLOW_ORIGINS = "*"
+# Set to a second hostname routed to this Worker (e.g. https://play.example.com) so player-made pages are served
+# from a different origin than the API. Empty = same host under /g/<id>/.
+GAMES_ORIGIN = ""
+
+[observability]
+enabled = true
