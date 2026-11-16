@@ -1,3 +1,132 @@
-/* This game's skin. Loaded after every base stylesheet, so anything here wins. The base game needs nothing extra.
-   A game shadows this file (games/<id>/src/game/theme.css) to restyle the whole UI: colours, fonts, panels, buttons,
-   layout. See REMIX.md for the variables and class names the base UI exposes. */
+/* Brasswick's skin: riveted iron plate, polished brass, verdigris and gaslight. Hard corners instead of the base
+   game's soft parchment; engraved small-caps type; gauges for bars. Everything is scoped to this game. */
+
+html[data-game="brasswick"] {
+  --k-panel: #2c2623; --k-panel-dk: #171311; --k-frame: #b8893b; --k-accent: #ffc45c;
+  --k-text: #f3e6c8; --k-text-lt: #fff6de; --k-go: #d9982f; --k-danger: #c7422e; --k-page: #1d1512;
+  --k-ink: #0d0907; --k-plate: rgba(24, 19, 16, 0.94); --k-plate-hi: rgba(255, 196, 92, 0.14);
+  --k-blue: #3f8f86; --k-page-dk: #120d0a; --k-muted: #a8977a; --k-well: rgba(0, 0, 0, 0.32);
+  --k-scrim: rgba(8, 5, 3, 0.7);
+  --tide: #38cfc0; --tide-d: #157a72; --tide-l: #a9fff2;
+  --ember: #ff6b42; --ember-d: #a5341b; --ember-l: #ffc4ac;
+  --gold: #ffc45c; --gold-d: #b9792a;
+  --display: "Copperplate", "Copperplate Gothic Bold", "Rockwell", "Georgia", serif;
+  --font: "Avenir Next Condensed", "Avenir Next", "Helvetica Neue", system-ui, sans-serif;
+  --gloss: linear-gradient(180deg, rgba(255,255,255,0.3), rgba(255,255,255,0.05) 42%, rgba(0,0,0,0.1) 58%, rgba(0,0,0,0.34));
+  --t1: linear-gradient(160deg, #c58a52, #8a5a2c 55%, #5e3a18);
+  --t2: linear-gradient(160deg, #e8eef2, #9aa7b3 50%, #5e6a76);
+  --t3: linear-gradient(160deg, #ffe9a0, #e0a83a 50%, #9a6a16);
+  --t4: linear-gradient(135deg, #ffe9a0, #7fe0d2 35%, #ffc45c 65%, #fff3c8);
+  /* a rivet: use as a background layer at a corner */
+  --rivet: radial-gradient(circle, #ffe2a0 0 1.2px, #b8893b 1.3px 3px, #4a3416 3.1px 4px, rgba(0,0,0,0) 4.2px);
+  --brass: linear-gradient(180deg, #f6d27c, #d9a441 38%, #a8762a 62%, #7a531b);
+  --iron: linear-gradient(180deg, #4a4340, #2c2623 45%, #1c1816);
+  background: #120d0a;
+}
+html[data-game="brasswick"] body { background: radial-gradient(120% 80% at 50% 0%, #3a2a1c, #1d1512 55%, #0e0a08); color: var(--k-text); }
+
+/* ---- type: engraved small caps for anything that is a heading or a number */
+html[data-game="brasswick"] h1, html[data-game="brasswick"] .screen-head h1 { font-family: var(--display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--k-accent); text-shadow: 0 2px 0 #000, 0 0 12px rgba(255,170,60,0.35); }
+html[data-game="brasswick"] .screen-head { background: linear-gradient(#3a302b, #211b18); border-bottom: 3px solid #0d0907; box-shadow: inset 0 -2px 0 var(--k-frame), 0 4px 10px rgba(0,0,0,0.5); }
+
+/* ---- surfaces: iron plate, brass edge, a rivet in each corner */
+html[data-game="brasswick"] .panel, html[data-game="brasswick"] .sheet, html[data-game="brasswick"] .pop,
+html[data-game="brasswick"] .tip, html[data-game="brasswick"] .profile, html[data-game="brasswick"] .b-card {
+  border-radius: 6px; border: 2px solid var(--k-ink); color: var(--k-text);
+  background:
+    var(--rivet) 6px 6px / 9px 9px no-repeat, var(--rivet) calc(100% - 6px) 6px / 9px 9px no-repeat,
+    var(--rivet) 6px calc(100% - 6px) / 9px 9px no-repeat, var(--rivet) calc(100% - 6px) calc(100% - 6px) / 9px 9px no-repeat,
+    linear-gradient(180deg, rgba(255,210,140,0.08), rgba(0,0,0,0) 30%), var(--iron);
+  box-shadow: inset 0 0 0 2px var(--k-frame), inset 0 0 0 3.5px #5e4318, inset 0 0 22px rgba(0,0,0,0.55), 0 6px 0 rgba(0,0,0,0.45), 0 10px 22px rgba(0,0,0,0.4);
+}
+html[data-game="brasswick"] .plate { border-radius: 5px; border: 2px solid var(--k-ink); background: linear-gradient(rgba(255,196,92,0.12), rgba(0,0,0,0) 45%), #1b1613; box-shadow: inset 0 0 0 1.5px #6d5122, 0 3px 0 rgba(0,0,0,0.5); }
+html[data-game="brasswick"] .overlay { background: radial-gradient(circle at 50% 40%, rgba(60,36,14,0.55), rgba(6,4,2,0.86)); }
+html[data-game="brasswick"] .lead, html[data-game="brasswick"] .flavour { color: var(--k-muted); font-style: italic; }
+html[data-game="brasswick"] .pill { border-radius: 4px; border: 2px solid var(--k-ink); background: #120e0c; box-shadow: inset 0 0 0 1px #5e4318; }
+
+/* ---- buttons: stamped brass plates that sink when pressed */
+html[data-game="brasswick"] .btn { border-radius: 5px; border: 2px solid var(--k-ink); font-family: var(--display); letter-spacing: 0.07em; text-transform: uppercase; color: #2a1a08; text-shadow: 0 1px 0 rgba(255,240,200,0.55);
+  background: var(--rivet) 7px 50% / 9px 9px no-repeat, var(--rivet) calc(100% - 7px) 50% / 9px 9px no-repeat, var(--gloss), var(--b);
+  box-shadow: inset 0 0 0 1.5px rgba(255,236,180,0.5), inset 0 -4px 0 rgba(0,0,0,0.28), 0 4px 0 var(--k-ink), 0 7px 10px rgba(0,0,0,0.45); }
+html[data-game="brasswick"] .btn::after { left: 3px; right: 3px; top: 2px; height: 2px; border-radius: 0; background: rgba(255,250,225,0.55); }
+html[data-game="brasswick"] .btn:active:not(:disabled) { transform: translateY(4px); box-shadow: inset 0 0 0 1.5px rgba(255,236,180,0.4), inset 0 3px 6px rgba(0,0,0,0.45), 0 0 0 var(--k-ink); }
+html[data-game="brasswick"] .btn { --b: #4aa397; color: #06221f; }
+html[data-game="brasswick"] .btn.primary, html[data-game="brasswick"] .btn.gold, html[data-game="brasswick"] .btn.up { --b: #d9a441; color: #2a1a08; }
+html[data-game="brasswick"] .btn.danger, html[data-game="brasswick"] .btn.sell { --b: #c7523a; color: #2a0b05; }
+html[data-game="brasswick"] .btn.ghost { --b: #3a322e; color: var(--k-text); text-shadow: 0 1px 0 #000; box-shadow: inset 0 0 0 1.5px #6d5122, 0 4px 0 var(--k-ink); }
+html[data-game="brasswick"] .btn.big { border-radius: 6px; font-size: 21px; }
+html[data-game="brasswick"] .btn.boon { --b: #3a322e; color: var(--k-text); text-shadow: none; text-transform: none; letter-spacing: 0; }
+html[data-game="brasswick"] .icon-btn { --b: #6b5a3c; border-radius: 50%; border: 2px solid var(--k-ink); background: radial-gradient(circle at 35% 30%, #f6d27c, #b8893b 55%, #6d4c1a); box-shadow: inset 0 0 0 2px rgba(0,0,0,0.25), 0 3px 0 var(--k-ink); color: #2a1a08; }
+html[data-game="brasswick"] .icon-btn .icon { filter: none; }
+html[data-game="brasswick"] .chip { border-radius: 4px; font-family: var(--display); letter-spacing: 0.05em; text-transform: uppercase; }
+html[data-game="brasswick"] .chip.on { background: var(--brass); color: #2a1a08; }
+
+/* ---- ribbons become engraved nameplates held by two bolts */
+html[data-game="brasswick"] .ribbon > b { border-radius: 3px; border: 2px solid var(--k-ink); padding: 7px 30px 8px; letter-spacing: 0.1em; text-transform: uppercase; color: #2a1a08; text-shadow: 0 1px 0 rgba(255,240,200,0.6);
+  background: var(--rivet) 9px 50% / 9px 9px no-repeat, var(--rivet) calc(100% - 9px) 50% / 9px 9px no-repeat, var(--brass);
+  box-shadow: inset 0 0 0 1.5px rgba(255,240,190,0.6), 0 4px 0 rgba(0,0,0,0.5); }
+html[data-game="brasswick"] .ribbon > i { display: none; }
+html[data-game="brasswick"] .ribbon.danger > b, html[data-game="brasswick"] .results.lost .ribbon > b { background: var(--rivet) 9px 50% / 9px 9px no-repeat, var(--rivet) calc(100% - 9px) 50% / 9px 9px no-repeat, linear-gradient(#8a8f96, #555a61 55%, #33373c); color: #111; }
+html[data-game="brasswick"] .banner { font-family: var(--display); letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* ---- battle HUD: gauges and a tool rack */
+html[data-game="brasswick"] .hpbar { height: 22px; border-radius: 11px; border: 2px solid var(--k-ink); background: #0c0908; box-shadow: inset 0 0 0 1.5px #6d5122, inset 0 3px 6px rgba(0,0,0,0.8), 0 2px 0 rgba(0,0,0,0.5); }
+html[data-game="brasswick"] .hpbar > i { border-radius: 9px; background: linear-gradient(180deg, rgba(255,255,255,0.45), rgba(255,255,255,0) 40%, rgba(0,0,0,0.3)), var(--hp); box-shadow: 0 0 10px var(--hp); }
+html[data-game="brasswick"] .hpbar > b { background: #ffe9b0; border-radius: 9px; }
+html[data-game="brasswick"] .hpbar::after { background: repeating-linear-gradient(90deg, rgba(0,0,0,0) 0 calc(5% - 1px), rgba(255,220,150,0.35) calc(5% - 1px) 5%); height: 35%; top: auto; bottom: 0; }
+html[data-game="brasswick"] .hpbar > span { font-family: var(--display); letter-spacing: 0.04em; }
+html[data-game="brasswick"] .round small { letter-spacing: 0.18em; color: var(--k-accent); text-shadow: none; }
+html[data-game="brasswick"] .round b { color: #ffe9b0; text-shadow: 0 2px 0 #000, 0 0 10px rgba(255,170,60,0.5); }
+html[data-game="brasswick"] .hud-bottom { background: linear-gradient(#3b302a, #1d1714 30%, #120e0c); border-top: 3px solid var(--k-ink); box-shadow: inset 0 3px 0 var(--k-frame), inset 0 5px 0 #5e4318, 0 -8px 18px rgba(0,0,0,0.5); border-radius: 0; }
+html[data-game="brasswick"] .card { border-radius: 4px; border: 2px solid var(--k-ink); box-shadow: inset 0 0 0 1.5px rgba(255,236,180,0.45), 0 4px 0 rgba(0,0,0,0.55); }
+html[data-game="brasswick"] .card-art { border-radius: 2px; border: 1.5px solid #0d0907; }
+html[data-game="brasswick"] .card-name { border-radius: 2px; border: 1.5px solid var(--k-ink); background: #17120f; color: #ffe9b0; font-family: var(--font); font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; text-shadow: none; }
+html[data-game="brasswick"] .card-cost { font-family: var(--display); color: #2a1a08; text-shadow: none; }
+html[data-game="brasswick"] .card-cost::before { transform: none; border-radius: 50%; border: 2.5px dotted #0d0907; outline: 2px solid var(--k-ink); background: radial-gradient(circle at 35% 30%, #fff0b8, #e0a83a 55%, #9a6a16); }
+html[data-game="brasswick"] .reroll, html[data-game="brasswick"] .cmdr { font-family: var(--display); }
+
+/* ---- results */
+html[data-game="brasswick"] .results .result-stats span, html[data-game="brasswick"] .result-stats span { background: #120e0c; border: 1.5px solid #6d5122; border-radius: 4px; box-shadow: inset 0 3px 8px rgba(0,0,0,0.7); color: var(--k-muted); letter-spacing: 0.1em; }
+html[data-game="brasswick"] .result-stats b { color: #ffe9b0; text-shadow: 0 0 10px rgba(255,170,60,0.55); }
+html[data-game="brasswick"] .result-crest { color: var(--k-accent); filter: drop-shadow(0 0 10px rgba(255,170,60,0.5)); }
+html[data-game="brasswick"] .objectives li { border-radius: 4px; background: rgba(0,0,0,0.3); }
+
+/* ---- home: gaslit stage, a brass go-plate and an iron tab rail */
+html[data-game="brasswick"] .hm-top { background: linear-gradient(#2a221e, rgba(18,13,10,0.4)); }
+html[data-game="brasswick"] .hm-go { border-radius: 6px; letter-spacing: 0.1em; }
+html[data-game="brasswick"] .hm-play-word { font-family: var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: #2a1a08; text-shadow: 0 1px 0 rgba(255,240,200,0.6); }
+html[data-game="brasswick"] .hm-play-lv { color: #4a2f0c; text-shadow: none; }
+html[data-game="brasswick"] .hm-card { border-radius: 5px; border: 2px solid var(--k-ink); box-shadow: inset 0 0 0 2px var(--k-frame), 0 5px 0 rgba(0,0,0,0.5); }
+html[data-game="brasswick"] .hm-card-name { font-family: var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--k-accent); }
+html[data-game="brasswick"] .hm-card-bar { border-radius: 2px; }
+html[data-game="brasswick"] .tb-bar { background: linear-gradient(#3b302a, #1a1512); border-top: 3px solid var(--k-ink); box-shadow: inset 0 3px 0 var(--k-frame), 0 -6px 16px rgba(0,0,0,0.5); }
+html[data-game="brasswick"] .tb-tab { border-radius: 4px; }
+html[data-game="brasswick"] .tb-face { border-radius: 4px; border: 2px solid var(--k-ink); background: var(--iron); box-shadow: inset 0 0 0 1.5px #5e4318; }
+html[data-game="brasswick"] .tb-tab.on .tb-face, html[data-game="brasswick"] .tb-tab[aria-selected="true"] .tb-face { background: var(--brass); box-shadow: inset 0 0 0 1.5px rgba(255,240,190,0.6), 0 0 14px rgba(255,170,60,0.45); }
+html[data-game="brasswick"] .tb-label { font-family: var(--display); letter-spacing: 0.08em; text-transform: uppercase; font-size: 10px; }
+html[data-game="brasswick"] .tb-tab.on .tb-label, html[data-game="brasswick"] .tb-tab[aria-selected="true"] .tb-label { color: #2a1a08; text-shadow: none; }
+html[data-game="brasswick"] .tb-badge, html[data-game="brasswick"] .tb-dot { background: #ff6b42; border-color: var(--k-ink); }
+
+/* ---- Army, map, Arena */
+html[data-game="brasswick"] .ar-tile, html[data-game="brasswick"] .ar-slot { border-radius: 4px; }
+html[data-game="brasswick"] .ar-name, html[data-game="brasswick"] .ar-sec { font-family: var(--display); letter-spacing: 0.06em; text-transform: uppercase; }
+html[data-game="brasswick"] .ar-sec { color: var(--k-accent); }
+html[data-game="brasswick"] .node { border-radius: 50%; font-family: var(--display); }
+html[data-game="brasswick"] .act.panel { border-radius: 6px; }
+html[data-game="brasswick"] .ar-badge { border-radius: 50%; border: 2px solid var(--k-ink); background: radial-gradient(circle at 35% 30%, #d0d5da, #8b949c 55%, #4a5057); color: #17120f; }
+html[data-game="brasswick"] .ar-badge.league-2 { background: radial-gradient(circle at 35% 30%, #f0b890, #c0703a 55%, #7a3f18); }
+html[data-game="brasswick"] .ar-badge.league-3 { background: radial-gradient(circle at 35% 30%, #fff0b8, #e0a83a 55%, #9a6a16); }
+html[data-game="brasswick"] .ar-badge.league-4 { background: radial-gradient(circle at 35% 30%, #c8fff6, #4fc6b6 55%, #1c7268); }
+html[data-game="brasswick"] .ar-bar, html[data-game="brasswick"] .act-bar { border-radius: 7px; background: #0c0908; box-shadow: inset 0 0 0 1.5px #6d5122, inset 0 3px 6px rgba(0,0,0,0.8); }
+html[data-game="brasswick"] .ar-bar i { border-radius: 6px; background: linear-gradient(#ffe9a0, #e0a83a); box-shadow: 0 0 10px rgba(255,180,70,0.7); }
+html[data-game="brasswick"] .ar-thumb { border-radius: 3px; background: #5f5a52; box-shadow: 0 0 0 2px var(--k-frame), 0 3px 0 2px rgba(0,0,0,0.4); }
+html[data-game="brasswick"] .ar-arena, html[data-game="brasswick"] .ar-row { border-radius: 4px; }
+html[data-game="brasswick"] .ar-league b, html[data-game="brasswick"] .ar-vs-text b, html[data-game="brasswick"] .ar-row-head b { letter-spacing: 0.06em; text-transform: uppercase; color: var(--k-accent); }
+html[data-game="brasswick"] .ar-trophies b { -webkit-text-stroke: 0; text-shadow: 0 0 12px rgba(255,170,60,0.6); }
+
+/* ---- fit: engraved caps are wide, so names that sit in small boxes use the condensed text face */
+html[data-game="brasswick"] .card-name, html[data-game="brasswick"] .ar-name { font-family: var(--font); font-weight: 700; font-size: 11.5px; letter-spacing: 0; text-transform: none; }
+html[data-game="brasswick"] .card-name.long { font-size: 10px; letter-spacing: -0.02em; }
+html[data-game="brasswick"] .btn.big { padding-left: 24px; padding-right: 24px; }
+html[data-game="brasswick"] .hm-card-name { font-size: 21px; line-height: 1; }
+html[data-game="brasswick"] .hm-card-line { color: #e8d9b8; }
