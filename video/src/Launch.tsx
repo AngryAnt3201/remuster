@@ -4,7 +4,7 @@ import React from "react";
 import { AbsoluteFill, Audio, OffthreadVideo, Sequence, continueRender, delayRender, interpolate, spring, staticFile, useCurrentFrame } from "remotion";
 import clips from "./clips.json";
 import vo from "../vo/script.json";
-import { BAR, BARS, BEAT, CAPTIONS, DURATION, FPS, GAMES, PROMPTS, SCENE_START, SHOTS, TAIL, at, game, type GameId, type Shot } from "./timeline";
+import { BAR, BARS, BEAT, CAPTIONS, DURATION, FPS, GAMES, PROMPTS, SCENE_SKIP, SCENE_START, SHOTS, TAIL, at, game, type GameId, type Shot } from "./timeline";
 
 const W = 1080, H = 1920;
 const INK = "#1a1210";
@@ -22,7 +22,7 @@ const outline = (px: number, c = INK) => Array.from({ length: 16 }, (_, i) => `$
 const pop = (f: number, delay = 0) => spring({ frame: f - delay, fps: FPS, config: { stiffness: 260, damping: 15, mass: 0.7 } });
 
 /** The scene time (seconds) a shot starts at: its own `t`, or wherever the scene's running clock is at that bar. */
-const shotTime = (s: Shot) => s.t ?? Math.max(0, (at(s.bar) - at(SCENE_START[s.clip] ?? s.bar)) / FPS);
+const shotTime = (s: Shot) => s.t ?? (SCENE_SKIP[s.clip] ?? 0) + Math.max(0, (at(s.bar) - at(SCENE_START[s.clip] ?? s.bar)) / FPS);
 
 /** A capture, cropped to fill a box. A game that hasn't been filmed yet gets a labelled slate, so the edit renders. */
 const Footage: React.FC<{ g: GameId; clip: string; t: number; style?: React.CSSProperties; fit?: "cover" | "contain" }> = ({ g, clip, t, style, fit = "cover" }) => {

@@ -45,7 +45,9 @@ export const SECTIONS: Section[] = [
 ];
 
 /** Scene clocks: the bar at which each continuous scene's time 0 falls. */
-export const SCENE_START: Record<string, number> = { clash: 5, siege: 21, arena: 30 };
+export const SCENE_START: Record<string, number> = { clash: 5, siege: 21, arena: 29 };
+/** Seconds of each capture to skip: the game's own opening banner before the armies move. */
+export const SCENE_SKIP: Record<string, number> = { clash: 1.0, arena: 2.0, siege: 2.0 };
 
 export const SHOTS: Shot[] = [
   // intro: the base game's home screen
