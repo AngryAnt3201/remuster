@@ -539,4 +539,11 @@ export const LEXICON: Record<string, string> = {
   "Upgrade": "Mod",
   "Victory": "Secured",
   "War Pass": "Street Pass",
+  "The last crown is down and the citadel is yours. Sixty battles, ten acts, and every banner flies your colours.": "The last tower is dark and Apex Plaza is yours. Sixty clashes, ten sectors, and every sign in the Hold burns your colours.",
+  "The orchards are in bloom and the banners are out.": "The sign-trees are lit pink and every crew is out.",
+  "The campaign is won": "The Hold is yours",
+  "gold": "creds",
+  "Gold": "Creds",
+  "trophies": "rep",
+  "army": "crew",
 };
