@@ -33,9 +33,9 @@ Auto battler army strategy
 ## Promotional text
 
 ```
-New: a Daily Challenge for everyone, three new acts and seven new units. Free to play with every level open. No ads, no tracking, offline.
+New: Arenas. Fight around walls, towers and cover and climb the trophy ladder. Free to play with every level open. No ads, no energy.
 ```
-138/170. Can be changed any time without a new build.
+133/170. Can be changed any time without a new build.
 
 ## Description
 
@@ -53,7 +53,8 @@ Rank a unit up from Recruit to Veteran to Elite and it looks tougher and hits ha
 RIVALS THAT THINK
 Rivals plan their own draft and formation, and the toughest ones test their plans against your board before they commit. Buried mines stay hidden from them, so a good trap still springs. In the AI Lab you can tune a rival yourself: difficulty, aggression, tactic (swarm, fortress, artillery, ambush, blitz or siege), economy, rerolls and formation width. Or set two AIs against each other and watch.
 
-FIVE WAYS TO PLAY
+SIX WAYS TO PLAY
+• Arena: battles around walls, buildings, barricades and water. Shots stop on stone, cover weakens them, charges have to go round and barricades can be smashed. Twelve arenas in four leagues, on a trophy ladder.
 • Campaign: 60 levels across ten acts, each act ending in a boss fight. Unlock new units as you go and earn up to three stars on every level.
 • Daily Challenge: one board a day, the same for every player. Win it, keep your streak going and beat your best.
 • Gauntlet: one health pool against rival after rival. Your army carries over and every win brings a boon.
@@ -70,7 +71,7 @@ PLAYS YOUR WAY
 • No ads, no tracking, no energy
 • Your progress stays on your device
 ```
-3318/4000.
+3529/4000.
 
 ## What's New in This Version
 
