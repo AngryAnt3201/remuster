@@ -13,3 +13,4 @@ dist-games
 games/*/art/preview
 *.todo.json
 .wrangler
+tools/music/out
