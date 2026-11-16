@@ -6,6 +6,8 @@ import {
   type BodyKind, type Mods, type Obstacle, type Piece, type Role, type Side, type UnitKind,
 } from "./defs";
 import { levelDmg, levelHp, levelOf, type Levels } from "./levels";
+import { NAV_TOL, Nav } from "./nav";
+import { COVER_KEEP, COVER_REACH, breakable, circleHitsBlock, type Block, type BlockKind, type BlockState } from "./terrain";
 import { Rng } from "./rng";
 
 export interface Body {
@@ -100,6 +102,8 @@ export interface Proj {
   alive: boolean;
   /** Extra effect on landing: "fire" (Firebomb), "shrapnel", "freeze" (Deep Freeze), or "". */
   fx: string;
+  /** A direct shot loosed at something in the air: it flies over the arena's blocks instead of stopping on them. */
+  over: boolean;
 }
 
 export type BoomKind = "mine" | "grenade" | "slam" | "quake" | "erupt" | "shell" | "shrapnel" | "bomblet" | "keg" | "pop" | "talon" | "mirror" | "swoop";
@@ -155,11 +159,18 @@ export type BattleEvent =
   | { t: "volley"; id: number; x: number; y: number; a: number }
   | { t: "twin"; id: number; x: number; y: number; a: number }
   | { t: "reset"; id: number; x: number; y: number }
+  // Arena terrain (only in battles with BattleOptions.terrain). `id` / `block` are Block ids.
+  | { t: "blockhit"; id: number; x: number; y: number; dmg: number; hp: number; by: number }
+  | { t: "blockbreak"; id: number; kind: BlockKind; x: number; y: number; w: number; h: number }
+  | { t: "ricochet"; x: number; y: number; kind: ProjKind | "hook"; block: number }
+  | { t: "crash"; id: number; x: number; y: number; a: number }
   | { t: "end"; winner: -1 | 0 | 1 };
 
 export interface BattleOptions {
   seed?: number;
   obstacles?: Obstacle[];
+  /** Arena terrain (engine/core/terrain.ts): walls, buildings, barricades, cover and water. Omitted or empty = open field. */
+  terrain?: Block[];
   mods?: [Mods | undefined, Mods | undefined];
   /** Persistent troop levels per side (engine/core/levels.ts). Missing = level 1, which leaves every stat unchanged. */
   levels?: [Levels | undefined, Levels | undefined];
@@ -226,6 +237,18 @@ const SURF_TIME = 3;
 const RALLY_R = 2.2; // Lionheart rally reach and haste time
 const RALLY_TIME = 3;
 const LAST_STAND = 2.5;
+// Arena terrain.
+/** Siege (Stone Colossus slams, keg blasts) does this many times its damage to barricades and cover. */
+export const SIEGE_MUL = 3;
+/** What breaking through a block costs a melee unit's route, in units of walking per point of the block's health:
+ * a fresh barricade is worth a 10-unit detour to most, under 2 to siege. */
+const BREACH_PEN = 1 / 32;
+const SIEGE_PEN = 1 / 200;
+/** A Lancer that charges into a wall is stunned this long. */
+export const CRASH_STUN = 0.6;
+const DEFLECT = [0.8, -0.8, 1.5, -1.5];
+/** A body's cached route round the blocks (see Battle.steer). */
+interface Route { gx: number; gy: number; pts: number[]; n: number; i: number; ver: number; at: number; breach: number; partial: boolean; live: boolean; }
 
 export class Battle {
   bodies: Body[] = [];
@@ -242,6 +265,8 @@ export class Battle {
   winner: -1 | 0 | 1 = -1;
   readonly rng: Rng;
   readonly obstacles: Obstacle[];
+  /** The arena's blocks as they stand now: `hp` counts down and `alive` goes false when one breaks. Empty on an open field. */
+  readonly blocks: BlockState[];
   readonly limit: number;
   private nextId = 1;
   private log: boolean;
@@ -256,6 +281,14 @@ export class Battle {
   private bastions: Body[] = [];
   private graves: Body[] = [];
   private medics: Body[] = [];
+  /** Terrain queries and navigation; null on an open field (every terrain rule is behind this check). */
+  private nav: Nav | null;
+  private routes = new Map<number, Route>();
+  // Where the body now acting is heading (set by seek), for steer().
+  private goalOn = false;
+  private goalX = 0;
+  private goalY = 0;
+  private goalSp = 0;
 
   constructor(pieces: Piece[], opts: BattleOptions = {}) {
     this.rng = new Rng(opts.seed ?? 1);
@@ -264,6 +297,8 @@ export class Battle {
     this.log = opts.events ?? false;
     this.mods = [opts.mods?.[0] ?? {}, opts.mods?.[1] ?? {}];
     this.levels = [opts.levels?.[0], opts.levels?.[1]];
+    this.nav = opts.terrain?.length ? new Nav(opts.terrain) : null;
+    this.blocks = this.nav ? this.nav.blocks : [];
     for (const p of pieces) this.addPiece(p);
     for (const b of this.bodies) if (b.kind === "hive" && this.mods[b.side].broodStart) { this.spawnMite(b); this.spawnMite(b); }
     for (const b of this.bodies) {
@@ -299,8 +334,10 @@ export class Battle {
     }
   }
 
-  private makeBody(kind: BodyKind, side: Side, rank: number, x: number, y: number, pieceId: number): Body {
+  private makeBody(kind: BodyKind, side: Side, rank: number, x: number, y: number, pieceId: number, from?: { x: number; y: number }): Body {
     const base = bodyDef(kind);
+    // Nothing starts inside a block (flyers and the burrowed sapper are over or under them).
+    if (this.nav && kind !== "sapper" && kind !== "harrier" && kind !== "griffin") [x, y] = this.freeAt(x, y, base.radius, from);
     const m = this.mods[side];
     const unitKind: UnitKind = isSpawn(kind) ? BODY_EXTRA[kind].from : kind;
     const hpMul = (m.hpMul ?? 1) * (m.kindHp?.[unitKind] ?? 1);
@@ -362,7 +399,39 @@ export class Battle {
   }
   /** Gap between two bodies' edges. */
   private gap(a: Body, b: Body) {
-    return this.dist(a, b) - a.radius - b.radius;
+    const g = this.dist(a, b) - a.radius - b.radius;
+    // Across a wall nobody is in reach, however close.
+    return this.nav && g < 1.6 && !this.sees(a, b) ? 99 : g;
+  }
+  /** Line of sight between two bodies' centres: walls, buildings and barricades block it. Always true on an open
+   * field, and to or from anything in the air. */
+  private sees(a: Body, b: Body) {
+    return !this.nav || a.flying || b.flying || this.nav.los(a.x, a.y, b.x, b.y);
+  }
+  /** Distance for a direct shot: infinite with no line of sight, so a shooter closes in until it has one. */
+  private shotDist(a: Body, b: Body) {
+    return this.sees(a, b) ? this.dist(a, b) : Infinity;
+  }
+  /** Is a body fully behind a wall from a point: its centre and both flanks out of sight (blasts don't reach it). */
+  private shadowed(x: number, y: number, e: Body): boolean {
+    const nav = this.nav!;
+    if (e.flying || nav.los(x, y, e.x, e.y)) return false;
+    const dx = e.x - x, dy = e.y - y, d = hyp(dx, dy) || 1, px = (-dy / d) * e.radius, py = (dx / d) * e.radius;
+    return !nav.los(x, y, e.x + px, e.y + py) && !nav.los(x, y, e.x - px, e.y - py);
+  }
+  /** The nearest free ground to (x, y) for a circle of radius `rad`, on `from`'s side of any block when given. */
+  private freeAt(x: number, y: number, rad: number, from?: { x: number; y: number }): [number, number] {
+    const nav = this.nav;
+    if (!nav) return [x, y];
+    if (!from) nav.spot(x, y, rad);
+    else if (!nav.spot(x, y, rad, true, from.x, from.y)) nav.spot(from.x, from.y, rad);
+    return [nav.sx, nav.sy];
+  }
+  /** A body that just landed, surfaced or blinked takes the nearest free ground (on `by`'s side of any block). */
+  private settle(b: Body, by?: { x: number; y: number }) {
+    if (!this.nav) return;
+    [b.x, b.y] = this.freeAt(b.x, b.y, b.radius, by);
+    b.px = b.x; b.py = b.y;
   }
   nearestEnemy(b: Body, opts: { max?: number; filter?: (e: Body) => boolean; taunt?: boolean } = {}): Body | undefined {
     let best: Body | undefined, bd = opts.max ?? Infinity;
@@ -371,6 +440,18 @@ export class Battle {
       let d = this.dist(b, e) - e.radius;
       if (e.kind === "decoy") d -= DECOY_LURE;
       if (d < bd) { bd = d; best = e; }
+    }
+    if (this.nav && best && !b.flying && !b.burrowed && !best.flying && !this.nav.los(b.x, b.y, best.x, best.y)) {
+      // The nearest is behind a wall: take the nearest in plain sight instead. With no reach limit and nobody in
+      // sight, keep the hidden one (to walk toward).
+      let vis: Body | undefined, vd = opts.max ?? Infinity;
+      for (const e of this.bodies) {
+        if (e === best || !this.targetable(b, e) || (opts.filter && !opts.filter(e))) continue;
+        let d = this.dist(b, e) - e.radius;
+        if (e.kind === "decoy") d -= DECOY_LURE;
+        if (d < vd && (e.flying || this.nav.los(b.x, b.y, e.x, e.y))) { vd = d; vis = e; }
+      }
+      if (vis || opts.max !== undefined) best = vis;
     }
     if (opts.taunt !== false && best) {
       // A shield bearer close by draws melee attackers to itself.
@@ -381,12 +462,13 @@ export class Battle {
     }
     return best;
   }
-  /** The other side's bodies a ground blast at (x, y) reaches; `air` also takes flyers. */
-  private enemiesNear(side: Side, x: number, y: number, r: number, air = false): Body[] {
+  /** The other side's bodies a ground blast at (x, y) reaches; `air` also takes flyers. With `walls`, bodies fully
+   * behind a wall from (x, y) are sheltered and left out. */
+  private enemiesNear(side: Side, x: number, y: number, r: number, air = false, walls = true): Body[] {
     const out: Body[] = [];
     for (const e of this.bodies) {
       if (!e.alive || e.side === side || e.kind === "mine" || e.burrowed || (e.flying && !air)) continue;
-      if (hyp(e.x - x, e.y - y) <= r + e.radius) out.push(e);
+      if (hyp(e.x - x, e.y - y) <= r + e.radius && !(walls && this.nav && this.shadowed(x, y, e))) out.push(e);
     }
     return out;
   }
@@ -515,7 +597,7 @@ export class Battle {
       // The giant breaks into two smaller golems, thrown apart.
       const px = -Math.sin(b.face), py = Math.cos(b.face);
       for (const s of [-1, 1]) {
-        const g = this.makeBody("golemling", b.side, b.rank, b.x + px * s * 0.42, b.y + py * s * 0.42, b.pieceId);
+        const g = this.makeBody("golemling", b.side, b.rank, b.x + px * s * 0.42, b.y + py * s * 0.42, b.pieceId, b);
         g.vx = px * s * 2; g.vy = py * s * 2; g.face = b.face; g.cd = 0.6;
         this.emit({ t: "spawn", id: g.id, x: g.x, y: g.y, side: g.side, kind: g.kind, from: b.id });
       }
@@ -556,8 +638,9 @@ export class Battle {
     best.cd = best.cooldown;
     this.raise(best, dead.x, dead.y);
   }
-  private raise(g: Body, x: number, y: number) {
-    const th = this.makeBody("thrall", g.side, g.rank, x, y, g.pieceId);
+  private raise(g: Body, x0: number, y0: number, from?: Body) {
+    const th = this.makeBody("thrall", g.side, g.rank, x0, y0, g.pieceId, from);
+    const x = th.x, y = th.y;
     th.owner = g.id;
     th.cd = 0.5;
     th.face = g.side === 0 ? -Math.PI / 2 : Math.PI / 2;
@@ -585,6 +668,25 @@ export class Battle {
       this.damage(e, dmg * fall, { x, y }, side, !flat);
       this.push(e, (e.x - x) / d, (e.y - y) / d, knock, stun);
     }
+    if (this.nav) {
+      // Blasts wear down barricades and cover in reach; siege blasts far more.
+      const hit = dmg * (kind === "keg" || kind === "slam" || kind === "quake" ? SIEGE_MUL : 1);
+      for (let i = 0; i < this.blocks.length; i++) {
+        const k = this.blocks[i];
+        if (k.alive && breakable(k.kind) && circleHitsBlock(k, x, y, r)) this.hitBlock(i, hit, clamp(x, k.x - k.w / 2, k.x + k.w / 2), clamp(y, k.y - k.h / 2, k.y + k.h / 2));
+      }
+    }
+  }
+  /** Damage to a breakable block (index into `blocks`); `by` is the body striking it hand to hand. */
+  private hitBlock(i: number, dmg: number, x: number, y: number, by = -1) {
+    const k = this.blocks[i];
+    if (!k.alive || !breakable(k.kind) || dmg <= 0) return;
+    k.hp = Math.max(0, k.hp - dmg);
+    this.emit({ t: "blockhit", id: k.id, x, y, dmg: Math.round(dmg), hp: Math.round(k.hp), by });
+    if (k.hp > 0) return;
+    k.alive = false;
+    this.nav!.rebuild();
+    this.emit({ t: "blockbreak", id: k.id, kind: k.kind, x: k.x, y: k.y, w: k.w, h: k.h });
   }
   /** A melee blow; returns the damage that landed. */
   private melee(b: Body, t: Body, dmg: number, knock = 0, stun = 0): number {
@@ -627,6 +729,7 @@ export class Battle {
   /** Desired velocity toward a point, slowing within `arrive` of it. */
   private seek(b: Body, tx: number, ty: number, frac = 1, arrive = 0.6): [number, number] {
     const dx = tx - b.x, dy = ty - b.y, d = hyp(dx, dy);
+    this.goalOn = true; this.goalX = tx; this.goalY = ty; this.goalSp = b.speed * frac;
     if (d < 0.02) return [0, 0];
     const s = b.speed * frac * Math.min(1, d / arrive);
     return [(dx / d) * s, (dy / d) * s];
@@ -663,6 +766,118 @@ export class Battle {
     }
     const n = hyp(vx, vy) || 1;
     return [(vx / n) * sp, (vy / n) * sp];
+  }
+  /**
+   * Ground navigation, applied to what every behaviour returns. When a block stands on the straight line to where
+   * `b` is heading (the last seek), it follows a route round it instead: a few corner waypoints from Nav.path, cached
+   * per body and planned again only when a block breaks, the goal moves out of the last corner's view, or the body is
+   * shoved off the route. Melee bodies may route through a barricade or cover, and then they break it.
+   */
+  private steer(b: Body, want: [number, number]): [number, number] {
+    const nav = this.nav!;
+    if (b.kind === "lancer" && b.state !== "aim") return want; // a charge and its wheel run straight
+    const sp = hyp(want[0], want[1]);
+    if (sp < 0.01) return want;
+    const gx = this.goalX, gy = this.goalY;
+    if (!this.goalOn || want[0] * (gx - b.x) + want[1] * (gy - b.y) <= 0) return this.deflect(b, want, sp);
+    const rr = b.radius - NAV_TOL;
+    let rt = this.routes.get(b.id);
+    if (nav.clear(b.x, b.y, gx, gy, rr)) { if (rt) rt.live = false; return want; }
+    if (!rt) { rt = { gx: 0, gy: 0, pts: [], n: 0, i: 0, ver: 0, at: -9, breach: -1, partial: false, live: false }; this.routes.set(b.id, rt); }
+    const now = this.time, pts = rt.pts;
+    let stale = !rt.live || rt.ver !== nav.ver || now - rt.at > 2.5;
+    if (!stale) {
+      const moved = hyp(gx - rt.gx, gy - rt.gy);
+      if (moved > 0.4) {
+        const k = (rt.n - 1) * 2;
+        if (rt.breach >= 0 || rt.partial) stale = moved > 1.5;
+        else if (rt.n >= 2 && nav.clear(pts[k - 2], pts[k - 1], gx, gy, rr)) { rt.gx = gx; rt.gy = gy; pts[k] = gx; pts[k + 1] = gy; }
+        else stale = true;
+      }
+      // Shoved off the route.
+      if (!stale && rt.i < rt.n && !nav.clear(b.x, b.y, pts[rt.i * 2], pts[rt.i * 2 + 1], rr)) stale = true;
+    }
+    if (stale && now - rt.at >= 0.25) {
+      const pen = !isMeleeKind(b.kind) || b.baseDmg <= 0 ? 0 : b.kind === "golem" || b.kind === "keg" ? SIEGE_PEN : BREACH_PEN;
+      rt.at = now; rt.ver = nav.ver; rt.gx = gx; rt.gy = gy; rt.i = 0;
+      rt.live = nav.path(b.x, b.y, gx, gy, b.radius, pen);
+      rt.n = nav.np; rt.breach = nav.breach; rt.partial = nav.partial;
+      for (let i = 0; i < rt.n * 2; i++) pts[i] = nav.pts[i];
+    }
+    if (!rt.live) return this.deflect(b, want, sp);
+    // Skip ahead to the next corner once it is in plain view.
+    if (rt.i < rt.n - 1 && nav.clear(b.x, b.y, pts[rt.i * 2 + 2], pts[rt.i * 2 + 3], rr)) rt.i++;
+    for (let guard = 0; guard < 2 && rt.i < rt.n; guard++) {
+      const dx = pts[rt.i * 2] - b.x, dy = pts[rt.i * 2 + 1] - b.y, d = hyp(dx, dy);
+      const last = rt.i === rt.n - 1;
+      if (d < 0.15 && (!last || rt.breach >= 0)) { rt.i++; continue; } // corner reached
+      if (d < 0.03) return [0, 0];
+      const s = this.goalSp * (last && rt.breach < 0 ? Math.min(1, d / 0.3) : 1);
+      return [(dx / d) * s, (dy / d) * s];
+    }
+    return rt.breach >= 0 ? this.breachAt(b, rt) : [0, 0];
+  }
+  /** At the end of a route that goes through a breakable block: walk up to it and break it (a keg blows itself up on it). */
+  private breachAt(b: Body, rt: Route): [number, number] {
+    const k = this.blocks[rt.breach];
+    if (!k.alive) { rt.live = false; return [0, 0]; }
+    const qx = clamp(b.x, k.x - k.w / 2, k.x + k.w / 2), qy = clamp(b.y, k.y - k.h / 2, k.y + k.h / 2);
+    const dx = qx - b.x, dy = qy - b.y, d = hyp(dx, dy) || 0.001;
+    if (d > b.radius + clamp(b.range, 0.15, 0.6) + 0.1) return [(dx / d) * this.goalSp, (dy / d) * this.goalSp];
+    if (b.kind === "keg") { this.kegBlast(b); return [0, 0]; }
+    if (b.cd <= 0) {
+      b.cd = b.cooldown > 0 ? b.cooldown : 1;
+      b.swing = this.time; b.swingA = Math.atan2(dy, dx);
+      if (b.kind !== "bulwark") b.face = b.swingA;
+      this.hitBlock(rt.breach, b.dmg * (b.kind === "golem" ? SIEGE_MUL : 1), qx, qy, b.id);
+    }
+    return [0, 0];
+  }
+  /** Movement with no destination (fleeing): turn aside rather than press into a block dead ahead. */
+  private deflect(b: Body, want: [number, number], sp: number): [number, number] {
+    const nav = this.nav!, dx = want[0] / sp, dy = want[1] / sp, look = b.radius + 0.3;
+    if (!nav.hitsGround(b.x + dx * look, b.y + dy * look, b.radius)) return want;
+    for (const a of DEFLECT) {
+      const c = Math.cos(a * b.hand), s = Math.sin(a * b.hand), ex = dx * c - dy * s, ey = dx * s + dy * c;
+      if (!nav.hitsGround(b.x + ex * look, b.y + ey * look, b.radius)) return [ex * sp, ey * sp];
+    }
+    return want;
+  }
+  /**
+   * Keeps a ground body out of the blocks. Its whole move this step (walking, shoves, a hook's reel) is swept against
+   * them from where it stood when the step began, so nothing tunnels however fast; it slides along what it hits; any
+   * overlap left is pushed out; and if it still overlaps it goes back to where it began, which was clear.
+   */
+  private blockMove(b: Body) {
+    const nav = this.nav!, r = b.radius;
+    let ox = b.px, oy = b.py;
+    for (let it = 0; it < 2; it++) {
+      const dx = b.x - ox, dy = b.y - oy;
+      if (dx * dx + dy * dy < 1e-12) break;
+      const t = nav.sweep(ox, oy, b.x, b.y, r);
+      if (t > 1) break;
+      const nx = nav.snx, ny = nav.sny;
+      const cx = ox + dx * t + nx * 1e-4, cy = oy + dy * t + ny * 1e-4;
+      if (it === 0 && b.kind === "lancer" && b.state === "charge" && b.ax * nx + b.ay * ny < -0.4) {
+        // A charge into a wall ends there, with the rider dazed.
+        b.x = cx; b.y = cy; b.vx = 0; b.vy = 0;
+        b.state = "aim"; b.t = 0; b.stun = Math.max(b.stun, CRASH_STUN);
+        this.emit({ t: "crash", id: b.id, x: cx - nx * r, y: cy - ny * r, a: Math.atan2(b.ay, b.ax) });
+        break;
+      }
+      const vn = b.vx * nx + b.vy * ny;
+      if (vn < 0) { b.vx -= nx * vn; b.vy -= ny * vn; }
+      if (it === 0) {
+        // Slide: keep the part of the move that runs along the surface.
+        const rx = dx * (1 - t), ry = dy * (1 - t), dot = rx * nx + ry * ny;
+        b.x = cx + rx - nx * dot; b.y = cy + ry - ny * dot;
+        ox = cx; oy = cy;
+      } else { b.x = cx; b.y = cy; }
+    }
+    if (nav.pushOut(b, r)) nav.pushOut(b, r);
+    b.x = Math.max(r, Math.min(W - r, b.x));
+    b.y = Math.max(r, Math.min(H - r, b.y));
+    if (nav.hitsGround(b.x, b.y, r - 1e-3)) { b.x = b.px; b.y = b.py; b.vx = 0; b.vy = 0; }
   }
   /** Attack-speed multiplier: banner haste, frost, a ravager's fury. */
   private rate(b: Body) {
@@ -707,7 +922,11 @@ export class Battle {
       let want: [number, number] = [0, 0];
       if (b.frozen > 0) b.frozen -= dt;
       else if (b.stun > 0) b.stun -= dt;
-      else want = this.act(b, dt);
+      else {
+        this.goalOn = false;
+        want = this.act(b, dt);
+        if (this.nav && !b.structure && !b.flying && !b.burrowed && b.alive) want = this.steer(b, want);
+      }
       if (b.structure) { b.vx = 0; b.vy = 0; continue; }
       if (b.slow > 0) want = [want[0] * 0.5, want[1] * 0.5];
       if (b.snare > 0 && !b.flying) want = [want[0] * SNARE, want[1] * SNARE];
@@ -783,6 +1002,7 @@ export class Battle {
       }
       b.x = Math.max(b.radius, Math.min(W - b.radius, b.x));
       b.y = Math.max(b.radius, Math.min(H - b.radius, b.y));
+      if (this.nav && !b.flying && !b.burrowed) this.blockMove(b);
     }
   }
 
@@ -799,7 +1019,7 @@ export class Battle {
       z.tick -= dt;
       if (z.tick > 0) continue;
       z.tick += 0.25;
-      for (const e of this.enemiesNear(z.side, z.x, z.y, z.r)) {
+      for (const e of this.enemiesNear(z.side, z.x, z.y, z.r, false, false)) {
         if (z.kind === "surf") { e.slow = Math.max(e.slow, 0.4); continue; }
         if (z.kind === "thorn") e.snare = Math.max(e.snare, 0.35);
         this.damage(e, z.dps * 0.25, null, z.side);
@@ -888,7 +1108,7 @@ export class Battle {
     if (b.state === "armed") {
       for (const e of this.bodies) {
         if (!e.alive || e.side === b.side || e.structure || e.flying || e.burrowed) continue;
-        if (this.dist(b, e) <= 0.62 + e.radius) {
+        if (this.dist(b, e) <= 0.62 + e.radius && this.sees(b, e)) {
           b.state = "fuse"; b.t = 0; b.hidden = false;
           this.emit({ t: "fuse", id: b.id, x: b.x, y: b.y });
           break;
@@ -957,9 +1177,9 @@ export class Battle {
     const near = this.nearestEnemy(b, { taunt: false });
     if (!near) return [0, 0];
     let t = this.byId(b.target);
-    if (!t || !this.targetable(b, t) || this.dist(b, t) > b.range * 1.15) { t = near; b.target = near.id; }
+    if (!t || !this.targetable(b, t) || this.shotDist(b, t) > b.range * 1.15) { t = near; b.target = near.id; }
     const dn = this.gap(b, near);
-    const dt = this.dist(b, t);
+    const dt = this.shotDist(b, t);
     if (dt <= b.range && b.cd <= 0) {
       b.cd = b.cooldown;
       b.face = Math.atan2(t.y - b.y, t.x - b.x);
@@ -981,7 +1201,7 @@ export class Battle {
       const a = b.face + s * 0.24;
       let pick: Body | undefined, pd = 0.45;
       for (const e of this.bodies) {
-        if (!this.targetable(b, e) || taken.includes(e.id) || this.dist(b, e) > b.range * 1.1) continue;
+        if (!this.targetable(b, e) || taken.includes(e.id) || this.shotDist(b, e) > b.range * 1.1) continue;
         const d = Math.abs(angleDiff(a, Math.atan2(e.y - b.y, e.x - b.x)));
         if (d < pd) { pd = d; pick = e; }
       }
@@ -1034,7 +1254,7 @@ export class Battle {
       const f = a.hp / a.maxHp;
       if (f < low && this.dist(b, a) < 6) { low = f; ward = a; }
     }
-    if (ward && b.cd <= 0 && this.dist(b, ward) <= b.range + ward.radius) {
+    if (ward && b.cd <= 0 && this.dist(b, ward) <= b.range + ward.radius && this.sees(b, ward)) {
       b.cd = b.cooldown;
       const amt = 26 * rankDmg(b.rank) * b.healMul;
       this.heal(b, ward, amt);
@@ -1112,6 +1332,7 @@ export class Battle {
       const x0 = b.x, y0 = b.y;
       b.x = Math.max(b.radius, Math.min(W - b.radius, t.x + (this.rng.next() - 0.5) * 0.3));
       b.y = Math.max(b.radius, Math.min(H - b.radius, t.y + back * (t.radius + b.radius + 0.12)));
+      this.settle(b, t);
       b.px = b.x; b.py = b.y;
       b.vx = 0; b.vy = 0;
       b.face = Math.atan2(t.y - b.y, t.x - b.x);
@@ -1151,6 +1372,12 @@ export class Battle {
       const t = this.nearestEnemy(b, { taunt: false });
       if (!t) return [0, 0];
       const a = Math.atan2(t.y - b.y, t.x - b.x);
+      if (this.nav && !this.nav.clear(b.x, b.y, t.x, t.y, b.radius - NAV_TOL)) {
+        // No straight run at anyone: trot round the blocks to where there is one.
+        if (hyp(b.vx, b.vy) > 0.3) b.face = turnToward(b.face, Math.atan2(b.vy, b.vx), 5 * dt);
+        b.t = Math.min(b.t, 0.2);
+        return this.seek(b, t.x, t.y, 0.5, 0.3);
+      }
       b.face = turnToward(b.face, a, 5 * dt);
       const adj = this.nearestEnemy(b, { max: 0.35, taunt: false });
       if (adj && b.cd <= 0) { b.cd = 0.9; this.melee(b, adj, b.dmg * 0.3); }
@@ -1170,7 +1397,7 @@ export class Battle {
       for (const e of this.bodies) {
         if (!this.targetable(b, e) && !(e.alive && e.side !== b.side && e.kind === "shade")) continue;
         if (e.kind === "mine" || b.hits.includes(e.id)) continue;
-        if (this.dist(b, e) > b.radius + e.radius + 0.12) continue;
+        if (this.dist(b, e) > b.radius + e.radius + 0.12 || !this.sees(b, e)) continue;
         b.hits.push(e.id);
         if (!trample && (e.structure || e.kind === "golem" || e.kind === "bulwark")) {
           // Something it can't go through: big hit and the charge ends.
@@ -1214,12 +1441,12 @@ export class Battle {
         for (const s of [-1, 1]) {
           const ba = b.face + s * 0.06;
           const p = this.newProj("bolt", b, Math.cos(ba) * 14, Math.sin(ba) * 14);
-          p.life = b.range / 14;
+          p.life = b.range / 14; p.over = t.flying;
         }
         this.emit({ t: "twin", id: b.id, x: b.x, y: b.y, a: b.face });
       } else {
         const p = this.newProj("bolt", b, Math.cos(b.face) * 14, Math.sin(b.face) * 14);
-        p.life = b.range / 14;
+        p.life = b.range / 14; p.over = t.flying;
       }
     }
     return [0, 0];
@@ -1238,7 +1465,7 @@ export class Battle {
   private spawnMite(b: Body, kind: "mite" | "queen" = "mite") {
     const ec = this.enemyCentroid(b);
     const a = ec ? Math.atan2(ec.y - b.y, ec.x - b.x) + (this.rng.next() - 0.5) * 1.6 : this.rng.next() * TAU;
-    const m = this.makeBody(kind, b.side, b.rank, b.x + Math.cos(a) * (b.radius + 0.2), b.y + Math.sin(a) * (b.radius + 0.2), b.pieceId);
+    const m = this.makeBody(kind, b.side, b.rank, b.x + Math.cos(a) * (b.radius + 0.2), b.y + Math.sin(a) * (b.radius + 0.2), b.pieceId, b);
     m.owner = b.id;
     m.vx = Math.cos(a) * 2; m.vy = Math.sin(a) * 2;
     m.face = a;
@@ -1252,6 +1479,7 @@ export class Battle {
     if (!t) return [0, 0];
     if (this.gap(b, t) <= b.range && b.cd <= 0) { b.cd = b.cooldown; this.melee(b, t, b.dmg); }
     // A wobble across the path so the swarm streams rather than marching in single file.
+    this.goalOn = true; this.goalX = t.x; this.goalY = t.y; this.goalSp = b.speed;
     const wob = Math.sin(this.time * 9 + b.id * 1.7) * 0.6 * -fwd(b.side);
     const a = Math.atan2(t.y - b.y, t.x - b.x) + wob * Math.min(1, this.dist(b, t) / 2);
     return [Math.cos(a) * b.speed, Math.sin(a) * b.speed];
@@ -1262,8 +1490,8 @@ export class Battle {
     const near = this.nearestEnemy(b, { taunt: false });
     if (!near) return [0, 0];
     let t = this.byId(b.target);
-    if (!t || !this.targetable(b, t) || this.dist(b, t) > b.range * 1.1) { t = near; b.target = near.id; }
-    if (this.dist(b, t) <= b.range && b.cd <= 0) {
+    if (!t || !this.targetable(b, t) || this.shotDist(b, t) > b.range * 1.1) { t = near; b.target = near.id; }
+    if (this.shotDist(b, t) <= b.range && b.cd <= 0) {
       b.cd = b.cooldown;
       b.swing = this.time; b.swingA = Math.atan2(t.y - b.y, t.x - b.x);
       const over = b.rank >= 4; // Overcharge
@@ -1281,7 +1509,7 @@ export class Battle {
         for (const e of this.bodies) {
           if (!this.targetable(b, e) || hit.includes(e.id)) continue;
           const d = this.dist(from, e);
-          if (d < nd) { nd = d; next = e; }
+          if (d < nd && this.sees(from, e)) { nd = d; next = e; }
         }
         cur = next;
       }
@@ -1289,7 +1517,7 @@ export class Battle {
     }
     const dn = this.gap(b, near);
     if (dn < 1.4) return this.flee(b, near, 0.85);
-    if (this.dist(b, t) > b.range * 0.9) return this.seek(b, t.x, t.y, 1, 0.3);
+    if (this.shotDist(b, t) > b.range * 0.9) return this.seek(b, t.x, t.y, 1, 0.3);
     return [0, 0];
   }
 
@@ -1341,6 +1569,7 @@ export class Battle {
   private emerge(b: Body) {
     const big = b.rank >= 4; // Cave-in
     const r = big ? 2.0 : 1.0;
+    this.settle(b); // never up inside a block
     b.burrowed = false; b.state = "fight"; b.t = 0; b.cd = 0.35; b.target = -1;
     this.emit({ t: "emerge", id: b.id, x: b.x, y: b.y, r, side: b.side, big });
     this.emit({ t: "boom", x: b.x, y: b.y, r, kind: "erupt", side: b.side });
@@ -1421,13 +1650,13 @@ export class Battle {
     const near = this.nearestEnemy(b, { taunt: false });
     if (!near) return [0, 0];
     let t = this.byId(b.target);
-    if (!t || !this.targetable(b, t) || this.dist(b, t) > b.range * 1.1) { t = near; b.target = near.id; }
+    if (!t || !this.targetable(b, t) || this.shotDist(b, t) > b.range * 1.1) { t = near; b.target = near.id; }
     if (b.cd <= 0 && (t.slow > 0.6 || t.frozen > 0)) {
       // Spread the frost: prefer someone not yet chilled.
       const alt = this.nearestEnemy(b, { max: b.range, taunt: false, filter: (e) => e.slow <= 0 && e.frozen <= 0 });
       if (alt) { t = alt; b.target = alt.id; }
     }
-    if (this.dist(b, t) <= b.range && b.cd <= 0) {
+    if (this.shotDist(b, t) <= b.range && b.cd <= 0) {
       b.cd = b.cooldown;
       b.face = Math.atan2(t.y - b.y, t.x - b.x);
       b.swing = this.time; b.swingA = b.face;
@@ -1436,7 +1665,7 @@ export class Battle {
     }
     const dn = this.gap(b, near);
     if (dn < 1.5) return this.flee(b, near, 0.85);
-    if (this.dist(b, t) > b.range * 0.9) return this.seek(b, t.x, t.y, 1, 0.3);
+    if (this.shotDist(b, t) > b.range * 0.9) return this.seek(b, t.x, t.y, 1, 0.3);
     return [0, 0];
   }
 
@@ -1473,7 +1702,7 @@ export class Battle {
       if (!b.once) { b.once = true; b.aux = 3; }
       else if (b.aux <= 0) {
         b.aux = 6;
-        if (threat && this.owned(b, "thrall") < THRALL_CAP) this.raise(b, clamp(b.x, 0.4, W - 0.4), clamp(b.y + fwd(b.side) * 0.6, 0.4, H - 0.4));
+        if (threat && this.owned(b, "thrall") < THRALL_CAP) this.raise(b, clamp(b.x, 0.4, W - 0.4), clamp(b.y + fwd(b.side) * 0.6, 0.4, H - 0.4), b);
       }
     }
     if (threat && this.gap(b, threat) < 1.5) return this.flee(b, threat, 0.9);
@@ -1512,7 +1741,7 @@ export class Battle {
         if (b.t >= 1.2) {
           b.state = "idle";
           b.aux = 2.5;
-          const tu = this.makeBody("turret", b.side, b.rank, b.ax, b.ay, b.pieceId);
+          const tu = this.makeBody("turret", b.side, b.rank, b.ax, b.ay, b.pieceId, b);
           tu.owner = b.id;
           tu.face = b.face;
           tu.cd = 0.4;
@@ -1542,6 +1771,7 @@ export class Battle {
       const dx = ec.x - b.x, dy = ec.y - b.y, d = hyp(dx, dy) || 1;
       b.ax = clamp(b.x + (dx / d) * 0.7, 0.4, W - 0.4);
       b.ay = clamp(b.y + (dy / d) * 0.7, 0.4, H - 0.4);
+      if (this.nav) [b.ax, b.ay] = this.freeAt(b.ax, b.ay, BODY_EXTRA.turret.radius, b);
       b.face = Math.atan2(dy, dx);
       b.state = "build"; b.t = 0;
       this.emit({ t: "build", id: b.id, x: b.ax, y: b.ay, dur: 1.2 });
@@ -1679,7 +1909,7 @@ export class Battle {
       const n = b.rank >= 4 ? 4 : 2; // Mirror Hall
       for (let i = 0; i < n; i++) {
         const a = b.face + Math.PI / 2 + (i * TAU) / n;
-        const d = this.makeBody("decoy", b.side, b.rank, clamp(b.x + Math.cos(a) * 0.55, 0.3, W - 0.3), clamp(b.y + Math.sin(a) * 0.55, 0.3, H - 0.3), b.pieceId);
+        const d = this.makeBody("decoy", b.side, b.rank, clamp(b.x + Math.cos(a) * 0.55, 0.3, W - 0.3), clamp(b.y + Math.sin(a) * 0.55, 0.3, H - 0.3), b.pieceId, b);
         d.owner = b.id;
         d.face = b.face;
         d.vx = Math.cos(a) * 2; d.vy = Math.sin(a) * 2;
@@ -1720,6 +1950,12 @@ export class Battle {
       for (const id of b.hits) {
         const v = this.byId(id);
         if (!v || !this.targetable(b, v) || v.structure || v.flying || this.dist(b, v) > HOOK_R * 1.25) continue;
+        if (this.nav && !this.nav.los(b.x, b.y, v.x, v.y)) {
+          // The chain is a direct shot: it stops on the wall its mark stepped behind.
+          const k = this.nav.shotHit(b.x, b.y, v.x, v.y);
+          this.emit({ t: "ricochet", x: this.nav.hx, y: this.nav.hy, kind: "hook", block: k >= 0 ? this.blocks[k].id : -1 });
+          continue;
+        }
         caught.push(id);
         this.damage(v, b.dmg * 2, b, b.side, false, b); // the hook bites
         if (v.alive) this.emit({ t: "reel", id: b.id, target: v.id, x: v.x, y: v.y });
@@ -1759,7 +1995,7 @@ export class Battle {
       for (const e of this.bodies) {
         if (!this.targetable(b, e) || e.structure || e.flying || e.kind === "mine" || e.kind === "decoy") continue;
         const d = this.dist(b, e);
-        if (d > HOOK_R || this.gap(b, e) < 1.0) continue;
+        if (d > HOOK_R || this.gap(b, e) < 1.0 || !this.sees(b, e)) continue;
         const s = (ROLE_BACKLINE.has(e.kind) ? 3 : 0) + (1 - e.hp / e.maxHp) - d * 0.25 - (isSpawn(e.kind) ? 2 : 0);
         picks.push({ e, s });
       }
@@ -1813,7 +2049,7 @@ export class Battle {
         const z: Zone = { id: this.nextId++, kind: "thorn", x: best.x, y: best.y, r, side: b.side, until: this.time + (asc ? 5 : 3.5), dps: b.dmg, tick: 0.25 };
         this.zones.push(z);
         this.emit({ t: "zone", id: z.id, x: z.x, y: z.y, r: z.r, until: z.until, side: z.side, kind: "thorn", root: asc });
-        if (asc) for (const e of this.enemiesNear(b.side, z.x, z.y, z.r)) if (!e.structure) e.stun = Math.max(e.stun, 0.8);
+        if (asc) for (const e of this.enemiesNear(b.side, z.x, z.y, z.r, false, false)) if (!e.structure) e.stun = Math.max(e.stun, 0.8);
       }
     }
     const dn = this.gap(b, near);
@@ -1827,8 +2063,8 @@ export class Battle {
     const near = this.nearestEnemy(b, { taunt: false });
     if (!near) return [0, 0];
     let t = this.byId(b.target);
-    if (!t || !this.targetable(b, t) || this.dist(b, t) > b.range * 1.3) { t = near; b.target = near.id; }
-    const d = this.dist(b, t);
+    if (!t || !this.targetable(b, t) || this.shotDist(b, t) > b.range * 1.3) { t = near; b.target = near.id; }
+    const d = this.shotDist(b, t);
     if (d <= b.range && b.cd <= 0) {
       b.cd = b.cooldown;
       b.swing = this.time; b.swingA = Math.atan2(t.y - b.y, t.x - b.x);
@@ -1857,7 +2093,7 @@ export class Battle {
     if (b.cd <= 0 && threat) {
       const n = b.rank >= 4 ? 4 : 2;
       const picks: { a: Body; s: number }[] = [];
-      const pool = this.allies(b).filter((a) => !a.structure && !a.burrowed && a.ward <= 0);
+      const pool = this.allies(b).filter((a) => !a.structure && !a.burrowed && a.ward <= 0 && this.sees(b, a));
       if (!pool.length && b.ward <= 0) pool.push(b);
       for (const a of pool) {
         const d = this.dist(b, a);
@@ -1879,7 +2115,7 @@ export class Battle {
         }
       } else b.cd = 0.3;
     }
-    if (threat && b.aux <= 0 && this.dist(b, threat) <= b.range) {
+    if (threat && b.aux <= 0 && this.shotDist(b, threat) <= b.range) {
       b.aux = 1.3;
       b.face = Math.atan2(threat.y - b.y, threat.x - b.x);
       this.shoot(b, "pellet", threat, 9);
@@ -1893,7 +2129,7 @@ export class Battle {
     const p: Proj = {
       id: this.nextId++, kind, side: b.side,
       x: b.x + Math.cos(b.face) * b.radius, y: b.y + Math.sin(b.face) * b.radius, px: b.x, py: b.y,
-      vx, vy, x0: b.x, y0: b.y, tx: 0, ty: 0, target: -1, dmg: b.dmg, t: 0, life: 2, z: 0, hits: [], owner: b.id, rank: b.rank, alive: true, fx: "",
+      vx, vy, x0: b.x, y0: b.y, tx: 0, ty: 0, target: -1, dmg: b.dmg, t: 0, life: 2, z: 0, hits: [], owner: b.id, rank: b.rank, alive: true, fx: "", over: false,
     };
     p.px = p.x; p.py = p.y;
     this.projs.push(p);
@@ -1905,12 +2141,39 @@ export class Battle {
     const p = this.newProj(kind, b, Math.cos(a) * speed, Math.sin(a) * speed);
     p.target = t.id;
     p.life = 1.2;
+    p.over = t.flying;
     return p;
   }
   private lob(b: Body, tx: number, ty: number, flight: number, kind: "grenade" | "shell"): Proj {
+    // A lob aimed into a wall or building comes down beside it instead of on the roof.
+    if (this.nav && this.nav.inShot(tx, ty)) [tx, ty] = this.freeAt(tx, ty, 0.05);
     const p = this.newProj(kind, b, 0, 0);
     p.x0 = p.x; p.y0 = p.y; p.tx = tx; p.ty = ty; p.life = flight;
     return p;
+  }
+  /** Where a direct shot's move this step meets a wall, building or barricade: the shot is put there and the block's
+   * index returned (-1 when the way is clear, or the shot flies over). */
+  private wallStop(p: Proj, x0: number, y0: number): number {
+    if (p.over) return -1;
+    const k = this.nav!.shotHit(x0, y0, p.x, p.y);
+    if (k >= 0) { p.x = this.nav!.hx; p.y = this.nav!.hy; }
+    return k;
+  }
+  /** A direct shot stops on a block (and wears it down if it can break). */
+  private wallHit(p: Proj, k: number) {
+    p.alive = false;
+    this.emit({ t: "ricochet", x: p.x, y: p.y, kind: p.kind, block: this.blocks[k].id });
+    this.hitBlock(k, p.dmg, p.x, p.y);
+  }
+  /** Cover: a direct shot that crosses a cover block close in front of its target keeps COVER_KEEP of its damage,
+   * and what the cover soaks comes off the cover. Returns the damage multiplier. */
+  private cover(p: Proj, e: Body): number {
+    const nav = this.nav;
+    if (!nav || e.flying) return 1;
+    const k = nav.coverFor(p.x0, p.y0, e.x, e.y, COVER_REACH);
+    if (k < 0) return 1;
+    this.hitBlock(k, p.dmg * (1 - COVER_KEEP), nav.hx, nav.hy);
+    return COVER_KEEP;
   }
   private land(p: Proj) {
     if (p.kind === "shell") {
@@ -1942,12 +2205,14 @@ export class Battle {
           // A stray volley arrow: straight, stops in the first enemy on its line.
           const x0 = p.x, y0 = p.y;
           p.x += p.vx * dt; p.y += p.vy * dt;
+          const wall = this.nav ? this.wallStop(p, x0, y0) : -1;
           for (const e of this.bodies) {
             if (!this.canTarget(p.side, "ranger", e) || segDist(x0, y0, p.x, p.y, e.x, e.y) >= e.radius + 0.1) continue;
             p.alive = false;
-            this.damage(e, p.dmg, { x: x0, y: y0 }, p.side);
+            this.damage(e, p.dmg * this.cover(p, e), { x: x0, y: y0 }, p.side);
             break;
           }
+          if (wall >= 0 && p.alive) this.wallHit(p, wall);
           if (p.t > p.life) p.alive = false;
           continue;
         }
@@ -1956,10 +2221,20 @@ export class Battle {
           const a = Math.atan2(t.y - p.y, t.x - p.x), s = hyp(p.vx, p.vy);
           p.vx = Math.cos(a) * s; p.vy = Math.sin(a) * s;
         }
+        const x0 = p.x, y0 = p.y;
         p.x += p.vx * dt; p.y += p.vy * dt;
+        if (this.nav && !p.over) {
+          const k = this.nav.shotHit(x0, y0, p.x, p.y);
+          // The wall stops it, unless its target stands nearer than the wall.
+          if (k >= 0 && !(t && t.alive && hyp(t.x - x0, t.y - y0) - t.radius - 0.1 <= hyp(this.nav.hx - x0, this.nav.hy - y0))) {
+            p.x = this.nav.hx; p.y = this.nav.hy;
+            this.wallHit(p, k);
+            continue;
+          }
+        }
         if (t && t.alive && this.dist(p, t) < t.radius + 0.1) {
           p.alive = false;
-          const dealt = this.damage(t, p.dmg, { x: p.px, y: p.py }, p.side);
+          const dealt = this.damage(t, p.dmg * this.cover(p, t), { x: p.px, y: p.py }, p.side);
           if (p.kind === "shard" && dealt > 0 && t.alive) {
             this.chill(t, 2);
             if (p.fx === "freeze") this.freeze(t, 1.5);
@@ -1971,14 +2246,16 @@ export class Battle {
       // bolt: straight, pierces; tests the segment covered this step.
       const x0 = p.x, y0 = p.y;
       p.x += p.vx * dt; p.y += p.vy * dt;
+      const wall = this.nav ? this.wallStop(p, x0, y0) : -1;
       for (const e of this.bodies) {
         if (!this.canTarget(p.side, "ballista", e) || p.hits.includes(e.id)) continue;
         if (segDist(x0, y0, p.x, p.y, e.x, e.y) < e.radius + 0.1) {
           p.hits.push(e.id);
-          this.damage(e, p.dmg, { x: x0, y: y0 }, p.side);
+          this.damage(e, p.dmg * this.cover(p, e), { x: x0, y: y0 }, p.side);
           this.push(e, p.vx / 14, p.vy / 14, 1.0, 0.1);
         }
       }
+      if (wall >= 0) this.wallHit(p, wall);
       if (p.t > p.life || p.x < 0 || p.x > W || p.y < 0 || p.y > H) p.alive = false;
     }
     if (this.projs.length > 64) this.projs = this.projs.filter((p) => p.alive);
@@ -1999,7 +2276,7 @@ export class Battle {
     if (b.state === "soar") {
       let t = this.byId(b.target);
       if (!t || !this.targetable(b, t) || t.flying) { t = this.diveMark(b); b.target = t ? t.id : -1; }
-      if (!t) { b.state = "fight"; b.t = 0; b.flying = false; return [0, 0]; }
+      if (!t) { b.state = "fight"; b.t = 0; b.flying = false; this.settle(b); return [0, 0]; }
       const d = this.dist(b, t);
       // High over the fight, then down onto the mark over the last stretch.
       b.z = Math.max(0.2, Math.min(Math.min(1.5, b.z + dt * 2.5), (d - t.radius) * 0.6 + 0.2));
@@ -2043,6 +2320,7 @@ export class Battle {
     }
     // Down among them now: it fights low, on the wing but in reach of swords and blasts.
     b.state = "fight"; b.t = 0; b.cd = b.cooldown; b.aux = 1.0; b.flying = false;
+    this.settle(b, t);
     b.target = t.alive ? t.id : -1;
   }
 
@@ -2059,6 +2337,7 @@ export class Battle {
           if (!this.targetable(b, e) || e.flying || e.kind === "mine") continue;
           const ahead = (e.y - b.y) * dir;
           if (ahead < -0.3 || ahead > WAVE_LEN || Math.abs(e.x - cx) > WAVE_W / 2 + e.radius * 0.5) continue;
+          if (this.nav && !this.nav.los(e.x, b.y, e.x, e.y)) continue; // sheltered behind a wall down the lane
           s += isSpawn(e.kind) ? 0.5 : 1;
         }
         s -= Math.abs(cx - b.x) * 0.04;
@@ -2076,7 +2355,7 @@ export class Battle {
     }
     const dn = this.gap(b, near);
     if (dn < 1.6) return this.flee(b, near, 0.9);
-    if (dn > 3.6) return this.seek(b, near.x, near.y, 0.9, 0.4);
+    if (dn > 3.6 || !this.sees(b, near)) return this.seek(b, near.x, near.y, 0.9, 0.4);
     return [0, 0];
   }
   private stepWaves(dt: number) {
@@ -2091,6 +2370,7 @@ export class Battle {
         const a = (e.y - y0) * w.dir;
         if (a < -e.radius - 0.3 || a > span + e.radius) continue;
         w.hits.push(e.id);
+        if (this.nav && !this.nav.los(e.x, w.y0, e.x, e.y)) continue; // the wave broke on a wall before reaching it
         this.damage(e, w.dmg, { x: e.x, y: e.y - w.dir }, w.side, true);
         this.push(e, 0, w.dir, WAVE_PUSH, 0.35);
       }
