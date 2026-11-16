@@ -2,11 +2,13 @@
 // simulating the coming battle against what it can see of your board (plus a guess at what you'll add).
 import { Battle, canHitAir } from "./battle";
 import {
-  ASCEND_ROUND, MAX_RANK, UNITS, UNIT_KINDS, W, ZONE_DEPTH, clampToZone, toWorld, upgradeCost,
+  ASCEND_ROUND, MAX_RANK, UNITS, UNIT_KINDS, W, ZONE_DEPTH, clampToZone, toLocal, toWorld, upgradeCost,
   type Piece, type Role, type Side, type UnitKind,
 } from "./defs";
 import { Match } from "./match";
+import { freeSpotIn } from "./placement";
 import { Rng, hashSeed } from "./rng";
+import type { Block } from "./terrain";
 
 export type Tactic = "balanced" | "swarm" | "fortress" | "artillery" | "ambush" | "blitz" | "siege";
 export const TACTICS: Tactic[] = ["balanced", "swarm", "fortress", "artillery", "ambush", "blitz", "siege"];
@@ -216,8 +218,13 @@ const BAND: Record<Role, number> = {
   support: -1.9, ranged: -2.4, caster: -2.2, artillery: -3.0, structure: -3.6, spawner: -3.4, air: -1.3,
 };
 
-/** Lays the whole army out in side-local terms, then converts to the board. */
-export function formation(side: Side, pieces: Piece[], theirs: Piece[], ai: AIProfile, rng: Rng, jitter: number): { id: number; x: number; y: number }[] {
+/** Lays the whole army out in side-local terms, then converts to the board. In an arena (`terrain`) every piece ends
+ * on free ground: anything the layout put on a block moves to the nearest free spot in the zone. */
+export function formation(side: Side, pieces: Piece[], theirs: Piece[], ai: AIProfile, rng: Rng, jitter: number, terrain?: Block[]): { id: number; x: number; y: number }[] {
+  // Arenas are symmetric under a half turn, so there side 1 lays out the mirror image of what side 0 would (its left is
+  // the board's right). On an open field both sides use the board's x as before.
+  const turn = !!terrain?.length && side === 1;
+  if (turn) theirs = theirs.map((p) => ({ ...p, x: W - p.x }));
   const front = ZONE_DEPTH * (0.42 + 0.5 * ai.aggression);
   const span = 2.2 + ai.spread * 5.4;
   // Lean toward the side of the board where they are thinner, if it is aggressive and sharp.
@@ -285,12 +292,63 @@ export function formation(side: Side, pieces: Piece[], theirs: Piece[], ai: AIPr
       o.x = c.x; o.y = c.y;
     }
   }
+  if (terrain?.length) for (const o of out) {
+    if (turn) o.x = W - o.x;
+    const p = pieces.find((q) => q.id === o.id)!;
+    const c = freeSpotIn(terrain, side, p.kind, o.x, o.y);
+    if (c) { o.x = c.x; o.y = c.y; }
+  }
   return out;
+}
+
+/** Direct-fire shooters, who gain from cover in front of them (their own shots are not weakened leaving it). */
+const SHOOTERS = new Set<UnitKind>(["ranger", "rime", "storm", "outrider", "lamp"]);
+/** Soft units that need no line of sight to do their work, so a wall in front of them is pure gain. */
+const LOBBERS = new Set<UnitKind>(["grenadier", "bombard", "thorn", "hive", "grave", "medic", "banner"]);
+/**
+ * A terrain-aware variation of a layout (in place): shooters move up behind cover blocks in their zone, and units
+ * that work over walls move behind a wall or building. Each block offers a few spots along its own-side face; pieces
+ * take the nearest free one. Purely a candidate: planSteps tests it in simulation like any other.
+ */
+export function shelter(side: Side, layout: { id: number; x: number; y: number }[], pieces: Piece[], terrain: Block[], rng: Rng) {
+  const back = side === 0 ? 1 : -1; // toward this side's own edge
+  const spots = (kinds: (k: Block["kind"]) => boolean, gap: number, front: number) => {
+    const out: { x: number; y: number; used: boolean }[] = [];
+    for (const b of terrain) {
+      if (!kinds(b.kind)) continue;
+      const y = b.y + back * (b.h / 2 + gap);
+      const n = Math.max(1, Math.floor(b.w / 0.7));
+      for (let i = 0; i < n; i++) {
+        const x = b.x - b.w / 2 + (b.w * (i + 0.5)) / n;
+        const c = clampToZone(side, x, y, 0.3);
+        // Inside the zone, and (for walls) not right at its front edge, where a soft unit would be the front line.
+        if (Math.abs(c.x - x) < 1e-6 && Math.abs(c.y - y) < 1e-6 && toLocal(side, x, y).depth <= ZONE_DEPTH - front) out.push({ x, y, used: false });
+      }
+    }
+    return out;
+  };
+  const cover = spots((k) => k === "cover", 0.45, 0), walls = spots((k) => k === "wall" || k === "building" || k === "barricade", 0.6, 1.4);
+  for (const l of layout) {
+    const p = pieces.find((q) => q.id === l.id);
+    if (!p) continue;
+    const pool = SHOOTERS.has(p.kind) ? cover : LOBBERS.has(p.kind) ? walls : null;
+    if (!pool || !rng.chance(0.75)) continue;
+    let best: { x: number; y: number; used: boolean } | undefined, bd = 4.5;
+    for (const s of pool) {
+      const d = Math.hypot(s.x - l.x, s.y - l.y);
+      if (!s.used && d < bd) { bd = d; best = s; }
+    }
+    if (!best) continue;
+    const c = freeSpotIn(terrain, side, p.kind, best.x, best.y);
+    if (!c) continue;
+    best.used = true;
+    l.x = c.x; l.y = c.y;
+  }
 }
 
 // ---------------------------------------------------------------- guessing the other side
 /** What the other side might add this round with the gold it holds, from a balanced read of its roster. */
-export function guessAdditions(side: Side, seen: Piece[], gold: number, supply: number, roster: UnitKind[], rng: Rng): Piece[] {
+export function guessAdditions(side: Side, seen: Piece[], gold: number, supply: number, roster: UnitKind[], rng: Rng, terrain?: Block[]): Piece[] {
   const guess: Piece[] = seen.map((p) => ({ ...p }));
   const ai: AIProfile = { ...DEFAULT_AI, difficulty: 0.5 };
   let g = gold, id = -100;
@@ -303,7 +361,7 @@ export function guessAdditions(side: Side, seen: Piece[], gold: number, supply: 
   }
   const added = guess.filter((p) => p.id <= -100);
   if (added.length) {
-    const lay = formation(side, added, [], ai, rng, 0.4);
+    const lay = formation(side, added, [], ai, rng, 0.4, terrain);
     for (const l of lay) { const p = guess.find((q) => q.id === l.id)!; p.x = l.x; p.y = l.y; }
   }
   return guess;
@@ -313,6 +371,9 @@ export function guessAdditions(side: Side, seen: Piece[], gold: number, supply: 
 export interface PlanOpts {
   /** Override the number of candidates tested. */
   candidates?: number;
+  /** In an arena, let some candidate layouts tuck shooters behind cover and soft units behind walls (default true;
+   * false leaves terrain to the plain formations, for A/B tests). */
+  shelter?: boolean;
 }
 
 function scoreBattle(b: Battle, side: Side, goldLeft: number, ai: AIProfile): number {
@@ -343,7 +404,7 @@ export function* planSteps(match: Match, side: Side, ai: AIProfile, opts: PlanOp
   // Mines are buried: it knows how many it has met, not where they are now, so its test battles leave them out.
   const visible = other.seen.filter((p) => p.kind !== "mine");
   const theirs = ai.difficulty >= 0.55
-    ? guessAdditions(opp, visible, other.gold, match.supplyCap(opp), other.roster, rng.fork(3))
+    ? guessAdditions(opp, visible, other.gold, match.supplyCap(opp), other.roster, rng.fork(3), match.cfg.terrain)
     : visible.map((p) => ({ ...p }));
   const n = opts.candidates ?? Math.max(1, Math.round(1 + ai.difficulty * 15));
   const base: Draft = { gold: st.gold, pieces: st.pieces.map((p) => ({ ...p })), shop: [...st.shop], supply: match.supplyCap(side), shopFixed: !!match.cfg.fixedShop?.[side], round: match.round };
@@ -358,7 +419,9 @@ export function* planSteps(match: Match, side: Side, ai: AIProfile, opts: PlanOp
       aggression: Math.max(0, Math.min(1, ai.aggression + crng.range(-0.3, 0.3))),
       spread: Math.max(0, Math.min(1, ai.spread + crng.range(-0.35, 0.35))),
     };
-    const layout = formation(side, d.pieces, theirs, shape, crng, c === 0 ? 0.15 : 0.45);
+    const layout = formation(side, d.pieces, theirs, shape, crng, c === 0 ? 0.15 : 0.45, match.cfg.terrain);
+    // In an arena, every other exploring candidate also tries the ground: the simulation decides whether it pays.
+    if (match.cfg.terrain?.length && opts.shelter !== false && c % 2 === 1) shelter(side, layout, d.pieces, match.cfg.terrain, crng);
     candidates.push({ rerolls, options: d.options, layout, score: 0, tested: 0, pieces: d.pieces, goldLeft: d.gold });
   }
   // 3. Test the candidates in simulation, the sharper the more of them.
@@ -376,6 +439,7 @@ export function* planSteps(match: Match, side: Side, ai: AIProfile, opts: PlanOp
         const b = new Battle([...pieces, ...theirs.map((p) => ({ ...p, side: opp }))], {
           seed: hashSeed(match.cfg.seed, "probe", match.round, k),
           obstacles: match.cfg.obstacles,
+          terrain: match.cfg.terrain,
           mods: side === 0 ? [st.mods, other.mods] : [other.mods, st.mods],
           levels: match.cfg.levels,
           limit: 30,
@@ -419,8 +483,10 @@ export function applyPlan(match: Match, side: Side, plan: Plan) {
       const l = plan.layout.find((x) => x.id === tmp);
       const why = match.canBuy(side, o.slot!);
       if (why) continue;
-      const p = match.buy(side, o.slot!, l?.x ?? W / 2, l?.y ?? toWorld(side, W / 2, 1).y);
-      idMap.set(tmp, p.id);
+      try {
+        const p = match.buy(side, o.slot!, l?.x ?? W / 2, l?.y ?? toWorld(side, W / 2, 1).y);
+        idMap.set(tmp, p.id);
+      } catch { /* an arena with no free spot left */ }
     } else {
       const real = o.pieceId! < 0 ? idMap.get(o.pieceId!) : o.pieceId!;
       if (real !== undefined && !match.canUpgrade(side, real)) match.upgrade(side, real);
@@ -435,7 +501,7 @@ export function applyPlan(match: Match, side: Side, plan: Plan) {
 
 /** Drafts a starting army worth about `budget` gold (Gauntlet opponents, campaign set pieces); ranks go up to `maxRank`
  * once the board is full (4 = Ascended, for armies that start late in a match). */
-export function draftArmy(side: Side, budget: number, roster: UnitKind[], ai: AIProfile, seed: number, maxPieces = 12, maxRank = 3): Piece[] {
+export function draftArmy(side: Side, budget: number, roster: UnitKind[], ai: AIProfile, seed: number, maxPieces = 12, maxRank = 3, terrain?: Block[]): Piece[] {
   const rng = new Rng(seed);
   const pieces: Piece[] = [];
   let g = budget, id = 1000;
@@ -455,7 +521,7 @@ export function draftArmy(side: Side, budget: number, roster: UnitKind[], ai: AI
     g -= UNITS[kind].cost;
     pieces.push({ id: id++, kind, side, x: 0, y: 0, rank: 1, spent: UNITS[kind].cost });
   }
-  const lay = formation(side, pieces, [], ai, rng, 0.3);
+  const lay = formation(side, pieces, [], ai, rng, 0.3, terrain);
   for (const l of lay) { const p = pieces.find((q) => q.id === l.id)!; p.x = l.x; p.y = l.y; }
   return pieces;
 }
