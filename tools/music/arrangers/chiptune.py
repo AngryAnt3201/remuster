@@ -92,8 +92,8 @@ def arrange(X, F):
                 snr += [(t, v, dict(dur=0.06)) for t, v in roll(b0 + 2, b0 + 4, 0.25, 0.4, 0.9)]
 
     X.add("pulse2", S.chip_pulse, p2, level=-23, pan=0.2, rev=0.06, human=(0.0, 0.0))
-    X.add("triangle", S.chip_tri, tri, level=-16, pan=0.0, human=(0.0, 0.0))
-    X.add("dmc_kick", S.chip_tri, [(b, 0.22, 64, v, dict(drop=24.0)) for b, v in kick], level=-15, human=(0.0, 0.0))
+    X.add("triangle", S.chip_tri, tri, level=-19, pan=0.0, human=(0.0, 0.0))
+    X.add("dmc_kick", S.chip_tri, [(b, 0.22, 64, v, dict(drop=24.0)) for b, v in kick], level=-14, human=(0.0, 0.0))
     X.add("noise_snare", S.chip_noise, snr, kw=dict(dur=0.11, period=6, dec=0.1), peak=-12, pan=0.05, rev=0.08, pitched=False,
           human=(0.0, 0.03))
     X.add("noise_hat", S.chip_noise, hat, peak=-21, pan=-0.05, pitched=False, human=(0.0, 0.03))

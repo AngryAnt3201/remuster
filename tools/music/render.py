@@ -119,7 +119,7 @@ def game(gid, style=None, only=None):
     for kind in only or KINDS:
         results[kind], _ = render_checked(style, kind, GAME_SR, GAME_LUFS, os.path.join(pub, kind + ".m4a"), AAC)
     if not only:
-        rows = ",\n".join(f'  {k}: {{ file: "{k}.m4a", loop: {results[k]["loop"]:.4f} }}' for k in KINDS)
+        rows = ",\n".join(f'  {k}: {{ file: "{k}.m4a", loop: {results[k]["loop"]:.6f} }}' for k in KINDS)
         os.makedirs(os.path.dirname(src), exist_ok=True)
         with open(src, "w") as f:
             f.write(HEADER + f"\n// {song.KEY}, {song.BPM} BPM. Written by `npm run music -- {gid}` ({style} arrangement); do not edit by hand.\n"

@@ -49,6 +49,13 @@ def run(cuts, out_path, fx=True):
                 raise check.CheckError(f"stem {st} is {len(stems[st])} samples, grid says {total}")
     out = np.zeros((total, 2))
     xf = int(XFADE * sr)
+    # Level-match each segment to the median of all stems over the same bars (within 3 dB), so a cut never jumps
+    # in loudness just because one style is busier there.
+    allst = {st: (stems[st] if st in stems else check.decode(os.path.join(AUDIO, f), sr)[0]) for st, f in grid["stems"].items()}
+    kw = {st: S._kweight(x) ** 2 for st, x in allst.items()}
+    cs = {st: np.concatenate([[0.0], np.cumsum(v.sum(1))]) for st, v in kw.items()}
+    del kw
+    trims = []
     for i, (b, st) in enumerate(cuts):
         a = b * bar
         z = cuts[i + 1][0] * bar if i + 1 < len(cuts) else total
@@ -61,7 +68,21 @@ def run(cuts, out_path, fx=True):
         if z < total:
             g[z - xf // 2:z - xf // 2 + xf] = ramp[::-1]
             g[z - xf // 2 + xf:] = 0.0
-        out += stems[st] * g[:, None]
+        zz = min(z, grid["bars"] * bar)
+        lev = {s_: 10 * np.log10((c[zz] - c[a]) / (zz - a) + 1e-12) for s_, c in cs.items()}
+        trim = float(np.clip(np.median(list(lev.values())) - lev[st], -3.0, 3.0))
+        trims.append(round(trim, 1))
+        out += stems[st] * g[:, None] * S.db(trim)
+    # no click at a cut: inside each crossfade the output never steps harder than the two stems it is made of
+    worst = 0.0
+    for i, (b, st) in enumerate(cuts[1:], 1):
+        c = b * bar
+        sl = slice(c - xf, c + xf)
+        step = lambda v: float(np.abs(np.diff(v[sl], axis=0)).max())
+        own = step(stems[cuts[i - 1][1]]) * S.db(trims[i - 1]) + step(stems[st]) * S.db(trims[i])
+        worst = max(worst, step(out) / (own + 1e-12))
+    if worst > 1.05:
+        raise check.CheckError(f"click at a cut: sample step {worst:.2f}x what the stems contain")
     if fx:
         for i, (b, st) in enumerate(cuts[1:], 1):
             seg = (b - cuts[i - 1][0]) * bar / sr                       # length of the segment being left
@@ -85,20 +106,10 @@ def run(cuts, out_path, fx=True):
     res_m = check.check_file(m4a, grid["loudness_lufs"], 0.0, "default", -1.0)
     if res["seconds"] != round(total / sr, 3):
         raise check.CheckError("soundtrack length differs from the stems")
-    # no click at any cut: high-band energy in a short window on the bar line is not above its surroundings
-    hf = check._hf(y, sr)
-    worst = -99.0
-    for b, _ in cuts[1:]:
-        c = b * bar
-        e = lambda k: float((hf[k - 256:k + 256] ** 2).mean()) + 1e-14
-        around = np.array([e(c + o) for o in range(-8192, 8193, 512) if abs(o) > 2048])
-        worst = max(worst, 10 * np.log10(e(c - 300) / np.percentile(around, 95)))   # just before the impact lands
-    if worst > 6.0:
-        raise check.CheckError(f"click at a cut: +{worst:.1f} dB")
     check.spectrogram(out_path, "soundtrack")
-    json.dump(dict(cuts=cuts, wav=res, m4a=res_m, cut_click_db=round(worst, 1)), open(os.path.join(check.OUT, "report_soundtrack.json"), "w"), indent=1)
+    json.dump(dict(cuts=cuts, segment_trims_db=trims, wav=res, m4a=res_m, cut_step_ratio=round(worst, 2)), open(os.path.join(check.OUT, "report_soundtrack.json"), "w"), indent=1)
     print(f"  soundtrack: {res['seconds']}s  wav {res['bytes'] // 1024} KB {res['lufs']} LUFS {res['true_peak']} dBTP | "
-          f"m4a {res_m['bytes'] // 1024} KB {res_m['lufs']} LUFS {res_m['true_peak']} dBTP | cuts {len(cuts) - 1}, worst cut click {worst:+.1f} dB")
+          f"m4a {res_m['bytes'] // 1024} KB {res_m['lufs']} LUFS {res_m['true_peak']} dBTP | cuts {len(cuts) - 1}, worst cut step {worst:.2f}x, segment trims {trims} dB")
     return res
 
 

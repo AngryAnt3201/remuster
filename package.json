@@ -25,7 +25,9 @@
     "ios:release:dry": "sh tools/ios-release.sh dry",
     "ios:release": "sh tools/ios-release.sh archive",
     "ios:export": "sh tools/ios-release.sh export",
-    "store:shots": "node tools/store-shots.mjs"
+    "store:shots": "node tools/store-shots.mjs",
+    "music": "python3 tools/music/render.py game",
+    "music:video": "python3 tools/music/render.py video"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

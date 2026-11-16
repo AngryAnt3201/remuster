@@ -29,7 +29,7 @@ def arrange(X, F):
     X.add("twang", S.twang, tune(F.mel_in(lambda b: main(b) and not calm and E[b] >= 2 and (not is_b(b) or dark)), 0.82, -12 if not dark else -24),
           level=-16, pan=-0.2, rev=0.12, rev2=0.5, fx=[trem], check=True, human=(0.007, 0.06))
     X.add("whistle", S.flute, tune(F.mel_in(lambda b: main(b) and ((is_b(b) and E[b] >= 2 and not dark) or E[b] == 0 or (E[b] >= 4 and not is_b(b) and not dark) or (calm and not is_b(b)))), 0.75, 12),
-          kw=dict(kind="whistle"), level=-23, pan=0.2, rev=0.55, check=True)
+          kw=dict(kind="whistle"), level=-21.5, pan=0.2, rev=0.55, check=True)
     X.add("harmonica", S.harmonica, tune(F.mel_in(lambda b: main(b) and ((is_b(b) and E[b] >= 4) or (calm and is_b(b)) or (dark and is_b(b)))), 0.75),
           level=-19, pan=0.3, rev=0.4, check=True)
     X.add("trumpet", S.brass, tune(F.mel_in(lambda b: main(b) and E[b] >= 5 and not is_b(b)), 0.85, -12 if dark else 0), kw=dict(kind="trumpet"),
@@ -71,7 +71,7 @@ def arrange(X, F):
         elif e == 1:
             bass += [(b0, 3.5, root + 12, 0.7)]
         # in B the baritone guitar leaves the tune to the whistle and plays the tresillo underneath
-        if is_b(b) and e >= 2 and not calm and not dark:
+        if ((is_b(b) and e >= 2) or e <= 1) and not calm and not dark:
             r = ch.bass(38)
             riff += [(b0 + t, 1.3 if i < 2 else 0.9, r + [0, 7, 12][i], 0.8) for i, t in enumerate(TRESILLO)]
         # honky-tonk piano: off-beat chords
