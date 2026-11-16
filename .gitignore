@@ -8,3 +8,8 @@ ios/DerivedData
 captures
 site/.vercel
 art/arenas/build
+.claude/worktrees
+dist-games
+games/*/art/preview
+*.todo.json
+.wrangler

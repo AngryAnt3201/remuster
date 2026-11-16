@@ -1,4 +1,6 @@
 // Synthesised sound effects (WebAudio, no files) with a per-sound rate limit so big fights don't turn to mush.
+// What each sound is made of lives in ../game/sounds.ts, which a game can replace.
+import { GAPS, SOUNDS } from "../game/sounds";
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
@@ -51,44 +53,18 @@ function noise(dur: number, peak: number, filter: BiquadFilterType, f0: number, 
   s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.05);
 }
 
-const GAP: Record<string, number> = { hit: 0.05, slash: 0.06, arrow: 0.07, squish: 0.08, heal: 0.15, down: 0.08, clank: 0.08 };
-
 export function sfx(name: string, gain = 1) {
   if (!enabled || !ctx) return;
+  const layers = SOUNDS[name];
+  if (!layers) return;
   const now = ctx.currentTime;
-  if (now - (last.get(name) ?? -1) < (GAP[name] ?? 0.03)) return;
+  if (now - (last.get(name) ?? -1) < (GAPS[name] ?? 0.03)) return;
   last.set(name, now);
-  const v = gain;
-  switch (name) {
-    case "slash": noise(0.09, 0.22 * v, "bandpass", 3200, 900, 1.5); break;
-    case "hit": noise(0.05, 0.25 * v, "lowpass", 1800, 400); tone("square", 180, 90, 0.05, 0.05 * v); break;
-    case "clank": tone("triangle", 1300, 900, 0.12, 0.12 * v); noise(0.05, 0.12 * v, "highpass", 4000, 3000); break;
-    case "arrow": noise(0.12, 0.12 * v, "bandpass", 5000, 1500, 3); break;
-    case "bolt": tone("sawtooth", 300, 60, 0.18, 0.12 * v); noise(0.14, 0.2 * v, "bandpass", 2400, 600, 2); break;
-    case "throw": tone("sine", 500, 900, 0.12, 0.06 * v); break;
-    case "pop": noise(0.35, 0.45 * v, "lowpass", 1600, 120); tone("sine", 120, 40, 0.3, 0.3 * v); break;
-    case "boom": noise(0.8, 0.7 * v, "lowpass", 2200, 60); tone("sine", 90, 28, 0.7, 0.55 * v); break;
-    case "slam": noise(0.3, 0.4 * v, "lowpass", 600, 80); tone("sine", 70, 35, 0.3, 0.35 * v); break;
-    case "zap": tone("sawtooth", 1800, 200, 0.16, 0.12 * v); noise(0.18, 0.18 * v, "highpass", 3000, 6000); break;
-    case "heal": tone("sine", 880, 1320, 0.18, 0.06 * v); tone("sine", 1320, 1760, 0.18, 0.04 * v, 0.06); break;
-    case "blink": tone("sine", 300, 1400, 0.16, 0.1 * v); break;
-    case "charge": noise(0.5, 0.2 * v, "lowpass", 400, 150); tone("triangle", 220, 330, 0.25, 0.08 * v); break;
-    case "fuse": tone("square", 1400, 1400, 0.05, 0.06 * v); tone("square", 1400, 1400, 0.05, 0.06 * v, 0.12); break;
-    case "down": tone("triangle", 260, 110, 0.18, 0.08 * v); break;
-    case "squish": noise(0.06, 0.12 * v, "bandpass", 1200, 500, 4); break;
-    case "crumble": noise(0.9, 0.5 * v, "lowpass", 900, 60); break;
-    // UI
-    case "tap": tone("triangle", 660, 760, 0.05, 0.05 * v); break;
-    case "buy": tone("triangle", 880, 880, 0.06, 0.07 * v); tone("triangle", 1320, 1320, 0.08, 0.07 * v, 0.06); break;
-    case "place": noise(0.07, 0.25 * v, "lowpass", 800, 150); tone("sine", 150, 80, 0.08, 0.15 * v); break;
-    case "upgrade": [660, 880, 1100].forEach((f, i) => tone("triangle", f, f, 0.09, 0.07 * v, i * 0.07)); break;
-    case "sell": tone("triangle", 900, 500, 0.12, 0.07 * v); break;
-    case "deny": tone("square", 200, 150, 0.12, 0.06 * v); break;
-    case "reroll": noise(0.2, 0.12 * v, "bandpass", 800, 3000, 2); break;
-    case "fight": tone("sawtooth", 110, 220, 0.4, 0.12 * v); tone("sawtooth", 165, 330, 0.4, 0.08 * v); break;
-    case "win": [523, 659, 784, 1047].forEach((f, i) => tone("triangle", f, f, 0.22, 0.09 * v, i * 0.11)); break;
-    case "lose": [392, 330, 262].forEach((f, i) => tone("triangle", f, f * 0.98, 0.3, 0.09 * v, i * 0.16)); break;
-    case "round": tone("triangle", 784, 784, 0.1, 0.07 * v); tone("triangle", 1047, 1047, 0.16, 0.07 * v, 0.1); break;
-    case "hurt": noise(0.3, 0.35 * v, "lowpass", 900, 100); tone("sine", 110, 50, 0.3, 0.2 * v); break;
+  for (const l of layers) {
+    if (l[0] === "tone") tone(l[1], l[2], l[3], l[4], l[5] * gain, l[6] ?? 0);
+    else noise(l[1], l[2] * gain, l[3], l[4], l[5], l[6] ?? 1, l[7] ?? 0);
   }
 }
+
+/** The shared audio context and the effects bus (null until the first tap unlocks audio); the music player joins it. */
+export const audioContext = () => ctx;

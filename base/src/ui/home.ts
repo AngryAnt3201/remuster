@@ -1,6 +1,7 @@
 // The home screen's tab bodies: the Battle tab (slim top bar, key art, the big Battle button, the chest rack), the
 // Modes tab (one illustrated card per mode) and the settings sheet. main.ts owns navigation and passes the actions in.
 import "./home.css";
+import { hasMusic } from "../audio/music";
 import { sfx, unlockAudio } from "../audio/sfx";
 import { MAX_COMMANDER } from "@engine/progression/economy";
 import { commanderBar } from "@engine/progression/troops";
@@ -129,6 +130,8 @@ export const flameChip = (n: number) => el("span", { class: "hm-flame" }, [icon(
 export interface SettingsOpts {
   sound: boolean; haptics: boolean; speed: number;
   setSound: (on: boolean) => void; setHaptics: (on: boolean) => void; setSpeed: (x: number) => void;
+  /** Present when the game ships a soundtrack. */
+  music?: boolean; setMusic?: (on: boolean) => void;
 }
 
 /** The settings sheet body: Sound and Haptics switches, battle Speed (1x, 2x, 3x). */
@@ -149,6 +152,7 @@ export function settingsBody(o: SettingsOpts): HTMLElement {
   return el("div", { class: "hm-settings" }, [
     el("h2", {}, ["Settings"]),
     sw("Sound", o.sound, o.setSound),
+    ...(o.setMusic && hasMusic() ? [sw("Music", !!o.music, o.setMusic)] : []),
     sw("Haptics", o.haptics, o.setHaptics),
     el("div", { class: "hm-set-row" }, [el("span", {}, ["Battle speed"]), speeds]),
   ]);

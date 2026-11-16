@@ -54,6 +54,11 @@ import { usePassStore } from "@engine/store/pass";
 import { seedPassDemo } from "@engine/progression/pass";
 import { seedQuestDemo } from "@engine/progression/quests";
 import { showEnding } from "./ui/ending";
+// [game] what a game overlay can replace without touching anything else: its words, its skin, its sounds and music
+import { installLexicon } from "./game/text";
+import { musicOn, playMusic, resumeMusic, setMusic } from "./audio/music";
+import { audioContext } from "./audio/sfx";
+import "./game/theme.css"; // last, so the game's skin wins over every base stylesheet
 
 const app = document.getElementById("app")!;
 let game: GameScreen | null = null;
@@ -75,6 +80,8 @@ let here: (() => void) | null = null;
 
 function clear() {
   game?.destroy(); game = null;
+  // [game] the soundtrack follows the screen: whoever called clear() builds a battle or a menu right after
+  queueMicrotask(() => playMusic(game ? (game.view.bossKeep ? "boss" : game.mode === "arena" ? "arena" : "battle") : "home"));
   sheetEl = null;
   here = null;
   app.replaceChildren();
@@ -181,6 +188,7 @@ function settingsSheet() {
       sound: st.sound, haptics: st.haptics, speed: st.speed || 1,
       setSound: (on) => { save((x) => { x.settings.sound = on; }); setSound(on); },
       setHaptics: (on) => { save((x) => { x.settings.haptics = on; }); setHaptics(on); },
+      music: musicOn(), setMusic: (on) => { try { localStorage.setItem(MUSIC_KEY, on ? "1" : "0"); } catch { /* private mode */ } setMusic(on); },
       setSpeed: (n) => save((x) => { x.settings.speed = n; }),
     }),
     btn("Done", "primary", closeSheet),
@@ -710,7 +718,13 @@ function gemDemo(kind: string) {
 }
 
 // ---------------------------------------------------------------- boot
+const MUSIC_KEY = "remuster.music";
 async function boot() {
+  document.documentElement.dataset.game = __GAME__; // [game] theme.css can scope on html[data-game="<id>"]
+  installLexicon(document.body);
+  try { setMusic(localStorage.getItem(MUSIC_KEY) !== "0"); } catch { /* private mode */ }
+  // iOS keeps WebAudio running behind a backgrounded app unless it is suspended
+  document.addEventListener("visibilitychange", () => { const c = audioContext(); if (c) void (document.hidden ? c.suspend() : c.resume()); });
   applyStyleVars(document.documentElement);
   const s = load();
   const q = new URLSearchParams(location.search);
@@ -735,7 +749,7 @@ async function boot() {
   migrateArmy(); // [progression] once: old saves move to the card collection (found units, new-scale levels)
   settleLegacyCoins(); // [progression] coins for campaign clears made before troop levels existed
   await Promise.all([initNative(), loadSprites(), font]);
-  window.addEventListener("pointerdown", () => unlockAudio(), { once: true });
+  window.addEventListener("pointerdown", () => { unlockAudio(); resumeMusic(); }, { once: true });
   // Dev only: play any level from a script without a reload (tools/sprite-mem.mjs plays several back to back).
   if (import.meta.env.DEV) (window as any).__playLevel = (id: number) => { const l = LEVELS.find((x) => x.id === id); if (l) playLevel(l); return !!l; };
   // Deep links for checks: ?level=3, ?puzzle=2, ?lab, ?daily, ?gauntlet, ?watch, ?shop

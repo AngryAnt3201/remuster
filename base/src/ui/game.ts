@@ -4,6 +4,7 @@ import type { Battle } from "@engine/core/battle";
 import { BODY_EXTRA, DT, UNITS, clampToZone, inZone, upgradeCost, type Piece, type Side, type SpawnKind, type UnitKind } from "@engine/core/defs";
 import { Match, type MatchConfig, type RoundReport } from "@engine/core/match";
 import { sfx, unlockAudio } from "../audio/sfx";
+import { playMusic } from "../audio/music";
 import { buzz } from "../native";
 import { BoardView, type Scene } from "../render/board";
 import type { Assault } from "../render/assault";
@@ -54,7 +55,7 @@ export interface GameOpts {
   cfg: MatchConfig;
   foe?: AIProfile; // the rival's AI (omit for a puzzle: the foe board stands still)
   you?: AIProfile; // set to let an AI play your side (watch mode)
-  mode: "campaign" | "skirmish" | "gauntlet" | "puzzle" | "daily" | "watch" | "demo";
+  mode: "campaign" | "skirmish" | "gauntlet" | "puzzle" | "daily" | "watch" | "demo" | "arena";
   title?: string;
   showEnemyMines?: boolean;
   /** Campaign act whose arena to fight in (anything else gets act 1's). */
@@ -75,6 +76,8 @@ export class GameScreen {
   readonly match: Match;
   readonly view: BoardView;
   private o: GameOpts;
+  /** Which mode this screen is playing (the soundtrack and overlays read it). */
+  get mode() { return this.o.mode; }
   private canvas: HTMLCanvasElement;
   private phase: Phase = "deploy";
   private battle?: Battle;
@@ -518,6 +521,7 @@ export class GameScreen {
     if (this.destroyed) return;
     if (this.match.phase === "over") {
       sfx(this.match.winner === 0 ? "win" : "lose");
+      playMusic(this.match.winner === 0 ? "win" : "lose");
       buzz(this.match.winner === 0 ? "success" : "error");
       this.o.onEnd(this.match);
     } else {

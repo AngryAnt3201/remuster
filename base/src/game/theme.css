@@ -1,0 +1,3 @@
+/* This game's skin. Loaded after every base stylesheet, so anything here wins. The base game needs nothing extra.
+   A game shadows this file (games/<id>/src/game/theme.css) to restyle the whole UI: colours, fonts, panels, buttons,
+   layout. See REMIX.md for the variables and class names the base UI exposes. */
