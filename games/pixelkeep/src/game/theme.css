@@ -1,3 +1,283 @@
-/* This game's skin. Loaded after every base stylesheet, so anything here wins. The base game needs nothing extra.
-   A game shadows this file (games/<id>/src/game/theme.css) to restyle the whole UI: colours, fonts, panels, buttons,
-   layout. See REMIX.md for the variables and class names the base UI exposes. */
+/* Pixelkeep's skin: a console's text windows (see DIRECTION.md). Loaded after every base stylesheet.
+     windows   black or deep-blue boxes, a thick white border with a grey inner step, square corners, a hard shadow
+     buttons   flat boxes with a white border that drop onto their shadow and invert when pressed
+     bars      black slots filled with square cells
+     cards     a flat frame in the rank's colour, the price on a pixel coin
+     type      Press Start 2P (SIL OFL, public/fonts) for everything
+   The base kit is rounded, glossy and soft-shadowed, so the first block removes all of that wholesale: no rounded
+   corners, no gradients, no soft shadows anywhere. Everything after it puts back only hard-edged things.
+   Rules are prefixed with :root so they win over base rules of the same shape. */
+
+@font-face {
+  font-family: "Press Start 2P";
+  src: url("/fonts/PressStart2P-Regular.ttf") format("truetype");
+  font-weight: 400; font-style: normal; font-display: block;
+}
+
+:root, :root[data-style] {
+  --k-panel: #000000; --k-panel-dk: #101040; --k-frame: #ffffff; --k-accent: #ffbf00;
+  --k-text: #ffffff; --k-text-lt: #ffffff; --k-go: #008000; --k-danger: #bf0000; --k-page: #101040;
+  --k-ink: #000000; --k-plate: #000000; --k-plate-hi: rgba(0, 0, 0, 0);
+  --k-blue: #2040bf; --k-page-dk: #080820; --k-muted: #8080bf; --k-well: #101040;
+  --k-scrim: rgba(0, 0, 16, 0.82);
+  --tide: #40a0ff; --tide-d: #0040c0; --tide-l: #c0ffff;
+  --ember: #e02020; --ember-d: #800000; --ember-l: #ffc080;
+  --font: "Press Start 2P", ui-monospace, Menlo, Consolas, monospace;
+  --display: "Press Start 2P", ui-monospace, Menlo, Consolas, monospace;
+  --gold: #ffbf00; --gold-d: #bf8000;
+  /* ink is one hard pixel of drop shadow, never a soft outline */
+  --ol: 2px 2px 0 var(--k-ink);
+  --ol-s: 1px 1px 0 var(--k-ink);
+  --ol-f: drop-shadow(1px 1px 0 var(--k-ink));
+  --gloss: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0));
+  /* card frames by rank: copper, silver, gold, crystal */
+  --t1: #bf8040; --t2: #bfbfbf; --t3: #ffbf00; --t4: #80ffff;
+  --fam-might: #bf4040; --fam-guard: #4080bf; --fam-shot: #408040; --fam-arcane: #8040bf;
+  --fam-shadow: #404080; --fam-works: #bf8040; --fam-air: #40bfbf;
+  /* a window: white border (set on the element), then a black gap, a grey step, and a hard shadow */
+  --pk-win: inset 0 0 0 2px #000000, inset 0 0 0 4px #8080bf, 4px 4px 0 rgba(0, 0, 0, 0.6);
+  --pk-drop: 0 4px 0 #000000;
+}
+
+/* ---------------------------------------------------------------- strip the base kit's softness, everywhere */
+:root *, :root *::before, :root *::after { border-radius: 0 !important; letter-spacing: 0 !important; box-shadow: none !important; }
+:root :where(*:not(.map):not(.daily-board)), :root *::before, :root *::after { background-image: none !important; }
+/* The bitmap font's letters are a full em wide, twice the base face's: font-size-adjust draws every text at about
+   0.6 of its declared size, so nothing in the base layout has to be re-measured (icons sized in em are untouched).
+   It has to be set on every element: the `font` shorthand, which the base kit uses everywhere, resets it. */
+:root, :root *, :root *::before, :root *::after { font-size-adjust: 0.46 !important; }
+html { -webkit-font-smoothing: none; font-smooth: never; }
+html, body { background: #080820; }
+:root canvas, :root img { image-rendering: pixelated; }
+:root .display, :root h1, :root h2, :root h3, :root .btn, :root .ribbon > b, :root .tb-label { text-transform: uppercase; }
+:root b, :root strong, :root h1, :root h2, :root h3 { font-weight: 400; }
+@keyframes pk-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+
+/* ---------------------------------------------------------------- pixel pictures: coins, rubies, hearts */
+:root .coin { border: 0; background: var(--pk-coin) center / 100% 100% no-repeat !important; image-rendering: pixelated; color: #000; text-shadow: none; padding: 0; }
+:root .gem-ico { display: inline-block; width: 1em; height: 1em; background: var(--pk-ruby) center / 100% 100% no-repeat !important; image-rendering: pixelated; filter: none; }
+:root .gem-ico svg { display: none; }
+:root .gem, :root .icon, :root .star, :root .star.on, :root .tb-ico { filter: none; }
+:root .icon { color: #fff; }
+:root .star { color: #404080; } :root .star.on { color: var(--gold); }
+:root .role-badge { border: 2px solid #000; background-color: var(--fam, #404080); color: #fff; }
+/* the commander's crest is a heart */
+:root .crest { filter: none; }
+:root .crest::after { display: none; }
+:root .crest .glyph { background-color: currentColor; -webkit-mask: var(--pk-heart) center / contain no-repeat; mask: var(--pk-heart) center / contain no-repeat; }
+:root .crest .glyph svg { display: none; }
+
+/* ---------------------------------------------------------------- buttons */
+:root .btn, :root .icon-btn { border: 3px solid #fff; background-color: var(--b); color: #fff; box-shadow: var(--pk-drop) !important; transition: none; }
+:root .btn::after { display: none; }
+:root .btn:active:not(:disabled), :root .icon-btn:active { transform: translateY(4px); box-shadow: none !important; background-color: #fff; color: #000; text-shadow: none; transition: none; }
+:root .btn:active:not(:disabled) .icon, :root .icon-btn:active .icon { color: #000; }
+:root .btn:disabled { filter: none; border-color: #8080bf; color: #8080bf; }
+:root .btn.ghost { --b: #000000; color: #fff; }
+:root .btn.gold, :root .btn.up { --b: #bf8000; }
+:root .chip { border: 3px solid #8080bf; background-color: #000; color: #fff; }
+:root .chip.on { border-color: #fff; background-color: #fff; color: #000; text-shadow: none; }
+:root .switch { border: 3px solid #fff; background-color: #000; }
+:root .switch > b { background-color: #8080bf; border: 0; }
+:root .on > .switch > b, :root .toggle.on .switch > b { background-color: var(--k-accent); }
+
+/* ---------------------------------------------------------------- windows */
+:root .panel, :root .sheet, :root .pop, :root .tip, :root .profile, :root .b-card { background-color: #000; border: 3px solid #fff; color: #fff; box-shadow: var(--pk-win) !important; }
+:root .plate { background-color: #000; border: 3px solid #fff; box-shadow: inset 0 0 0 2px #000, inset 0 0 0 4px #404080 !important; }
+:root .overlay, :root .ch-overlay { background-color: var(--k-scrim); }
+:root .ribbon > b { border: 3px solid #fff; background-color: var(--r); box-shadow: 4px 4px 0 #000 !important; }
+:root .ribbon > i { display: none; }
+:root .ribbon.gold { --r: #bf8000; } :root .ribbon.plain { --r: #000000; } :root .ribbon.go { --r: #008000; }
+:root .screen { background-color: var(--k-page); }
+:root .screen-head { background-color: #000; border-bottom: 4px solid #fff; }
+
+/* ---------------------------------------------------------------- battle HUD */
+:root .hud-bottom { background-color: #000; border-top: 4px solid #fff; box-shadow: inset 0 4px 0 #000, inset 0 6px 0 #8080bf !important; }
+:root .cmdr-name { color: #fff; }
+:root .hpbar { height: 20px; border: 3px solid #fff; background-color: #000; }
+:root .hpbar > i { background-color: var(--hp); }
+:root .hpbar > b { background-color: #fff; }
+:root .hpbar::after { background-image: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0) 0 8px, #000 8px 10px) !important; border: 2px solid #000; }
+:root .hpbar > span { top: -1px; line-height: 16px; }
+:root .round small { color: var(--k-accent); }
+:root .pill { border: 3px solid #fff; background-color: #000; color: #fff; }
+:root .pill.supply .icon { color: var(--tide); }
+:root .shop { background-color: #101040; border: 3px solid #8080bf; padding: 12px 8px 9px; }
+:root .card { border: 3px solid #000; background-color: var(--metal); box-shadow: 0 0 0 2px #fff, 0 6px 0 #000 !important; transition: none; }
+:root .card-art { border: 2px solid #000; background-color: var(--fam, #404080); left: 3px; right: 3px; top: 3px; }
+:root .card-art::after { display: none; }
+:root .card-name { left: 0; right: 0; bottom: 0; height: 19px; padding: 0 1px; border: 0; border-top: 2px solid #000; background-color: #000; color: #fff; font-size: 11.5px; line-height: 17px; text-shadow: none; }
+:root .card-cost { color: #000; text-shadow: none; }
+:root .card-cost::before { inset: 2px; transform: none; border: 0; background: var(--pk-coin) center / 100% 100% no-repeat !important; image-rendering: pixelated; }
+:root .card.poor .card-cost { color: #bf0000; }
+:root .card-role { border-width: 2px; }
+:root .card-new { border: 2px solid #000; background-color: #ff4040; transform: none; }
+:root .card::after { inset: -3px; background-color: rgba(0, 0, 16, 0.6); }
+:root .card.picked { transform: translateY(-10px); box-shadow: 0 0 0 4px var(--gold), 0 10px 0 #000 !important; animation: none; }
+:root .card.picked::after { inset: -8px; border: 0; background-color: rgba(0, 0, 0, 0); opacity: 0; animation: none; }
+:root .card.sold { border: 3px dashed #404080; background-color: #000; box-shadow: none !important; }
+:root .card.sold::after { display: none; }
+:root .frame { border: 3px solid #000; background-color: var(--metal); box-shadow: 0 0 0 2px #fff !important; }
+:root .frame > canvas { border: 2px solid #000; background-color: var(--fam, #404080); }
+:root .btn.fight { border-width: 4px; }
+:root .btn.fight.ready::before { content: ""; inset: auto; left: 18px; top: calc(50% - 9px); width: 14px; height: 16px; opacity: 1; background: var(--pk-cursor) center / 100% 100% no-repeat !important; image-rendering: pixelated; animation: pk-blink 0.8s steps(1) infinite; }
+:root .btn.fight.ready:active::before { background-image: var(--pk-cursor-dk) !important; }
+:root .tally { border: 3px solid #fff; background-color: #000; }
+:root .status > span { border: 3px solid #fff; background-color: var(--k-danger); }
+:root .big-word { text-shadow: 4px 4px 0 #000, 8px 8px 0 #0040c0; }
+:root .banner.fight .big-word { animation: pk-blink 0.24s steps(1) 3; }
+:root .dmg { border: 3px solid #fff; background-color: var(--d); }
+:root .game.hurt::after { box-shadow: inset 0 0 0 10px #ff4040 !important; }
+
+/* ---------------------------------------------------------------- tab bar: a row of menu slots */
+:root .tb-bar { background-color: #000; border-top: 4px solid #fff; padding-top: 10px; gap: 4px; }
+:root .tb-tab { background-color: #000; border: 3px solid #404080; }
+:root .tb-ico { opacity: 1; width: 26px; height: 26px; }
+:root .tb-label { color: #8080bf; opacity: 1; text-shadow: none; }
+:root .tb-tab.on { flex-grow: 1.3; border: 3px solid #fff; background-color: #2040bf; }
+:root .tb-tab.on .tb-face { transform: none; }
+:root .tb-tab.on .tb-label { color: #fff; margin-top: 0; font-size: 13px; }
+:root .tb-tab.on::before { content: ""; position: absolute; left: calc(50% - 7px); top: -13px; width: 12px; height: 14px; transform: rotate(90deg); background: var(--pk-cursor) center / 100% 100% no-repeat !important; image-rendering: pixelated; animation: pk-blink 0.8s steps(1) infinite; }
+:root .tb-badge, :root .tb-dot { border: 2px solid #000; background-color: #ff4040; }
+:root .tb-dot { animation: pk-blink 1s steps(1) infinite; }
+
+/* ---------------------------------------------------------------- top bar */
+:root .hm-top { background-color: #000; border-bottom: 4px solid #fff; padding-bottom: 8px; }
+:root .hm-cmd { border: 0; background-color: rgba(0, 0, 0, 0); }
+:root .hm-cmd-lv { clip-path: none; width: 34px; height: 30px; margin: 0 6px 0 0; border: 3px solid #fff; background-color: #2040bf; }
+:root .hm-cmd-xp { border: 3px solid #fff; background-color: #000; height: 18px; }
+:root .hm-cmd-xp > i { background-color: var(--k-accent); }
+:root .hm-cmd-xp > small { color: #fff; line-height: 12px; mix-blend-mode: difference; }
+:root .cur-pill { border: 0; background-color: rgba(0, 0, 0, 0); padding: 0 4px; }
+:root .icon-btn.hm-gear { --b: #000000; box-shadow: none !important; }
+
+/* ---------------------------------------------------------------- the title screen (ui/home.ts) */
+:root .screen.home.tab-battle { background-color: #080820; }
+:root .pk-life::before { background: url("/ui/title-key.webp") center 38% / cover no-repeat !important; image-rendering: pixelated; animation: none; }
+:root .pk-life::after { display: none; }
+:root .tab-battle .hm-top { animation: none; }
+:root .pk-logo { position: relative; z-index: 2; margin: 64px 0 0; text-align: center; line-height: 1; pointer-events: none; }
+:root .pk-logo b { display: block; font: 400 78px/1 var(--display); color: #fff; text-shadow: 4px 4px 0 #0040c0, 8px 8px 0 #000; }
+:root .pk-logo .pk-logo-b { margin-top: 6px; color: #ffbf00; text-shadow: 4px 4px 0 #bf0000, 8px 8px 0 #000; }
+:root .pk-logo small { display: inline-block; margin-top: 16px; padding: 4px 8px; font: 400 13px/1 var(--display); color: #fff; background-color: #000; }
+:root .pk-title .hm-low { gap: 8px; }
+:root .pk-stage { align-self: center; align-items: center; gap: 5px; padding: 8px 14px 9px; border: 3px solid #fff; background-color: #000; box-shadow: var(--pk-win) !important; animation: none; }
+:root .pk-stage small { font: 400 13px/1 var(--display); color: var(--k-accent); text-transform: uppercase; }
+:root .pk-stage b { font: 400 22px/1.1 var(--display); color: #fff; text-transform: uppercase; }
+:root .pk-stage i { font: 400 13px/1 var(--display); font-style: normal; color: #8080bf; text-transform: uppercase; }
+:root .pk-menu { flex-direction: column; gap: 0; padding: 8px 6px; border: 3px solid #fff; background-color: #000; box-shadow: var(--pk-win) !important; }
+:root .btn.pk-item { position: relative; flex: none; width: 100%; height: 46px; padding: 0 12px 0 46px; border: 0; background-color: rgba(0, 0, 0, 0); box-shadow: none !important; overflow: visible;
+  display: flex; flex-direction: row; align-items: center; justify-content: flex-start; font: 400 28px/1 var(--display); color: #fff; text-align: left; animation: none; }
+:root .btn.pk-item::before { content: ""; position: absolute; left: 16px; top: calc(50% - 9px); width: 14px; height: 16px; transform: none; opacity: 0; background: var(--pk-cursor) center / 100% 100% no-repeat !important; image-rendering: pixelated; animation: none; }
+:root .btn.pk-item.hm-play { color: var(--k-accent); }
+:root .btn.pk-item.hm-play::before { opacity: 1; animation: pk-blink 0.8s steps(1) infinite; }
+:root .btn.pk-item:active:not(:disabled) { transform: none; background-color: #fff; color: #000; }
+:root .btn.pk-item:active::before { opacity: 1; animation: none; background-image: var(--pk-cursor-dk) !important; }
+:root .btn.pk-item.hm-map { width: 100%; }
+
+/* ---------------------------------------------------------------- results, objectives, pause, popovers */
+:root .results .result-stats span, :root .result-stats span { background-color: #101040; border: 2px solid #8080bf; color: #bfbfff; }
+:root .result-stats b { color: #fff; }
+:root .results.won .result-stats span:nth-child(2) b { color: var(--tide); }
+:root .results.lost .result-stats span:nth-child(3) b { color: #ff4040; }
+:root .objectives li, :root .results .objectives li { background-color: #000; border: 2px dashed #404080; color: #8080bf; }
+:root .objectives li.met, :root .results .objectives li.met { background-color: #101040; border: 2px solid var(--k-accent); color: #fff; }
+:root .objectives li:not(.met) .star { color: #404080; }
+:root .result-crest .icon, :root .results.lost .result-crest .icon { color: #8080bf; filter: none; }
+:root .results.won .result-crest .icon { color: var(--gold); filter: none; }
+:root .pause-info { background-color: #101040; border: 2px solid #8080bf; }
+:root .pause-side.you .pause-name { color: var(--tide); } :root .pause-side.foe .pause-name { color: #ff4040; }
+:root .pop-rank, :root .pop-lv { color: var(--k-accent); }
+:root .pop-ability { background-color: #101040; border: 2px dashed #8080bf; color: #bfbfff; }
+:root .pop-ability.on { border: 2px solid var(--k-accent); color: #fff; }
+:root .pop-ability b { color: var(--k-accent); }
+:root .role-line { color: #bfbfff; }
+
+/* ---------------------------------------------------------------- boxes (the base chest drawing, squared off) */
+:root .ch-art svg { shape-rendering: crispEdges; }
+:root .ch-art svg rect { rx: 0; }
+:root .ch-art svg ellipse, :root .ch-art svg circle { display: none; }
+:root .ch-art .ch-lid path:nth-child(1) { d: path("M7 25V9h50v16z"); }
+:root .ch-art .ch-lid path:nth-child(2) { d: path("M9.5 23V11.5h45V23z"); }
+:root .ch-art .ch-lid path:nth-child(3) { display: none; }
+
+/* ---------------------------------------------------------------- flat colours for parts the base kit paints with a gradient alone */
+:root .ar-fill, :root .ar-xp i, :root .pg-bar i.on, :root .td-hp-fill { background-color: var(--tide); }
+:root .ar-cards.full .ar-fill, :root .ar-cards.filling .ar-fill, :root .pt-row.reached::before, :root .ph-fill, :root .pq-bar i, :root .hm-card-bar > i { background-color: #40bf40; }
+:root .ar-cards.top .ar-fill, :root .pg-pips i.on, :root .pg-bar i.new, :root .pg-max, :root .ar-bar i, :root .act-gate-crest, :root .pr-keep { background-color: var(--gold); }
+:root .ar-cmd-lv, :root .ar-cmd-up-lv, :root .ar-chip-lv { clip-path: none; background-color: var(--k-blue); border: 3px solid #fff; }
+:root .ar-tile { background-color: #000; border: 3px solid #404080; border-top: 6px solid var(--r); color: #fff; }
+:root .ar-tile.ghost { background-color: #101040; }
+:root .ar-detail { background-color: #000; border: 3px solid #fff; border-top: 8px solid var(--r); color: #fff; box-shadow: var(--pk-win) !important; }
+:root .ar-cmd-up { background-color: rgba(0, 0, 16, 0.92); }
+:root .ar-hint { background-color: #400000; border: 2px solid #ff4040; color: #fff; }
+:root .pg-reward { background-color: #101040; border: 2px solid var(--gold); }
+:root .ar-card-ico, :root .ch-cards-ico { background-color: #fff; transform: none; }
+:root .pg-coin { border: 0; background: var(--pk-coin) center / 100% 100% no-repeat !important; image-rendering: pixelated; }
+:root .map .node-face { background-color: #2040bf; border: 3px solid #fff; }
+:root .map .node.done .node-face, :root .map .node.boss.done .node-face { background-color: #bf8000; }
+:root .map .node.boss .node-face, :root .map .node-boss { background-color: #bf0000; }
+:root .map .node.locked .node-face { background-color: #404040; border-color: #808080; }
+:root .map-head, :root .act-bar { background-color: #000; }
+:root .daily-flame { background-color: #404040; }
+:root .daily-streak.on .daily-flame { background-color: #ff8000; }
+:root .ar-badge { background-color: #bf8040; } :root .ar-badge.league-2 { background-color: #bfbfbf; }
+:root .ar-badge.league-3 { background-color: #ffbf00; } :root .ar-badge.league-4 { background-color: #80ffff; }
+:root .ch-sheet, :root .ch-earned, :root .ch-offer, :root .ch-deal, :root .gem-card, :root .reward-strip, :root .of-card, :root .pass-premium, :root .pt-cell.premium, :root .ch-mini {
+  background-color: #101040; border: 3px solid #8080bf; color: #fff; }
+:root .gem-card.best, :root .ch-offer.t-legend, :root .ch-deal.r-legendary, :root .of-card.t3, :root .of-card.t4, :root .pass-premium, :root .pt-cell.premium { border-color: var(--gold); }
+:root .ch-mini.ready { background-color: #008000; border-color: #fff; }
+:root .ch-card-face, :root .ch-sum-card { background-color: var(--r); border: 3px solid #fff; color: #000; }
+:root .ch-overlay.opening { background-color: #080820; }
+:root .pass-screen { background-color: var(--k-page); }
+:root .pass-screen .screen-head { background-color: #000; }
+:root .reward-chip { background-color: #000; border: 2px solid #8080bf; color: #fff; }
+:root .reward-total span { color: #bfbfff; }
+:root .reward-total b { color: #fff; }
+:root .pt-cell, :root .pt-cell:not(.reached):not(.got) { background-color: #000; border: 3px solid #8080bf; color: #fff; }
+:root .pt-cell.premium, :root .pt-cell.premium:not(.reached):not(.got) { background-color: #101040; border-color: var(--gold); }
+:root .pt-cell.locked { filter: none; opacity: 0.7; }
+:root .pt-cell.can { border-color: #fff; background-color: #008000; box-shadow: 0 0 0 3px var(--gold) !important; animation: none; }
+:root .pt-node { background-color: #000; border: 3px solid #fff; color: #fff; }
+:root .pt-row.reached .pt-node { background-color: var(--gold); color: #000; }
+:root .pt-row::before { background-color: #404080; }
+:root .pass-hero { background-color: var(--season-d, #101040); border: 3px solid #fff; }
+:root .skn-stage, :root .skn-thumb, :root .skn-card-art { background-color: #101040; }
+:root .skn-src-pass, :root .skn-badge.pass, :root .skn-ribbon { background-color: var(--gold); color: #000; text-shadow: none; }
+:root .logo-word > span { background-color: rgba(0, 0, 0, 0); -webkit-text-fill-color: #ffbf00; color: #ffbf00; }
+
+:root .ch-slots { border: 3px solid #fff; background-color: #000; }
+:root .ch-slot { border: 2px solid #8080bf; background-color: #101040; color: #fff; }
+:root .ch-slot.empty { border: 2px dashed #404080; background-color: #000; }
+:root .ch-slot-empty { color: #8080bf; }
+:root .ch-slot-t, :root .ch-slot.locked .ch-slot-t { color: #bfbfff; }
+:root .ch-slot.unlocking { background-color: #404080; border-color: var(--k-accent); }
+:root .ch-slot.ready { background-color: #008000; border-color: #fff; animation: none; }
+:root .ch-slot-t.ready { color: #fff; }
+:root .ch-info-head small { color: #bfbfff; }
+:root .ch-crowns { background-color: #101040; color: #fff; }
+:root .ch-crowns.ready { background-color: #bf0000; }
+:root .ch-open-title { text-shadow: 3px 3px 0 #000; }
+:root .pk-press { text-align: center; font: 400 14px/1 var(--display); color: #fff; text-shadow: 2px 2px 0 #000; animation: pk-blink 1.1s steps(1) infinite; }
+
+/* ---------------------------------------------------------------- mode select (ui/home.ts) */
+:root .pk-modes { display: flex; flex-direction: column; height: 100%; }
+:root .hm-modes-h { margin: 16px 12px 10px; font: 400 30px/1 var(--display); color: var(--k-accent); text-shadow: 3px 3px 0 #000; text-align: center; }
+:root .pk-list { margin: 0 12px; padding: 6px; display: flex; flex-direction: column; }
+:root .pk-row { position: relative; appearance: none; display: flex; align-items: center; gap: 10px; width: 100%; min-height: 62px; padding: 8px 8px 8px 30px; border: 0; border-bottom: 2px dashed #404080;
+  background-color: rgba(0, 0, 0, 0); color: #fff; font: inherit; text-align: left; cursor: pointer; touch-action: manipulation; }
+:root .pk-row:last-child { border-bottom: 0; }
+:root .pk-row::before { content: ""; position: absolute; left: 8px; top: calc(50% - 8px); width: 12px; height: 14px; opacity: 0.35; background: var(--pk-cursor) center / 100% 100% no-repeat !important; image-rendering: pixelated; }
+:root .pk-row:first-child::before { opacity: 1; animation: pk-blink 0.8s steps(1) infinite; }
+:root .pk-row:active { background-color: #fff; color: #000; }
+:root .pk-row:active::before { opacity: 1; animation: none; background-image: var(--pk-cursor-dk) !important; }
+:root .pk-row-no { display: none; }
+:root .pk-row-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+:root .pk-row .hm-card-name { font: 400 22px/1 var(--display); color: var(--k-accent); text-transform: uppercase; text-shadow: none; }
+:root .pk-row:active .hm-card-name { color: #000; }
+:root .pk-row .hm-card-line { font: 400 13px/1.35 var(--display); color: #bfbfff; text-shadow: none; }
+:root .pk-row:active .hm-card-line { color: #000; }
+:root .pk-row .hm-card-stat { position: static; flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; padding: 5px 7px; border: 2px solid #8080bf; background-color: #101040; font: 400 14px/1 var(--display); color: #fff; }
+:root .pk-row .hm-card-bar { display: block; width: 44px; height: 6px; border: 0; background-color: #404080; }
+:root .pk-row .hm-card-bar > i { display: block; height: 100%; background-color: var(--k-accent); }
+:root .pk-hint { margin: 12px 0 0; text-align: center; font: 400 13px/1 var(--display); color: #8080bf; }
