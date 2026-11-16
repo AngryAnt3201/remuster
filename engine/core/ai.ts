@@ -296,6 +296,50 @@ export function formation(side: Side, pieces: Piece[], theirs: Piece[], ai: AIPr
   return out;
 }
 
+/** Direct-fire shooters, who gain from cover in front of them (their own shots are not weakened leaving it). */
+const SHOOTERS = new Set<UnitKind>(["ranger", "rime", "storm", "outrider", "lamp"]);
+/** Soft units that need no line of sight to do their work, so a wall in front of them is pure gain. */
+const LOBBERS = new Set<UnitKind>(["grenadier", "bombard", "thorn", "hive", "grave", "medic", "banner"]);
+/**
+ * A terrain-aware variation of a layout (in place): shooters move up behind cover blocks in their zone, and units
+ * that work over walls move behind a wall or building. Each block offers a few spots along its own-side face; pieces
+ * take the nearest free one. Purely a candidate: planSteps tests it in simulation like any other.
+ */
+export function shelter(side: Side, layout: { id: number; x: number; y: number }[], pieces: Piece[], terrain: Block[], rng: Rng) {
+  const back = side === 0 ? 1 : -1; // toward this side's own edge
+  const spots = (kinds: (k: Block["kind"]) => boolean, gap: number) => {
+    const out: { x: number; y: number; used: boolean }[] = [];
+    for (const b of terrain) {
+      if (!kinds(b.kind)) continue;
+      const y = b.y + back * (b.h / 2 + gap);
+      const n = Math.max(1, Math.floor(b.w / 0.7));
+      for (let i = 0; i < n; i++) {
+        const x = b.x - b.w / 2 + (b.w * (i + 0.5)) / n;
+        const c = clampToZone(side, x, y, 0.3);
+        if (Math.abs(c.x - x) < 1e-6 && Math.abs(c.y - y) < 1e-6) out.push({ x, y, used: false });
+      }
+    }
+    return out;
+  };
+  const cover = spots((k) => k === "cover", 0.45), walls = spots((k) => k === "wall" || k === "building" || k === "barricade", 0.6);
+  for (const l of layout) {
+    const p = pieces.find((q) => q.id === l.id);
+    if (!p) continue;
+    const pool = SHOOTERS.has(p.kind) ? cover : LOBBERS.has(p.kind) ? walls : null;
+    if (!pool || !rng.chance(0.75)) continue;
+    let best: { x: number; y: number; used: boolean } | undefined, bd = 4.5;
+    for (const s of pool) {
+      const d = Math.hypot(s.x - l.x, s.y - l.y);
+      if (!s.used && d < bd) { bd = d; best = s; }
+    }
+    if (!best) continue;
+    const c = freeSpotIn(terrain, side, p.kind, best.x, best.y);
+    if (!c) continue;
+    best.used = true;
+    l.x = c.x; l.y = c.y;
+  }
+}
+
 // ---------------------------------------------------------------- guessing the other side
 /** What the other side might add this round with the gold it holds, from a balanced read of its roster. */
 export function guessAdditions(side: Side, seen: Piece[], gold: number, supply: number, roster: UnitKind[], rng: Rng, terrain?: Block[]): Piece[] {
@@ -321,6 +365,9 @@ export function guessAdditions(side: Side, seen: Piece[], gold: number, supply: 
 export interface PlanOpts {
   /** Override the number of candidates tested. */
   candidates?: number;
+  /** In an arena, let some candidate layouts tuck shooters behind cover and soft units behind walls (default true;
+   * false leaves terrain to the plain formations, for A/B tests). */
+  shelter?: boolean;
 }
 
 function scoreBattle(b: Battle, side: Side, goldLeft: number, ai: AIProfile): number {
@@ -367,6 +414,8 @@ export function* planSteps(match: Match, side: Side, ai: AIProfile, opts: PlanOp
       spread: Math.max(0, Math.min(1, ai.spread + crng.range(-0.35, 0.35))),
     };
     const layout = formation(side, d.pieces, theirs, shape, crng, c === 0 ? 0.15 : 0.45, match.cfg.terrain);
+    // In an arena, every other exploring candidate also tries the ground: the simulation decides whether it pays.
+    if (match.cfg.terrain?.length && opts.shelter !== false && c % 2 === 1) shelter(side, layout, d.pieces, match.cfg.terrain, crng);
     candidates.push({ rerolls, options: d.options, layout, score: 0, tested: 0, pieces: d.pieces, goldLeft: d.gold });
   }
   // 3. Test the candidates in simulation, the sharper the more of them.
