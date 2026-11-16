@@ -32,7 +32,9 @@
     "infra:dev": "vite-node infra/local/server.ts",
     "typecheck": "tsc --noEmit",
     "infra:deploy": "node infra/deploy.mjs",
-    "publish": "node tools/publish.mjs"
+    "publish": "node tools/publish.mjs",
+    "music": "python3 tools/music/render.py game",
+    "music:video": "python3 tools/music/render.py video"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
