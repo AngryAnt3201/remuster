@@ -543,7 +543,6 @@ export const LEXICON: Record<string, string> = {
   "The orchards are in bloom and the banners are out.": "The sign-trees are lit pink and every crew is out.",
   "The campaign is won": "The Hold is yours",
   "gold": "creds",
-  "Gold": "Creds",
   "trophies": "rep",
   "army": "crew",
 };

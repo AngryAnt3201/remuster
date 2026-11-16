@@ -175,13 +175,13 @@ export const keg: UnitDef = {
   build(m, p) {
     const t = p.tier;
     const h = crew(m, p, { weight: "light", bulk: 0.92, size: 0.96, lean: 20, handR: p.mix<V3>([0.1, 0.2, 0.44], [0.2, 0.26, 0.6]), handL: p.mix<V3>([0.1, -0.2, 0.44], [0.2, -0.26, 0.6]), swingR: 0.5, swingL: 0.5, torso: P.team, arms: P.team, stride: 0.44, skin: P.skin });
-    m.at(h.head, () => { visor(m, 0.19, core(t, P.laser), 0.24, 0.1); m.decal(0.02, () => m.torus([0, 0, 0.06], [0, 0, 1], 0.19, 0.03, P.team, { segs: 12 })); halo(m, p, 0.19, 0.6); });
+    m.at(h.head, () => { cap(m, 0.19, P.armorDk, P.laser); visor(m, 0.19, core(t, P.laser), 0.24, 0.0); m.decal(0.03, () => m.ellipsoid([-0.02, 0, 0.19], [0.17, 0.045, 0.03], P.laser, { segs: 8 })); halo(m, p, 0.19, 0.6); });
     // the cell on the back: a fat canister, hazard bands, a core that is about to go
     m.at(h.back, () => {
       const r = 0.15 + 0.008 * t, hh = 0.36 + 0.02 * t, beat = p.is("walk") || p.is("idle") ? 0.5 + 0.5 * p.wave(1, 2) : 1;
       m.move(0.06 + r * 0.5, 0, 0.02);
       m.cylinder([0, 0, -hh * 0.45], [0, 0, hh * 0.55], r, P.armorDk, r, { segs: 12 });
-      for (const z of [-hh * 0.34, hh * 0.44]) m.cylinder([0, 0, z - 0.025], [0, 0, z + 0.025], r * 1.06, t >= 3 ? P.gold : P.laser, r * 1.06, { segs: 12 });
+      for (const z of [-hh * 0.34, hh * 0.44]) m.cylinder([0, 0, z - 0.025], [0, 0, z + 0.025], r * 1.06, t >= 3 ? P.gold : t === 2 ? P.chrome : P.laser, r * 1.06, { segs: 12 });
       m.decal(0.01, () => m.cylinder([0, 0, -hh * 0.14], [0, 0, hh * 0.24], r * 1.05, beat > 0.5 ? P.red : P.magenta, r * 1.05, { segs: 12 }));
       m.sphere([0, 0, hh * 0.62], r * 0.5, t >= 4 ? P.aether : P.red, { segs: 8 });
     });

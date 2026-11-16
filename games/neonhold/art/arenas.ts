@@ -26,11 +26,11 @@ const streak = (p: Painter, x: number, y: number, col: string, a = 0.2, len = 2.
 
 type Floor = (p: Painter, x: number, y: number, w: number, h: number, c: string[], line: string) => void;
 const FLOORS: Record<string, Floor> = {
-  slabs: (p, x, y, w, h, c, l) => p.slabs(x, y, w, h, c, { sw: 1.5, sh: 1.0, joint: 0.03, jointColor: rgba(l, 0.4) }),
-  tiles: (p, x, y, w, h, c, l) => p.slabs(x, y, w, h, c, { sw: 0.75, sh: 0.75, joint: 0.025, jointColor: rgba(l, 0.45), bond: 0 }),
-  grate: (p, x, y, w, h, c, l) => p.slabs(x, y, w, h, c, { sw: 0.5, sh: 0.5, joint: 0.04, jointColor: rgba(l, 0.5), bond: 0, rivets: rgba(l, 0.5) }),
-  deck: (p, x, y, w, h, c, l) => p.slabs(x, y, w, h, c, { sw: 2.4, sh: 0.5, joint: 0.03, jointColor: rgba(l, 0.4), rivets: rgba(l, 0.45) }),
-  glass: (p, x, y, w, h, c, l) => p.slabs(x, y, w, h, c, { sw: 1.5, sh: 1.5, joint: 0.045, jointColor: rgba(l, 0.7), bond: 0 }),
+  slabs: (p, x, y, w, h, c, l) => p.slabs(x, y, w, h, c, { sw: 1.5, sh: 1.0, joint: 0.03, jointColor: rgba(l, 0.24) }),
+  tiles: (p, x, y, w, h, c, l) => p.slabs(x, y, w, h, c, { sw: 0.75, sh: 0.75, joint: 0.025, jointColor: rgba(l, 0.28), bond: 0 }),
+  grate: (p, x, y, w, h, c, l) => p.slabs(x, y, w, h, c, { sw: 0.5, sh: 0.5, joint: 0.04, jointColor: rgba(l, 0.32), bond: 0, rivets: rgba(l, 0.3) }),
+  deck: (p, x, y, w, h, c, l) => p.slabs(x, y, w, h, c, { sw: 2.4, sh: 0.5, joint: 0.03, jointColor: rgba(l, 0.26), rivets: rgba(l, 0.3) }),
+  glass: (p, x, y, w, h, c, l) => p.slabs(x, y, w, h, c, { sw: 1.5, sh: 1.5, joint: 0.045, jointColor: rgba(l, 0.4), bond: 0 }),
   plain: (p, x, y, w, h, c) => { p.rect(x, y, w, h, c[0]); p.mottle(x, y, w, h, c[1] ?? shade(c[0], 0.1), { alpha: 0.3, size: [0.4, 1.4] }); },
 };
 

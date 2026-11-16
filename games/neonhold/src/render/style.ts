@@ -19,7 +19,7 @@ export const STYLE: Style = {
   shadow: { color: "#07051a", alpha: 0.5 },
   vfx: {
     blend: "additive", glow: 1.25,
-    slash: "#f4f0ff", spark: "#ffe45c", fire: "#ff7a3c", fire_hot: "#fff2c8", smoke: "#4a4670",
+    slash: "#f4f0ff", spark: "#fff36b", fire: "#ff4de1", fire_hot: "#ffe6fb", smoke: "#4a4670",
     frost: "#a8ecff", zap: "#d8c4ff", heal: "#5dffa0", arcane: "#c05cff", gold: "#ffc53d", dust: "#6f6a9c",
   },
   ui: {
