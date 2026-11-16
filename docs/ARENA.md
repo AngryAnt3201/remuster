@@ -611,3 +611,14 @@ What to read:
 - **Result screen:** `end.result` (`delta`, `trophies`, `from`, `to`, `promoted`, `streak`), `end.reward`
   (`coins`, `parts`, `xp`, `capTo`), `end.chest` (as `winChest` returns; do not call `winChest` again).
 - **Opponent card:** `next.foe.name`, `next.foe.title`, `next.foe.level`, `next.foe.trophies`, `next.foe.ai.tactic`.
+
+With a backend (infra/README.md, "The Arena ladder: what the server checks") the server issues the match and settles
+it from a replay; the base game's side of that is `base/src/online.ts`:
+```ts
+const srv = await onlineArenaMatch();                 // null offline: an ArenaMatch plus the server's id
+const next = srv ?? nextArenaMatch();
+// ... play ...
+const result = srv ? await onlineArenaFinish(srv, match) : null;   // the server's ArenaResult; its ladder is now in the save
+const end = result ? settleArena(next, result) : awardArena(next, match.winner === 0);   // one or the other, never both
+```
+`settleArena` pays what `awardArena` pays (coins, XP, chest) and leaves the trophies to the server.

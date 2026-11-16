@@ -33,6 +33,8 @@ export interface Save {
   cosmetics?: CosmeticsSave;
   /** The Arena trophy ladder (engine/core/arena.ts). Older saves have none: they load with a blank ladder. */
   arena?: ArenaSave;
+  /** Counts every write of this save, on any device (cloud sync, engine/net/sync.ts, takes the higher as the newer). */
+  rev?: number;
 }
 
 const KEY = "muster.save.v1";
@@ -52,10 +54,29 @@ export function load(): Save {
   }
   return cache!;
 }
+const listeners = new Set<(s: Save) => void>();
+/** Calls `fn` after every write of the save (the cloud sync listens here). Returns the function that stops it. */
+export function subscribe(fn: (s: Save) => void): () => void {
+  listeners.add(fn);
+  return () => void listeners.delete(fn);
+}
+function persist(s: Save) {
+  try { localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* private mode */ }
+}
 export function save(mut?: (s: Save) => void) {
   const s = load();
   mut?.(s);
-  try { localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* private mode */ }
+  s.rev = (s.rev ?? 0) + 1;
+  persist(s);
+  for (const fn of [...listeners]) { try { fn(s); } catch { /* a listener never breaks a save */ } }
+}
+/** Swaps the whole save for `next` (a cloud save merged in). Kept in place, so anything holding load()'s object sees
+ * it. Listeners are not called: this is the sync writing, not the player. */
+export function replaceSave(next: Save) {
+  const s = load() as unknown as Record<string, unknown>;
+  for (const k of Object.keys(s)) delete s[k];
+  Object.assign(s, blank(), next, { daily: { ...blankDaily(), ...next.daily } });
+  persist(load());
 }
 export function resetSave() {
   cache = blank();
