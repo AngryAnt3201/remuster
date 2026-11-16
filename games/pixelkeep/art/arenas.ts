@@ -106,7 +106,7 @@ function world(d: World): ArenaDef {
 }
 
 const none: ArenaDef["ambient"] = { shade: 0, gust: null, motes: [], butterflies: 0, flock: null };
-const motes = (kind: "drift" | "fall" | "rise" | "blink", n: number, colors: string[], size = 2.4): ArenaDef["ambient"] => ({ ...none, motes: [{ kind, n, colors, size }] });
+const motes = (kind: "drift" | "fall" | "rise" | "blink", n: number, colors: string[], size = 0.05): ArenaDef["ambient"] => ({ ...none, motes: [{ kind, n, colors, size }] });
 
 export const ARENAS: ArenaArt = {
   team: { main: "#ffbf00", dark: "#bf8000", light: "#ffff80" },
@@ -127,7 +127,7 @@ export const ARENAS: ArenaArt = {
       side: [(m) => rock(m, 0.9, S.caveDk, S.cave), (m) => pillar(m, 0.8, S.stoneDk, S.slate, S.lava), (m) => deadTree(m, 0.9, S.caveDk)], far: [(m) => rock(m, 1.8, S.caveDk, S.cave), (m) => pillar(m, 1.3, S.stoneDk, S.slate, S.lava), (m) => tower(m, 1.0, S.caveDk, S.cave, null, S.lava), (m) => tower(m, 1.0, S.caveDk, S.cave, null, S.lava), (m) => pillar(m, 1.3, S.stoneDk, S.slate, S.lava), (m) => rock(m, 1.8, S.caveDk, S.cave)],
       scatter: [(m) => rock(m, 1.2, S.caveDk, S.cave), (m) => deadTree(m, 1, S.caveDk)],
       props: [(m) => rock(m, 1.25, S.caveDk, S.cave), (m) => pillar(m, 1.2, S.stoneDk, S.slate, S.lava), (m) => crystal(m, 1.1, S.lava)],
-      ambient: motes("rise", 20, ["#ff8000", "#ffff40"], 2.4),
+      ambient: motes("rise", 20, ["#ff8000", "#ffff40"], 0.05),
     }),
     world({
       name: "Deep Woods", obstacle: "pine", edge: "#004040",
@@ -136,7 +136,7 @@ export const ARENAS: ArenaArt = {
       side: [(m) => pine(m, 1), (m) => pine(m, 1.15), (m) => mushroom(m, 0.7)], far: [(m) => pine(m, 1.5), (m) => pine(m, 1.3), (m) => hut(m, 1.1, S.leafDk, S.trunkLt), (m) => pine(m, 1.4), (m) => pine(m, 1.5), (m) => pine(m, 1.3)],
       scatter: [(m) => pine(m, 1.2), (m) => pine(m, 1), (m) => mushroom(m, 0.8), (m) => bush(m, 1, S.leafDk)],
       props: [(m) => pine(m, 1.2), (m) => mushroom(m, 1.6), (m) => rock(m, 1.25, S.stoneDk, S.slate)],
-      ambient: motes("drift", 10, ["#ffff80", "#80ff40"], 2),
+      ambient: motes("drift", 10, ["#ffff80", "#80ff40"], 0.045),
     }),
     world({
       name: "Crystal Cave", obstacle: "crystal", edge: "#200020",
@@ -145,7 +145,7 @@ export const ARENAS: ArenaArt = {
       side: [(m) => rock(m, 0.9, S.cave, S.caveDk), (m) => crystal(m, 0.8), (m) => crystal(m, 0.7, S.crystalBlue)], far: [(m) => crystal(m, 1.6), (m) => rock(m, 1.6, S.cave, S.caveDk), (m) => crystal(m, 1.3, S.crystalBlue), (m) => crystal(m, 1.5), (m) => rock(m, 1.6, S.cave, S.caveDk), (m) => crystal(m, 1.4, S.crystalBlue)],
       scatter: [(m) => rock(m, 1.2, S.cave, S.caveDk), (m) => crystal(m, 1), (m) => crystal(m, 0.9, S.crystalBlue)],
       props: [(m) => crystal(m, 1.2), (m) => rock(m, 1.25, S.cave, S.caveDk), (m) => crystal(m, 1.2, S.crystalBlue)],
-      ambient: motes("blink", 14, ["#ff80ff", "#80ffff"], 2.2),
+      ambient: motes("blink", 14, ["#ff80ff", "#80ffff"], 0.045),
     }),
     world({
       name: "Castle Yard", obstacle: "crate", edge: "#404040",
@@ -162,7 +162,7 @@ export const ARENAS: ArenaArt = {
       side: [(m) => pine(m, 1, S.pine, S.snow), (m) => pine(m, 1.1, S.pine, S.snow), (m) => snowman(m, 0.8)], far: [(m) => pine(m, 1.5, S.pine, S.snow), (m) => hut(m, 1.2, S.snow, S.trunkLt), (m) => pine(m, 1.3, S.pine, S.snow), (m) => tower(m, 0.9, S.stone, S.stoneDk, S.snow), (m) => pine(m, 1.4, S.pine, S.snow), (m) => snowman(m, 1.2)],
       scatter: [(m) => pine(m, 1.2, S.pine, S.snow), (m) => rock(m, 0.8, S.snow, S.snowDk), (m) => snowman(m)],
       props: [(m) => snowman(m, 1.35), (m) => rock(m, 1.25, S.snow, S.snowDk), (m) => crystal(m, 1.2, S.crystalBlue)],
-      ambient: motes("fall", 26, ["#ffffff", "#bfffff"], 2.6),
+      ambient: motes("fall", 26, ["#ffffff", "#bfffff"], 0.055),
     }),
     world({
       name: "Cloud Top", obstacle: "pillar", edge: "#4080ff",
@@ -180,7 +180,7 @@ export const ARENAS: ArenaArt = {
       side: [(m) => deadTree(m, 1), (m) => bush(m, 1, S.swamp), (m) => mushroom(m, 0.8, S.darkLt)], far: [(m) => deadTree(m, 1.5), (m) => tree(m, 1.2, S.swamp, null, S.dead), (m) => hut(m, 1.1, S.darkLt, S.stoneDk), (m) => deadTree(m, 1.4), (m) => tree(m, 1.3, S.swamp, null, S.dead), (m) => deadTree(m, 1.5)],
       scatter: [(m) => deadTree(m, 1.1), (m) => bush(m, 1, S.swamp), (m) => mushroom(m, 1, S.darkLt)],
       props: [(m) => deadTree(m, 1.2), (m) => mushroom(m, 1.6, S.darkLt), (m) => rock(m, 1.25, S.swamp, S.swampDk)],
-      ambient: motes("blink", 12, ["#80ff40", "#ffff80"], 2.2),
+      ambient: motes("blink", 12, ["#80ff40", "#ffff80"], 0.045),
     }),
     world({
       name: "Sandy Shore", obstacle: "cactus", edge: "#bf8040",
@@ -192,12 +192,12 @@ export const ARENAS: ArenaArt = {
     }),
     world({
       name: "Dark Keep", obstacle: "torch", edge: "#200040",
-      field: ["#402060", "#200040", "#8040bf"], grid: "#200040", out: ["#200040", "#000020", "#402060"], road: ["#bf0000", "#400000"],
-      strip: ["#404080", "#202040", "#ffbf00"], plaza: ["#bf0000", "#400000", "#ffbf00"], pool: ["#40ff80", "#ffffff"],
+      field: ["#402060", "#200040", "#8040bf"], grid: "#200040", out: ["#200040", "#000020", "#402060"], road: ["#8040bf", "#400080"],
+      strip: ["#404080", "#202040", "#ffbf00"], plaza: ["#8040bf", "#400080", "#ffbf00"], pool: ["#40ff80", "#ffffff"],
       side: [(m) => pillar(m, 0.9, S.dark, S.darkDk, S.lava), (m) => wall(m, 1.3, 1, S.dark, S.darkDk), (m) => pillar(m, 0.8, S.dark, S.darkDk, S.crystal)], far: [(m) => tower(m, 1.2, S.dark, S.darkDk, S.roofRed, S.lava), (m) => wall(m, 2.4, 1.3, S.dark, S.darkDk), (m) => tower(m, 1.5, S.dark, S.darkDk, S.roofRed, S.lava), (m) => tower(m, 1.5, S.dark, S.darkDk, S.roofRed, S.lava), (m) => wall(m, 2.4, 1.3, S.dark, S.darkDk), (m) => tower(m, 1.2, S.dark, S.darkDk, S.roofRed, S.lava)],
       scatter: [(m) => deadTree(m, 1.1, S.dark), (m) => pillar(m, 1, S.dark, S.darkDk, S.lava), (m) => rock(m, 1, S.dark, S.darkDk)],
       props: [(m) => pillar(m, 1.2, S.dark, S.darkDk, S.lava), (m) => crystal(m, 1.2), (m) => rock(m, 1.25, S.dark, S.darkDk)],
-      ambient: motes("rise", 12, ["#ff80ff", "#ffbf00"], 2.2),
+      ambient: motes("rise", 12, ["#ff80ff", "#ffbf00"], 0.045),
     }),
   ],
 };

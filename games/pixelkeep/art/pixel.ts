@@ -14,10 +14,10 @@ function snap(v: number, odd: boolean, dither: boolean): number {
 }
 
 /** Pixelate a region of a canvas in place: `b` canvas pixels per art pixel. `alpha`: also harden the alpha channel
- *  (for sprites and effect cells; "soft" keeps one half-transparent step for smoke and glows); otherwise the region
+ *  (for sprites and effect cells; "soft" steps it in quarters instead, so a faint glow stays faint); otherwise the region
  *  is treated as opaque. */
 export function pixelate(g: CanvasRenderingContext2D, x0: number, y0: number, w: number, h: number, b: number, o: { dither?: boolean; alpha?: boolean | "soft"; cut?: number } = {}) {
-  const img = g.getImageData(x0, y0, w, h), d = img.data, dither = o.dither ?? true, cut = o.cut ?? (o.alpha === "soft" ? 44 : 96);
+  const img = g.getImageData(x0, y0, w, h), d = img.data, dither = o.dither ?? true, cut = o.cut ?? (o.alpha === "soft" ? 32 : 96);
   for (let by = 0; by * b < h; by++) for (let bx = 0; bx * b < w; bx++) {
     // the middle of the block decides its colour
     let r = 0, gg = 0, bl = 0, a = 0, n = 0;
@@ -36,7 +36,7 @@ export function pixelate(g: CanvasRenderingContext2D, x0: number, y0: number, w:
       const x = bx * b + xx, y = by * b + yy;
       if (x >= w || y >= h) continue;
       const i = (y * w + x) * 4;
-      d[i] = R; d[i + 1] = G; d[i + 2] = B; d[i + 3] = !on ? 0 : o.alpha === "soft" && al < 150 ? 128 : 255;
+      d[i] = R; d[i + 1] = G; d[i + 2] = B; d[i + 3] = !on ? 0 : o.alpha === "soft" ? Math.min(255, Math.round(al / 64) * 64) : 255;
     }
   }
   g.putImageData(img, x0, y0);

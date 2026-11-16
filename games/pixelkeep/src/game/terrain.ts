@@ -1,5 +1,5 @@
 // Pixelkeep's Arena terrain: tile-map buildings on the five-level console palette. Red brick walls, plaster huts
-// with red roofs, grey stone towers with blue caps, green hedges for barricades, crates, and blue water tiles.
+// with thatch roofs, grey stone towers with slate caps (never team red or team blue), green hedges for barricades, crates, and blue water tiles.
 // The battle canvas is a low-resolution pixel screen (src/render/board.ts), so these come out as fat pixels.
 //
 // The renderer (../render/terrain.ts) builds every wall, house, tower, crate stack and pond from these colours and
@@ -38,7 +38,7 @@ export interface TerrainStyle {
 const brick = { top: "#ff8080", front: "#bf4040", side: "#802020", trim: "#400000" };
 const stone = { top: "#ffffff", front: "#bfbfbf", side: "#808080", trim: "#404040" };
 const wood = { top: "#ffbf80", front: "#bf8040", side: "#804000", trim: "#402000" };
-const hut = { top: "#ffffff", front: "#ffffbf", side: "#bfbf80", trim: "#804000", roofLit: "#ff4040", roofDark: "#bf0000", glow: "#ffff40" };
+const hut = { top: "#ffffff", front: "#ffffbf", side: "#bfbf80", trim: "#804000", roofLit: "#ffbf40", roofDark: "#bf8000", glow: "#ffff40" };
 
 export const TERRAIN: TerrainStyle = {
   ink: "#101018",
@@ -46,8 +46,8 @@ export const TERRAIN: TerrainStyle = {
     wall: { h: 0.95, ...brick, roof: "crenel", detail: "brick" },
     building: { h: 1.0, ...hut, roof: "gable", detail: "house" },
     house: { h: 1.0, ...hut, roof: "gable", detail: "house" },
-    hall: { h: 1.3, ...stone, roof: "gable", roofLit: "#4080ff", roofDark: "#0040bf", detail: "house", glow: "#ffff40" },
-    tower: { h: 2.1, ...stone, roof: "cone", roofLit: "#4080ff", roofDark: "#0040bf", detail: "brick", glow: "#ffff40" },
+    hall: { h: 1.3, ...stone, roof: "gable", roofLit: "#bfbfff", roofDark: "#8080bf", detail: "house", glow: "#ffff40" },
+    tower: { h: 2.1, ...stone, roof: "cone", roofLit: "#bfbfff", roofDark: "#8080bf", detail: "brick", glow: "#ffff40" },
     barricade: { h: 0.55, top: "#80ff40", front: "#40bf40", side: "#008000", trim: "#004000", detail: "stake" },
     logs: { h: 0.45, ...wood, detail: "log" },
     crates: { h: 0.55, top: "#ffbf80", front: "#ffbf40", side: "#bf8000", trim: "#804000", detail: "crate" },
