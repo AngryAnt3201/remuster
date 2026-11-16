@@ -1,62 +1,97 @@
-# Muster
+# Remuster
 
-Turn-based unit battler for iPhone. Each commander has 400 health. Every round both sides buy units from a shop of four and place them anywhere in their half; units stay on the board and come back each round, so armies build up. Then the battle plays out on its own: free 360° steering, no grid, every unit with its own behaviour. The loser of a round takes damage: a base that grows each round, plus twice the threat of the winner's survivors.
+One auto-battler, any number of games. Remuster is a finished iPhone game (*Crownfall*: draft an army, place it, watch
+it fight) split into two halves:
 
-## Units (12)
+- **The engine and backend** (`engine/`, `infra/`): the battle sim, rules, AI, 31 units, a 60-level campaign, five
+  other modes, the Arena ladder, progression, economy, purchases, accounts, cloud saves and hosting. Locked, shared by
+  every game, and re-run on the server to verify results.
+- **The game** (`base/`, then `games/<id>/`): everything a player sees and hears. Art, interface, words, sound,
+  music. Made to be replaced, by hand or by telling Claude Code what the game should be.
 
-| Unit | Cost | Behaviour |
+```
+/remix dustline a spaghetti western          in Claude Code: makes games/dustline/ from the base game
+```
+
+The same battle with the same seed plays out identically in every game; only the picture and sound change.
+
+| | |
+| --- | --- |
+| `REMIX.md` | how a game is made: direction, words, art, interface, sound, checks |
+| `CLAUDE.md`, `.claude/` | the hand-off to Claude Code: the `/remix` command and a hook that keeps `engine/` locked |
+| `artkit/README.md` | drawing units, arenas, keeps and effects in code and baking them |
+| `docs/ARENA.md`, `docs/EVENTS.md` | Arena rules; what a renderer reads from a battle |
+| `infra/README.md` | the backend: local server, one-step deploy, publishing games |
+| `video/README.md` | the launch video: captures, soundtrack, edit, voice-over |
+| `tools/music/README.md` | the soundtrack synth and how a new style gets its arrangement |
+
+## Games in this repo
+
+| id | game | look |
 | --- | --- | --- |
-| Mine | 2 | Buried and untargetable; a short fuse when an enemy steps close, then a blast 1 unit wide |
-| Blade Trio | 3 | Three swords, one shared target, surround it and slash in an arc |
-| Ranger | 3 | Holds bow range, strafes, backs off when rushed |
-| Bulwark | 4 | Shield takes 60% less from the front; guards the ally in most danger; draws melee to itself |
-| Medic | 3 | Heals the most hurt ally while keeping it between itself and the enemy |
-| Grenadier | 4 | Lobs bombs where enemies will be bunched when they land |
-| Shade | 4 | Cloaked flank, blinks behind the softest target and backstabs |
-| Lancer | 4 | Aims, charges straight through a line, wheels round in an arc, again |
-| Ballista | 3 | Fixed; slow turret; bolts pierce everything in line |
-| Hive | 4 | Fixed; breeds mites that swarm (and trip mines) |
-| Stormcaller | 5 | Chain lightning that jumps between bunched enemies |
-| Golem | 5 | Slow giant, walks at structures first, splits into two golemlings when it falls |
-
-Upgrade a placed unit to rank 2 and 3; sell for half of what it cost. Unspent gold earns interest (1 per 5, max 3).
-
-## The AI
-
-`engine/core/ai.ts`. An `AIProfile` sets **difficulty** (how many plans it tests in simulation, how sharply it counters, how often it blunders), **aggression** (formation depth, damage vs defence), **tactic** (balanced, swarm, fortress, artillery, ambush, blitz, siege), **economy** (bank for interest and upgrades vs spend), **rerolls** and **spread** (formation width). Hard AIs simulate each candidate draft and formation against your visible board plus a guess at what you'll add; buried mines stay hidden from it. Tune them in-game under Skirmish (AI lab), including AI-vs-AI.
-
-## Modes
-
-- **Campaign**: acts of six levels with a boss at the end of each, a new unit unlocked along the way, three stars per level. The current level, act and puzzle counts come from `engine/core/counts.ts` (`npm run release:config` prints them).
-- **Gauntlet**: one health pool against rival after rival; your army carries over and each win brings a boon.
-- **Breakpoint**: one-battle puzzles against a fixed visible board with fixed gold; win, then win cheaper for stars.
-- **Skirmish**: any AI profile, any health, or watch two AIs.
+| `base` | Crownfall | storybook fantasy (Blender-rendered) |
+| `brasswick` | Brasswick | steampunk: brass, soot and gaslight |
+| `dustline` | Dustline | spaghetti western |
+| `neonhold` | Neonhold | neon megacity, synthwave |
+| `pixelkeep` | Pixelkeep | 8-bit cartridge |
+| `inkfall` | Inkfall | brush and ink on rice paper |
 
 ## Run
 
 ```
 npm install
-npm run dev          # http://localhost:5300 (deep links: ?level=3 ?puzzle=2 ?lab ?watch ?gauntlet)
-npm test             # sim, match, AI, content
-npm run build
-npm run ios:sim      # build the iOS app for the simulator (Capacitor, no signing)
-npm run ios:run      # build, install and launch on the booted simulator
-npm run ios:open     # open in Xcode to run on a device
-node tools/shot.mjs "/?level=1" out.png   # phone-size screenshot of the dev server
-node tools/e2e.mjs <dir>                  # full AI-vs-AI match in the browser
+npm run dev                          # Crownfall at http://localhost:5300
+GAME=brasswick PORT=5310 npm run dev # any other game
+npm test                             # sim, match, AI, content, Arena, progression, store, art contracts, backend API
+npm run typecheck && npm run build   # GAME=<id> npm run build -> dist-games/<id>/
+npm run check -- <id>                # is a game complete? (plays it and takes screenshots)
+npm run infra:dev                    # the backend, locally, with no cloud account
+npm run ios:run                      # build, install and launch on the booted iOS simulator
 ```
 
-Code: `base/src/core` is pure and deterministic (battle sim, match, AI, content); `base/src/render` draws it on a canvas; `base/src/ui` is the HUD and screens.
+Deep links for looking at one thing: `?level=3` `?arena` `?arena=old-village` `?tab=army|shop|modes|pass` `?campaign`
+`?daily` `?gauntlet` `?puzzles` `?lab` `?watch` `?film=clash|duel|siege|arena` `?demo` (a mid-game save).
+`node tools/shot.mjs "/?arena" out.png` takes a phone-size screenshot.
+
+## How a battle works
+
+Each commander has 400 health. Every round both sides buy units from a shop of four and place them anywhere in
+their half; units stay on the board and come back each round, so armies build up. Then the battle plays out on its
+own: free steering, no grid, every unit with its own behaviour and one ability. The loser of a round takes damage: a
+base that grows each round plus twice the threat of the winner's survivors. Upgrade a placed unit to rank 2, 3 and 4;
+sell for half; unspent gold earns interest.
+
+Modes: **Campaign** (10 acts of 6 levels, a boss each), **Arena** (battles around walls, buildings, cover and water
+on a trophy ladder; `docs/ARENA.md`), **Daily**, **Gauntlet**, **Breakpoint** puzzles, **Skirmish** (the AI lab) and
+**Bastion** (tower defence).
+
+The sim is pure TypeScript and deterministic (`engine/core`): no DOM, no clock, no `Math.random`. It emits events a
+renderer turns into pictures and sound. The AI (`engine/core/ai.ts`) drafts and places by simulating candidate
+boards against what it can see of yours.
+
+## Backend
+
+`infra/` is one Cloudflare Worker with a D1 database and an R2 bucket: anonymous player accounts, cloud saves, the
+gallery of published games (each served at `/g/<id>/`), the Arena ladder (results are re-simulated by the engine
+before trophies move) and analytics events. It runs locally with `npm run infra:dev`, and deploys in one step:
+
+```
+npx wrangler login       # once, in your own Cloudflare account
+npm run infra:deploy     # creates the database and bucket, runs migrations, deploys, writes .env.production
+```
+
+`npm run publish -- <id>` uploads a built game to the gallery.
 
 ## Release (App Store)
 
-`app.config.json` is the one place for the store name, home-screen name, version, build, bundle id and team; `npm run release:config` spreads it to Xcode (`ios/app.xcconfig`, `ios/App/ExportOptions.plist`), the listing (`store/`) and the site (`site/`), and checks App Store limits.
+`app.config.json` is the one place for the store name, home-screen name, version, build, bundle id and team;
+`npm run release:config` spreads it to Xcode, the listing (`store/`) and the site (`site/`).
 
 ```
-npm run ios:release:dry   # Release build for the simulator, unsigned: proves the Release config compiles
-npm run store:shots       # 6.9" App Store screenshots into store/screenshots (uses or starts the dev server)
-npm run ios:release       # Jack only: signed Release archive (talks to Apple for signing)
-npm run ios:export        # Jack only: App Store .ipa from that archive
+npm run ios:release:dry   # Release build for the simulator, unsigned
+npm run store:shots       # App Store screenshots into store/screenshots
+npm run ios:release       # signed Release archive (talks to Apple)
+npm run ios:export        # App Store .ipa from that archive
 ```
 
-Step by step: `store/RELEASE-CHECKLIST.md`. Listing copy: `store/LISTING.md`. Privacy and support pages: `site/` (static).
+Step by step: `store/RELEASE-CHECKLIST.md`. Listing copy: `store/LISTING.md`.
