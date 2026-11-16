@@ -1,6 +1,8 @@
 // Short-lived effects in world coordinates: sprite-sheet animations (public/vfx, see src/render/vfx.ts), particles,
 // rings, arcs, bolts of lightning, beams and floating numbers. Pure state: board.ts draws it.
 
+import { tr } from "../game/text";
+
 export interface Particle {
   x: number; y: number; z: number;
   vx: number; vy: number; vz: number;
@@ -178,6 +180,7 @@ export class Fx {
     this.beams.push({ x0, y0, x1, y1, life: max, max, color, width });
   }
   float(x: number, y: number, text: string, color = "#fff", size = 0.32, max = 0.8, kind: FloatKind = "text") {
+    if (kind === "text") text = tr(text); // [game] callouts in this game's words (game/lexicon.ts)
     // Numbers landing on the same spot within a moment add up into one (a cleave or a burst hitting a crowd shows a
     // few totals, not a stack of digits). A crit merging into a plain number upgrades it.
     if (kind !== "text") {

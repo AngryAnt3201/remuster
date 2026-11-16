@@ -106,6 +106,8 @@ export const LEXICON: Record<string, string> = {
   "The Mirelight Fen": "The Sump",
   "The Saltwind Coast": "Tar Wharf",
   "The Sky Throne": "The Aerodrome",
+  // battle callouts
+  "SWOOP": "DIVE", "RIPTIDE": "BURST MAIN", "WAVE": "FLOOD", "RALLY": "REVEILLE", "PARRY": "PARRY!", "IMPALED": "HARPOONED", "SEIZED": "SNARED", "HOOKED": "WINCHED", "BEACON": "ARC LAMP", "REVIVED": "SMELLING SALTS",
   // interface
   "Army": "Regiment",
   "Coins": "Shillings",

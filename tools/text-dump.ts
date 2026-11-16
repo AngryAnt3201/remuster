@@ -46,6 +46,9 @@ add("ui", "Battle", "Army", "Shop", "Modes", "Pass", "War Pass", "Campaign", "Da
   "Coins", "Gems", "coins", "gems", "Chest", "chest", "Chests", "Keep", "keep", "Commander", "Fight", "Victory", "Defeat", "Round", "Reroll",
   "Level", "Act", "Boss", "Stars", "Trophies", "League", "Settings", "Sound", "Music", "Haptics", "Upgrade", "Sell", "Ascended", "Cards", "Quests");
 
+// Words shouted over the battle (drawn on the canvas, upper case as written here).
+add("battle callouts", "SWOOP", "RIPTIDE", "WAVE", "RALLY", "RIPOSTE", "PARRY", "IMPALED", "SEIZED", "HOOKED", "BEACON", "REVIVED");
+
 let current: Record<string, string> = {};
 const lex = join(root, "games", game, "src/game/lexicon.ts");
 if (existsSync(lex)) {

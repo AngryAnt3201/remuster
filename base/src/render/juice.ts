@@ -2,6 +2,7 @@
 // shake, Ascended ability callouts, HP bars that drain behind the damage, squash-and-stretch for landings, and the
 // round-end flourish. Pure state (no canvas): board.ts draws it, tests drive it directly.
 import type { BattleEvent, Body } from "@engine/core/battle";
+import { tr } from "../game/text";
 import { ABILITIES, UNITS, type BodyKind, type Side, type UnitKind } from "@engine/core/defs";
 
 /** One display frame at 60 Hz: hit-stop is counted in these. */
@@ -64,9 +65,9 @@ export function ascendedOf(e: BattleEvent, find: Find): Kick["callout"] | undefi
   const asc = (id: number, kind: UnitKind, need = true) => {
     const b = find(id);
     if (!b || b.kind !== kind || (need && b.rank < 4)) return undefined;
-    return { id: b.id, key: `b${b.id}`, x: b.x, y: b.y, side: b.side, text: ABILITIES[kind].name };
+    return { id: b.id, key: `b${b.id}`, x: b.x, y: b.y, side: b.side, text: tr(ABILITIES[kind].name) };
   };
-  const at = (key: string, x: number, y: number, side: Side, kind: UnitKind) => ({ id: -1, key, x, y, side, text: ABILITIES[kind].name });
+  const at = (key: string, x: number, y: number, side: Side, kind: UnitKind) => ({ id: -1, key, x, y, side, text: tr(ABILITIES[kind].name) });
   switch (e.t) {
     case "slash": return e.spin ? asc(e.id, "blades") : undefined;
     case "volley": return asc(e.id, "ranger", false);
