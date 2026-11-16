@@ -219,7 +219,7 @@ export const tinker: UnitDef = {
     const aim = norm(p.mix<V3>([0.45, 0.1, 1], [1, -0.2, -0.5], { wind: [-0.5, 0.15, 1], cast: [0.9, -0.1, -0.8], castWind: [-0.5, 0.1, 1] }));
     const h = guy(m, p, { weight: "mid", bulk: 1.12, handR: R, twist: 20, torso: P.team, arms: P.team, legs: P.woodDk, boots: P.black, lunge: 0.6 });
     m.at(h.chest, () => m.decal(0.025, () => m.box([0.1, 0, -0.08], [0.14, 0.3, 0.36], P.leather)));
-    m.at(h.back, () => { m.box([0.07, 0, 0], [0.12, 0.28, 0.26], P.woodDk); m.with(() => { m.move(0.14, 0, 0.06).rotY(90); m.cylinder([0, 0, 0], [0, 0, 0.04], 0.12, trim(Math.max(2, t)), 0.12, { segs: 6 }); }); });
+    m.at(h.back, () => { m.box([0.07, 0, 0], [0.14, 0.3, 0.28], P.team); m.with(() => { m.move(0.14, 0, 0.06).rotY(90); m.cylinder([0, 0, 0], [0, 0, 0.04], 0.12, trim(Math.max(2, t)), 0.12, { segs: 6 }); }); });
     m.at(h.head, () => { m.decal(0.04, () => m.box([r * 0.9, 0, r * 0.12], [r * 0.3, r * 1.5, r * 0.42], trim(t))); m.decal(0.06, () => { for (const s of [1, -1]) m.box([r * 0.98, s * r * 0.4, r * 0.12], [r * 0.2, r * 0.4, r * 0.3], P.ice); }); m.box([-r * 0.1, 0, r * 0.95], [r * 1.3, r * 1.4, r * 0.3], P.orange); headband(m, r, P.team); rank(m, p, r * 1.35); });
     m.at(h.aim("R", aim), () => hammer(m, 0.36 + 0.02 * t, blade(t) === P.steel ? P.iron : P.glory, 0.16));
     if (p.hit) flash(m, h.pt([0.48, 0, 0.08]), 0.07, P.spark, P.yellow);
@@ -274,7 +274,7 @@ export const tide: UnitDef = {
     const h = guy(m, p, { weight: "mid", bulk: 1.05, torso: P.team, arms: P.team, legs: P.seaDk, boots: P.seaDk, handR: R, handL: offHand(p), lunge: 0.3, recoil: 0.03 });
     robe(m, h, P.team, 0.25, 0.2);
     belt(m, h, P.sea, trim(t), 1.05);
-    m.at(h.head, () => { m.group(() => { m.ellipsoid([-r * 0.1, 0, r * 0.4], [r * 1.25, r * 1.3, r * 0.75], P.sea, { segs: 8 }); m.cone([-r * 0.3, 0, r * 0.9], [-r * 1.2, 0, r * 1.5], r * 0.5, P.sea, { segs: 5 }); }); m.decal(0.02, () => m.cylinder([0, 0, r * 0.2], [0, 0, r * 0.55], r * 1.34, P.team, r * 1.25, { segs: 8 })); beard(m, r, P.ice, 0.8); rank(m, p, r * 1.6); });
+    m.at(h.head, () => { m.ellipsoid([-r * 0.1, 0, r * 0.4], [r * 1.25, r * 1.3, r * 0.75], P.team, { segs: 8 }); m.cone([-r * 0.3, 0, r * 0.9], [-r * 1.2, 0, r * 1.6], r * 0.55, P.sea, { segs: 5 }); m.decal(0.02, () => m.cylinder([0, 0, r * 0.2], [0, 0, r * 0.5], r * 1.34, P.white, r * 1.28, { segs: 8 })); beard(m, r, P.ice, 0.8); rank(m, p, r * 1.6); });
     m.at(h.aim("R", norm(p.mix<V3>([0.3, 0, 1], [1, 0, 0.1], { wind: [-0.2, 0, 1] }))), () => {
       const L = 0.5 + 0.02 * t, g = t >= 4 ? P.glory : P.gold;
       m.cylinder([-0.3, 0, 0], [L, 0, 0], 0.022, P.woodDk, 0.022, { segs: 5 });
@@ -314,7 +314,7 @@ export const grave: UnitDef = {
     const h = guy(m, p, { weight: "mid", skin: P.bone, torso: P.purpleDk, arms: P.purpleDk, legs: P.night, boots: P.black, hands: P.bone, handR: staffHand(p), handL: offHand(p), lunge: 0, noFace: true });
     robe(m, h, P.purpleDk, 0.26, 0.2);
     m.at(h.chest, () => m.decal(0.02, () => m.cylinder([0, 0, 0.02], [0, 0, 0.2], 0.25, P.team, 0.15, { segs: 8 })));
-    m.at(h.head, () => { hood(m, r, P.purpleDk, 0.9); m.decal(0.04, () => { for (const s of [1, -1]) m.box([r * 0.95, s * r * 0.38, 0], [r * 0.2, r * 0.3, r * 0.3], t >= 4 ? P.gloryInk : P.ghost); }); rank(m, p, r * 1.9); });
+    m.at(h.head, () => { hood(m, r, P.purpleDk, 0.9); m.decal(0.03, () => m.cylinder([-r * 0.12, 0, r * 0.35], [-r * 0.12, 0, r * 0.7], r * 1.16, P.team, r * 1.05, { segs: 8 })); m.decal(0.04, () => { for (const s of [1, -1]) m.box([r * 0.95, s * r * 0.38, 0], [r * 0.2, r * 0.3, r * 0.3], t >= 4 ? P.gloryInk : P.ghost); }); rank(m, p, r * 1.9); });
     m.at(h.aim("R", [1, 0, 0]), () => {
       const top = 0.5 + 0.02 * t;
       staff(m, 0.36, top, t >= 3 ? P.gold : P.black);
@@ -421,7 +421,7 @@ function jester(m: Model, p: Pose, fake: boolean) {
   if (fake) m.cylinder([0, 0, 0], [0, 0, 0.3], 0.03, P.woodDk, 0.03, { segs: 4 });
   else cape(m, h, p, P.teamDk, 0.4, 0.2);
   m.at(h.head, () => {
-    for (const s of [1, -1]) { m.cone([0, s * r * 0.4, r * 0.5], [-r * 0.2, s * r * 1.6, r * 1.5], r * 0.6, s > 0 ? cloth : alt, { segs: 5 }); m.box([-r * 0.2, s * r * 1.65, r * 1.55], [r * 0.34, r * 0.34, r * 0.34], fake ? P.woodDk : trim(Math.max(3, t))); }
+    for (const s of [1, -1]) { m.cone([0, s * r * 0.4, r * 0.5], [-r * 0.2, s * r * 1.6, r * 1.5], r * 0.6, cloth, { segs: 5 }); m.box([-r * 0.2, s * r * 1.65, r * 1.55], [r * 0.34, r * 0.34, r * 0.34], fake ? P.woodDk : trim(Math.max(3, t))); }
     m.decal(0.02, () => m.cylinder([0, 0, r * 0.3], [0, 0, r * 0.55], r * 1.05, alt, r * 1.0, { segs: 8 }));
     if (fake) m.decal(0.04, () => { for (const s of [1, -1]) { m.box([r * 0.97, s * r * 0.38, r * 0.05], [r * 0.1, r * 0.3, r * 0.1], P.black); m.box([r * 0.97, s * r * 0.38, r * 0.05], [r * 0.1, r * 0.1, r * 0.3], P.black); } });
     rank(m, p, r * 1.5);

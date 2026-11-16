@@ -157,7 +157,7 @@ export const ARENAS: ArenaArt = {
     }),
     world({
       name: "Frost Field", obstacle: "snow", edge: "#80bfff",
-      field: ["#ffffff", "#bfffff", "#80bfff"], out: ["#ffffff", "#bfffff", "#80bfff"], road: ["#bfbfff", "#8080bf"],
+      field: ["#bfffff", "#80bfff", "#ffffff"], out: ["#ffffff", "#bfffff", "#80bfff"], road: ["#bfbfff", "#8080bf"],
       strip: ["#80ffff", "#40bfff", "#4040bf"], plaza: ["#bfbfff", "#8080bf", "#404080"], pool: ["#80ffff", "#ffffff"],
       side: [(m) => pine(m, 1, S.pine, S.snow), (m) => pine(m, 1.1, S.pine, S.snow), (m) => snowman(m, 0.8)], far: [(m) => pine(m, 1.5, S.pine, S.snow), (m) => hut(m, 1.2, S.snow, S.trunkLt), (m) => pine(m, 1.3, S.pine, S.snow), (m) => tower(m, 0.9, S.stone, S.stoneDk, S.snow), (m) => pine(m, 1.4, S.pine, S.snow), (m) => snowman(m, 1.2)],
       scatter: [(m) => pine(m, 1.2, S.pine, S.snow), (m) => rock(m, 0.8, S.snow, S.snowDk), (m) => snowman(m)],

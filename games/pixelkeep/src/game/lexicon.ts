@@ -181,7 +181,7 @@ export const LEXICON: Record<string, string> = {
   "The Saltwind Coast": "Sandy Shore",
   "Crownfall Citadel": "Dark Keep",
   // ---- levels
-  "First Muster": "Press Start",
+  "First Muster": "Boot Up",
   "Tripwire": "Tutorial",
   "Arrow Rain": "Arrow Rain",
   "Fence Line": "Tall Grass",

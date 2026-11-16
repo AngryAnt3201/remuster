@@ -18,8 +18,10 @@ Reference points, in our own words:
 | player | **P1**, the Blue Kingdom | light sky blue `#40a0ff` (dark `#0040c0`, light `#c0ffff`) | tunics, shields, wings, flags, keep roofs, health bars, deploy zone |
 | rival | **CPU**, the Red Horde | dark cartridge red `#e02020` (dark `#800000`, light `#ffc080`) | the same surfaces |
 
-Light and cool against dark and warm: they separate in lightness as well as hue. Team colour sits on the biggest
-surface of every body (tunic, shield, wings, robe); skin, steel, wood and bone are shared.
+Light and cool against dark and warm: they separate in lightness as well as hue. The camera looks down from behind
+the player's army, so team colour sits where that view sees it: on the hat, hood, helmet crest or cape of every
+body (and on shields, wings, robes and flags); skin, steel, wood and bone are shared. Neutral scenery and Arena
+buildings never use team red or team blue.
 
 ## Palette and type
 
