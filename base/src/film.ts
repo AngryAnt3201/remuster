@@ -82,7 +82,7 @@ export function sceneConfig(s: Scene): MatchConfig {
   };
 }
 
-declare global { interface Window { __film?: { scene: string; ready: boolean; marks: { name: string; t: number }[]; sfx: { name: string; gain: number; t: number }[] } } }
+declare global { interface Window { __film?: { scene: string; ready: boolean; marks: { name: string; t: number }[]; sfx: { name: string; gain: number; t: number }[]; render?: (log: { name: string; gain: number; t: number }[], seconds: number) => Promise<Float32Array[]> } } }
 
 /** Shared with the recorder: what scene is playing, whether it has started, named moments and every sound played
  *  (with times on the page clock), so the edit can cut on a moment and lay the game's own sound under the picture. */

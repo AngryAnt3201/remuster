@@ -60,7 +60,7 @@ import { showEnding } from "./ui/ending";
 // [game] what a game overlay can replace without touching anything else: its words, its skin, its sounds and music
 import { installLexicon } from "./game/text";
 import { musicOn, playMusic, resumeMusic, setMusic } from "./audio/music";
-import { audioContext } from "./audio/sfx";
+import { audioContext, renderSfx } from "./audio/sfx";
 import "./game/theme.css"; // last, so the game's skin wins over every base stylesheet
 
 const app = document.getElementById("app")!;
@@ -817,10 +817,11 @@ async function playFilm(name: string, speed: number) {
   save((s) => { s.settings.speed = speed || scene.speed || 1; });
   clear();
   game = new GameScreen(app, {
-    cfg: sceneConfig(scene), you: { ...DEFAULT_AI, difficulty: 0 }, mode: "watch", title: scene.title, arena: scene.arena,
+    cfg: sceneConfig(scene), you: { ...DEFAULT_AI, difficulty: 0 }, mode: "watch", scripted: true, title: scene.title, arena: scene.arena,
     marks: scene.terrain ? arenaById(scene.terrain)?.marks : undefined,
     onEnd: () => { filmMark("end"); }, onQuit: title,
   });
+  st.render = renderSfx; // the recorder rebuilds the scene's sound offline with this game's synth
   st.ready = true;
   filmMark("start");
 }

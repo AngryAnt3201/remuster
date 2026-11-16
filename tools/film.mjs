@@ -163,8 +163,7 @@ if (isFilm) {
   info.sounds = film.sfx.length;
   if (process.argv.includes("--debug")) info.sfx = film.sfx;
   const pcm = await page.evaluate(async ({ log, seconds }) => {
-    const mod = await import("/base/src/audio/sfx.ts");
-    const [l, r] = await mod.renderSfx(log, seconds);
+    const [l, r] = await window.__film.render(log, seconds); // the game's own synth (set by playFilm)
     const out = new Int16Array(l.length * 2);
     for (let i = 0; i < l.length; i++) { out[2 * i] = Math.max(-1, Math.min(1, l[i])) * 32767; out[2 * i + 1] = Math.max(-1, Math.min(1, r[i])) * 32767; }
     let bin = ""; const u8 = new Uint8Array(out.buffer);

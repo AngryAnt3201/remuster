@@ -62,6 +62,8 @@ export interface GameOpts {
   arena?: number;
   /** [arena] Decoration for an Arena battlefield (gates, bridges); the blocks themselves are cfg.terrain. */
   marks?: import("@engine/core/arena").ArenaMark[];
+  /** [film] Both armies are already on the board as authored: nobody plans, the battle just starts. */
+  scripted?: boolean;
   /** Line under the opening banner (default "vs <rival>"). */
   intro?: string;
   /** First-time coaching: drag a card down, then Fight. */
@@ -380,7 +382,7 @@ export class GameScreen {
       this.planning = true;
       this.plans.push(planTurnAsync(m, 1, this.o.foe, { tick }).then((p) => { if (!this.destroyed) applyPlan(m, 1, p); }));
     }
-    if (this.o.you) this.plans.push(planTurnAsync(m, 0, this.o.you, { tick }).then((p) => { if (!this.destroyed) applyPlan(m, 0, p); }));
+    if (this.o.you && !this.o.scripted) this.plans.push(planTurnAsync(m, 0, this.o.you, { tick }).then((p) => { if (!this.destroyed) applyPlan(m, 0, p); }));
     void Promise.all(this.plans).then(() => {
       this.planning = false;
       if (this.destroyed) return;
