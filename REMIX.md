@@ -179,11 +179,22 @@ with `el()` (`base/src/ui/dom.ts`); keep the same exported functions and callbac
 notice.
 
 **Fonts.** Bundled fonts go in `games/<id>/public/fonts/` with an `@font-face` in `theme.css`. Only ship fonts whose
-licence allows redistribution (SIL OFL, Apache); otherwise use system stacks. Text drawn on the battle canvas uses
-`--display`.
+licence allows redistribution (SIL OFL, Apache); otherwise use system stacks. Text drawn on the battle canvas (damage
+numbers, callouts, health bars) is drawn by `base/src/render/juicedraw.ts` with its own font; shadow that file to
+change it. The base kit sets type with the `font` shorthand, which resets `font-size-adjust`; set sizes explicitly
+if your face is much wider or narrower.
 
 **Images in CSS.** The home stage and title use `/ui/title-key.webp`; the bake writes your key art there. Anything
 else you reference goes in `games/<id>/public/ui/`.
+
+Many base panels are painted with a gradient and no plain colour underneath (`.ar-detail`, `.ar-tile`, `.ch-slot`,
+`.pt-cell`, map nodes...). If your skin removes gradients, give those a `background-color` or they turn transparent.
+
+The canvas itself is yours too: a game that needs a different resolution or no smoothing (pixel art) subclasses
+`BoardView` in a shadowed `src/render/board.ts`; `games/pixelkeep` does.
+
+The check's play-through does not open everything. Also look at: an Army card's detail sheet, a unit popover and
+the pause menu in a battle, both result screens, the pass, an opening chest.
 
 Look at every screen at 390 x 844: `node tools/shot.mjs "/?tab=army" out.png` (also `/`, `/?tab=shop`, `/?tab=modes`,
 `/?tab=pass`, `/?campaign`, `/?arena`, `/?level=3`, `/?daily`, `/?gauntlet`, `/?puzzles`, `/?lab`, `/?chests=open`,
