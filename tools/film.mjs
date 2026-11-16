@@ -64,7 +64,7 @@ const shim = (seed) => {
   function stepAnimations(dt) {
     for (const a of document.getAnimations()) {
       try {
-        if (!anims.has(a)) { anims.add(a); a.pause(); a.currentTime = a.currentTime ?? 0; }
+        if (!anims.has(a)) { anims.add(a); a.pause(); a.currentTime = 0; } // whatever real time it ran for is discarded
         const end = a.effect?.getComputedTiming().endTime ?? Infinity;
         const t = Number(a.currentTime ?? 0) + dt;
         if (t >= end && Number.isFinite(end)) a.finish(); else a.currentTime = t;
@@ -74,7 +74,7 @@ const shim = (seed) => {
   const flush = async () => { for (let i = 0; i < 4; i++) await Promise.resolve(); };
 
   window.__clock = {
-    now: () => now, inflight: () => inflight, loads: () => loads,
+    now: () => now, inflight: () => inflight, loads: () => loads, sync: () => stepAnimations(0), reseed: (v) => { s = v >>> 0; },
     /** Advance `dt` ms: run every timer that falls due (in order, letting promises settle between them), then one
      *  animation frame. dt = 0 redraws the current moment (used after late-arriving art). */
     async step(dt) {
@@ -92,7 +92,7 @@ const shim = (seed) => {
       const cbs = rafs; rafs = [];
       for (const c of cbs) { try { c.fn(now); } catch (e) { console.error(e); } }
       await flush();
-      if (dt > 0) stepAnimations(dt);
+      stepAnimations(dt);
     },
   };
 };
@@ -116,19 +116,24 @@ const settle = async (maxMs = 15000) => { // real time: wait for the network the
 };
 const step = (dt) => page.evaluate((d) => window.__clock.step(d), dt);
 
-// Boot: let the app start (its boot waits on fonts, sprites and timers) until the scene says it is ready.
+// Boot with the clock frozen: the app loads in real time (fonts, sprites, the scene's art) while virtual time stays
+// at zero, so however long the network takes, the scene's first moment is always t = 0 and every run is the same.
 const isFilm = url.includes("film=");
-for (let i = 0; i < 600; i++) {
-  await settle(); await step(1000 / fps);
-  const ready = await page.evaluate((film) => (film ? !!window.__film?.ready : !!document.querySelector("#app > *")), isFilm);
-  if (ready && i > 5) break;
-}
+const ready = () => page.evaluate((film) => (film ? !!window.__film?.ready : !!document.querySelector("#app > *")), isFilm);
+let up = false;
+for (let i = 0; i < 400 && !up; i++) { await settle(); await step(0); up = await ready(); }
+// (a screen that only appears after a timer: let time run, as a fallback)
+for (let i = 0; i < 300 && !up; i++) { await settle(); await step(1000 / fps); up = await ready(); }
+if (!up) { console.error(`the page never became ready: ${url}`); errors.push("not ready"); }
 await page.evaluate(() => document.fonts.ready);
-await settle();
-// Warm every sheet the scene will need, then start the count from here.
-for (let i = 0; i < 12; i++) { await step(0); await settle(); }
+// Draw the opening moment until nothing new is being fetched (each redraw asks for the sheets it is missing).
+for (let quiet = 0, i = 0; quiet < 3 && i < 200; i++) {
+  const before = await page.evaluate(() => window.__clock.loads());
+  await step(0); await settle();
+  quiet = (await page.evaluate(() => window.__clock.loads())) === before ? quiet + 1 : 0;
+}
 const t0 = await page.evaluate(() => window.__clock.now());
-if (isFilm) await page.evaluate(() => { window.__film.sfx.length = 0; });
+await page.evaluate(() => { window.__clock.reseed(20261116); if (window.__film) window.__film.sfx.length = 0; });
 
 const total = Math.round(seconds * fps);
 const mp4 = join(outDir, `${name}.mp4`);
@@ -142,6 +147,7 @@ for (let f = 0; f < total; f++) {
   await settle();
   // art that arrived during this frame: draw the same moment again with it in place
   if (await page.evaluate(() => window.__clock.loads()) !== before) { await step(0); await settle(); }
+  await page.evaluate(() => window.__clock.sync()); // animations born while waiting on the network start from this frame
   const jpg = await page.screenshot({ type: "jpeg", quality: 95 });
   if (!ff.stdin.write(jpg)) await new Promise((r) => ff.stdin.once("drain", r));
   if (f % 60 === 0) process.stdout.write(`\r${game}/${name}: frame ${f}/${total}`);
@@ -155,6 +161,7 @@ if (isFilm) {
   const film = await page.evaluate((base) => ({ marks: window.__film.marks.map((m) => ({ name: m.name, t: (m.t - base) / 1000 })), sfx: window.__film.sfx.map((e) => ({ ...e, t: e.t - base })) }), t0);
   info.marks = film.marks;
   info.sounds = film.sfx.length;
+  if (process.argv.includes("--debug")) info.sfx = film.sfx;
   const pcm = await page.evaluate(async ({ log, seconds }) => {
     const mod = await import("/base/src/audio/sfx.ts");
     const [l, r] = await mod.renderSfx(log, seconds);
