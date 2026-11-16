@@ -35,7 +35,8 @@
     "infra:deploy": "node infra/deploy.mjs",
     "publish": "node tools/publish.mjs",
     "music": "python3 tools/music/render.py game",
-    "music:video": "python3 tools/music/render.py video"
+    "music:video": "python3 tools/music/render.py video",
+    "check": "node tools/check-game.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

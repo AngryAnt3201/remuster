@@ -1,6 +1,6 @@
 // Start a new game: `npm run new -- <id> ["Display Name"]`
-// Creates games/<id>/ as an overlay on the base game (see REMIX.md): a game.json and copies of the four files a
-// re-theme always touches (its words, skin, sounds and soundtrack table), ready to edit. Everything else falls
+// Creates games/<id>/ as an overlay on the base game (see REMIX.md): a game.json and copies of the five files a
+// re-theme always touches (its words, skin, sounds, soundtrack table and Arena buildings), ready to edit. Everything else falls
 // through to the base game until the new game shadows it.
 import { cpSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -19,7 +19,7 @@ const display = name || id.replace(/(^|-)([a-z])/g, (_, a, b) => (a ? " " : "") 
 mkdirSync(join(dir, "src/game"), { recursive: true });
 mkdirSync(join(dir, "public"), { recursive: true });
 writeFileSync(join(dir, "game.json"), JSON.stringify({ id, name: display, tagline: "", themeColor: "#0b0f17" }, null, 2) + "\n");
-for (const f of ["lexicon.ts", "theme.css", "sounds.ts", "music.ts"]) cpSync(join(root, "base/src/game", f), join(dir, "src/game", f));
+for (const f of ["lexicon.ts", "theme.css", "sounds.ts", "music.ts", "terrain.ts"]) cpSync(join(root, "base/src/game", f), join(dir, "src/game", f));
 writeFileSync(join(dir, "public/.gitkeep"), "");
 
 console.log(`Created games/${id} ("${display}").
