@@ -557,4 +557,16 @@ export const LEXICON: Record<string, string> = {
   "the Many": "the Stampede",
   "Free chest": "Free strongbox",
   "Crown chest": "Sheriff's safe",
+  // battle callouts
+  "SWOOP": "STOOP",
+  "RIPTIDE": "GULLY WASHER",
+  "WAVE": "FLASH FLOOD",
+  "RALLY": "REVEILLE",
+  "RIPOSTE": "QUICK DRAW",
+  "PARRY": "DODGED",
+  "IMPALED": "SKEWERED",
+  "SEIZED": "LASSOED",
+  "HOOKED": "ROPED",
+  "BEACON": "SIGNAL LAMP",
+  "REVIVED": "BACK UP",
 };
