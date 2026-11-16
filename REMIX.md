@@ -73,20 +73,26 @@ abilities, acts, levels, rivals, modes, chests, boons, quests, arenas...). Renam
 
 ```ts
 export const LEXICON: Record<string, string> = {
-  "Ranger": "Deadeye", "Rangers": "Deadeyes",
+  "Ranger": "Deadeye",
+  "Rangers": "Deadeyes",
   "Volley": "Fan the Hammer",
   "The Borderlands": "Dry Gulch",
-  "Gems": "Silver", "gems": "silver",
+  "Gems": "Silver",
+  "gems": "silver",
   "War Pass": "Bounty Board",
 };
 ```
 
-It applies to every piece of text on screen and on the battle canvas. Matching is case-sensitive, whole words,
+One pair per line (the text dump reads them that way). It applies to every piece of text on screen and on the battle
+canvas, including the callouts shouted over a fight ("WAVE", "HOOKED": the "battle callouts" section). Matching is case-sensitive, whole words,
 longest phrase first. Re-run `npm run text` to see what is left (renamed phrases show their new value).
 
 - All units, abilities and acts must be renamed. Levels, rivals and the interface words mostly so.
 - Keep names short: a unit name sits under a 76 px card. Check the Army screen and the shop row for clipping.
 - Ability *descriptions* contain numbers and rules; rename the nouns in them, never the meaning.
+- The dump lists what the engine exports. A few generated phrases (rival titles and epithets in `engine/core/daily.ts`,
+  `gauntlet.ts` and `arena.ts`; interface lines like "Win a battle", "Free chest") are not in it: play the game and
+  add what you still see in the base game's voice.
 - Don't reuse names of characters, places or products from existing games, films or books.
 
 ## 3. Art
@@ -113,7 +119,12 @@ Order of work, looking at the preview after each:
    **effects**, **map pages**, **home key art**, **Bastion** backdrops, **portraits**.
 4. In the running game: a battle in three different acts, the Army screen, the map, the home screen.
 
-Budget: keep `games/<id>/public` under about 45 MB (`atlas.ppu` and `atlas.colors` in `art/index.ts` are the knobs).
+Budget: keep `games/<id>/public` under about 45 MB (`atlas.ppu` and `atlas.colors` in `art/index.ts` are the knobs;
+104 ppu with 48 colours lands near 43 MB).
+
+Two things that bite: upright faces fall in the darkest shade band, so team paint on shields, doors and banners
+bakes almost black unless the material sets `shade: 0.3`; and tall parts at the back of a keep can be clipped by
+its canvas, so check the keeps sheet.
 
 ### Arena buildings
 
@@ -135,6 +146,15 @@ with `html[data-game="<id>"]` if you want to be safe against specificity ties.
 `--font` (text), `--display` (headings and numbers); `--gold` `--gold-d`; `--gloss`; card frame metals `--t1`..`--t4`;
 role families `--fam-*`. Setting these alone is a recolour, which is where you start, not where you stop.
 
+**Team colours are not CSS.** `--tide*` and `--ember*` are written onto `<html>` at boot from
+`base/src/render/style.ts`, which also colours the battle canvas (health bars, zones, glows). To change the two
+sides' colours, shadow that file (`games/<id>/src/render/style.ts`) and keep them equal to your art's team colours.
+
+**Drawn icons are code, not CSS.** The currency icons (`ui/currency.ts`), chest art (`ui/chests.ts`), tab icons
+(`ui/tabs.ts`) and the glyph set (`ui/kit.ts`) are small SVGs built in those files. Shadow the file to redraw them.
+
+A shadow file added while the dev server is running is not picked up until you restart it.
+
 **Parts** (restyle the part and every screen follows):
 
 | part | classes |
@@ -144,7 +164,7 @@ role families `--fam-*`. Setting these alone is a recolour, which is where you s
 | battle HUD | `.hud-top` `.hud-bottom` `.hpbar` `.round` `.shop` `.card` (`.card-art` `.card-cost` `.card-name` `.card-role`) `.reroll` `.cmdr` |
 | results | `.results` `.result-stats` `.result-stars` `.result-crest` `.objectives` |
 | home and tabs | `.hm-stage` `.hm-life` `.hm-top` `.hm-battle` `.hm-go` `.hm-cards` `.hm-card` `.tb-bar` `.tb-tab` `.tb-badge` |
-| campaign map | `.map` `.map-view` `.map-trail` `.node` `.act` `.act-gate` |
+| campaign map | `.map` `.map-view` `.map-trail` `.map .node-face` `.node-name` `.node-boss` `.act` `.act-gate` |
 | Army | `.ar-grid` `.ar-tile` `.ar-detail` `.ar-deck` `.ar-slot` `.ar-cmd` `.r-common` `.r-rare` `.r-epic` `.r-legendary` |
 | Arena | `.arena-screen` `.ar-ladder` `.ar-league` `.ar-badge` `.ar-bar` `.ar-next-match` `.ar-arena` |
 | chests, shop, pass | `.ch-*` `.shop-*` `.starter-*` `.pass-*` `.pt-*` `.pq-*` `.of-*` |
@@ -167,7 +187,8 @@ else you reference goes in `games/<id>/public/ui/`.
 
 Look at every screen at 390 x 844: `node tools/shot.mjs "/?tab=army" out.png` (also `/`, `/?tab=shop`, `/?tab=modes`,
 `/?tab=pass`, `/?campaign`, `/?arena`, `/?level=3`, `/?daily`, `/?gauntlet`, `/?puzzles`, `/?lab`, `/?chests=open`,
-`/?settings`; set `PORT` to your dev server's). Text must not clip, nothing may sit under the notch or home bar
+`/?settings`, `/?gemdemo=reward` (a won result), `/?gemdemo=rally` (a lost one), `/?td`; add `demo` to any of them
+(`/?demo&tab=army`) for a mid-game save instead of an empty one; set `PORT` to your dev server's). Text must not clip, nothing may sit under the notch or home bar
 (`?safe=59,34` fakes them), and tap targets stay at least 44 px.
 
 ## 5. Sound

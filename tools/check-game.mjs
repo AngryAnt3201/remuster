@@ -51,7 +51,7 @@ if (!shotsOnly) {
   let words = { ok: false, note: "text dump failed: " + (td.stderr || td.stdout).split("\n")[0] };
   try {
     const todo = JSON.parse(read(join(dir, "lexicon.todo.json")));
-    const cover = (sec) => { const e = Object.values(todo[sec] ?? {}); return e.length ? e.filter((v) => v !== "").length / e.length : 1; };
+    const cover = (sec) => { const e = Object.entries(todo[sec] ?? {}); return e.length ? e.filter(([k, v]) => v !== "" && v !== k).length / e.length : 1; }; // a phrase mapped to itself is not renamed
     const need = [["units", 1], ["abilities", 0.9], ["acts", 1], ["ui", 0.5], ["levels", 0.5]];
     const short = need.filter(([s, min]) => cover(s) < min).map(([s, min]) => `${s} ${Math.round(cover(s) * 100)}% (need ${Math.round(min * 100)}%)`);
     const all = Object.values(todo).flatMap((s) => Object.values(s));
