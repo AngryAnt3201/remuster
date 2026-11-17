@@ -14,6 +14,7 @@ import type { Fx } from "./fx";
 import { drawFaces, groundPoly, slice, type Face, type KitLook, type P3, type Piece } from "./kit3d";
 import { HEIGHT, buildBlock, buildMark, seeded } from "./props";
 import { TERRAIN } from "../game/terrain";
+import { texture } from "./textures";
 
 type Ctx = CanvasRenderingContext2D;
 interface Env { sound?: (n: string, g?: number) => void; kick?: (k: number) => void; }
@@ -32,7 +33,15 @@ function matOf(b: Block): string {
 /** The kit's shading set-up from the game's style. */
 export function kitLook(): KitLook {
   const l = TERRAIN.light, n = Math.hypot(l[0], l[1], l[2]) || 1;
-  return { ink: TERRAIN.ink, inkW: TERRAIN.inkW, light: [l[0] / n, l[1] / n, l[2] / n], dark: TERRAIN.dark, tint: TERRAIN.tint, bands: TERRAIN.bands };
+  let tex: Map<string, HTMLCanvasElement> | undefined;
+  if (TERRAIN.tex && typeof document !== "undefined") {
+    tex = new Map();
+    for (const [m, t] of Object.entries(TERRAIN.tex)) if (t) tex.set(TERRAIN.mat[m as keyof typeof TERRAIN.mat], texture(t));
+    // per-look wall colours carry their material's texture too: walls are stone, houses plaster
+    for (const [look, o] of Object.entries(TERRAIN.looks ?? {})) if (o.wall && !tex.has(o.wall)) { const t = TERRAIN.tex[look === "wall" || look === "tower" || look === "gatehouse" ? "stone" : "plaster"]; if (t) tex.set(o.wall, texture(t)); }
+    for (const [, o] of Object.entries(TERRAIN.looks ?? {})) if (o.roofC && !tex.has(o.roofC) && TERRAIN.tex.roof) tex.set(o.roofC, texture(TERRAIN.tex.roof));
+  }
+  return { ink: TERRAIN.ink, inkW: TERRAIN.inkW, light: [l[0] / n, l[1] / n, l[2] / n], dark: TERRAIN.dark, tint: TERRAIN.tint, bands: TERRAIN.bands, tex, texK: TERRAIN.texK, texSize: TERRAIN.texSize, ao: TERRAIN.ao };
 }
 interface Standing { id: number; block?: Block; pieces: Piece[]; anim?: (t: number) => Face[]; ax: number; ay: number; h: number; }
 interface Tuft { x: number; y: number; h: number; ph: number; kind: number; }

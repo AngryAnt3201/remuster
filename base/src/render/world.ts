@@ -164,6 +164,7 @@ export class World {
     const sky = g.createLinearGradient(0, 0, 0, cssH);
     sky.addColorStop(0, S.sky[0]); sky.addColorStop(1, S.sky[1]);
     g.fillStyle = sky; g.fillRect(0, 0, cssW, cssH);
+    this.heavens(g, cssW, cssH);
     // a glow behind the globe, then its underside as stacked rings, darkening downward
     const rimZ = 0, top = this.loop(cam, RAD, rimZ);
     const c = cam.project(W / 2, H / 2, -RAD * 0.6);
@@ -189,6 +190,24 @@ export class World {
     g.beginPath(); top.forEach((p, k) => (k ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath();
     g.strokeStyle = S.halo; g.lineWidth = 2; g.stroke();
   }
+  /** What hangs in the sky (the game's skyKind). Fixed to the screen: the globe turns under it. */
+  private heavens(g: G, w: number, h: number) {
+    const kind = TERRAIN.skyKind ?? "clear", r = seeded(77);
+    if (kind === "stars") { g.fillStyle = "#fff"; for (let i = 0; i < 90; i++) { g.globalAlpha = 0.25 + r() * 0.7; const s = r() > 0.9 ? 2 : 1; g.fillRect(r() * w, r() * h * 0.8, s, s); } g.globalAlpha = 1; }
+    else if (kind === "sun") {
+      const x = w * 0.72, y = h * 0.16, gr = g.createRadialGradient(x, y, 4, x, y, w * 0.6);
+      gr.addColorStop(0, "rgba(255,250,225,0.95)"); gr.addColorStop(0.07, "rgba(255,240,200,0.55)"); gr.addColorStop(1, "rgba(255,240,200,0)");
+      g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    } else if (kind === "smoke" || kind === "hell") {
+      for (let i = 0; i < 16; i++) {
+        const x = r() * w, y = r() * h * 0.7, rad = w * (0.18 + r() * 0.3), gr = g.createRadialGradient(x, y, 0, x, y, rad);
+        const c = kind === "hell" ? (i % 3 ? "20,0,0" : "255,90,20") : (i % 4 ? "20,20,22" : "150,140,130");
+        gr.addColorStop(0, `rgba(${c},${kind === "hell" && i % 3 === 0 ? 0.3 : 0.38})`); gr.addColorStop(1, `rgba(${c},0)`);
+        g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      }
+    }
+  }
+
   /** A circle about the globe's axis at radius r, dropped z below the rim, on screen. */
   private loop(cam: Camera, r: number, z: number): [number, number][] {
     const out: [number, number][] = [], zr = -cam.bend * RAD * RAD + cam.bend * r * r; // the camera bends by r; hold the rim's height

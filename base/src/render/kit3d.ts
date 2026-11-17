@@ -38,6 +38,12 @@ export interface KitLook {
   tint?: string;
   /** Bands of shading (0 = smooth). */
   bands: number;
+  /** Surface textures by base colour: a grey tile multiplied over the shaded face (textures.ts). */
+  tex?: Map<string, HTMLCanvasElement>;
+  /** Texture strength (0..1) and the world units one tile covers. */
+  texK?: number; texSize?: number;
+  /** 0..1: upright faces darken toward the ground. */
+  ao?: number;
 }
 
 const sub = (a: P3, b: P3): P3 => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
@@ -201,6 +207,8 @@ export function drawFaces(ctx: CanvasRenderingContext2D, cam: Camera, faces: rea
     ctx.fill();
     // close hairline gaps between neighbours
     ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 0.6; ctx.stroke();
+    const tile = !f.flat && look.tex ? look.tex.get(f.c) : undefined;
+    if ((tile || (look.ao && f.n[2] < 0.5)) && !f.flat) surface(ctx, cam, f, look, tile, A * (f.alpha ?? 1));
     if (look.inkW > 0 && f.ink !== false && !o.noInk) {
       ctx.strokeStyle = look.ink; ctx.lineWidth = Math.max(0.8, (s / n) * look.inkW);
       if (!f.ink) ctx.stroke();
@@ -212,6 +220,46 @@ export function drawFaces(ctx: CanvasRenderingContext2D, cam: Camera, faces: rea
     }
   }
   ctx.globalAlpha = 1;
+}
+
+const patterns = new WeakMap<HTMLCanvasElement, CanvasPattern>();
+/** Texture and ground-shade a face that has just been pathed and filled. The texture is laid in the face's own
+ *  plane (so it runs on across neighbouring faces of a wall) and mapped to the screen by the face's tangent frame,
+ *  which is exact for a face this small at this distance. */
+function surface(ctx: CanvasRenderingContext2D, cam: Camera, f: Face, look: KitLook, tile: HTMLCanvasElement | undefined, alpha: number) {
+  const n = f.n, flatTop = Math.abs(n[2]) > 0.9;
+  ctx.save();
+  ctx.clip();
+  if (tile) {
+    // u runs level along the face, v up it
+    let u: P3 = flatTop ? [1, 0, 0] : [-n[1], n[0], 0];
+    const ul = Math.hypot(u[0], u[1], u[2]) || 1; u = [u[0] / ul, u[1] / ul, u[2] / ul];
+    const v: P3 = flatTop ? [0, 1, 0] : [n[1] * u[2] - n[2] * u[1], n[2] * u[0] - n[0] * u[2], n[0] * u[1] - n[1] * u[0]];
+    const c = centroid(f.p), size = look.texSize ?? 1, k = tile.width / size;
+    const s0 = dot(c, u), t0 = dot(c, v);
+    const o = cam.project(c[0], c[1], c[2]), pu = cam.project(c[0] + u[0], c[1] + u[1], c[2] + u[2]), pv = cam.project(c[0] + v[0], c[1] + v[1], c[2] + v[2]);
+    // texture pixel (s k, -t k) -> screen
+    const ax = (pu.x - o.x) / k, ay = (pu.y - o.y) / k, bx = -(pv.x - o.x) / k, by = -(pv.y - o.y) / k;
+    ctx.transform(ax, ay, bx, by, o.x - ax * s0 * k + bx * t0 * k, o.y - ay * s0 * k + by * t0 * k);
+    let pat = patterns.get(tile);
+    if (!pat) { pat = ctx.createPattern(tile, "repeat")!; patterns.set(tile, pat); }
+    ctx.globalCompositeOperation = "multiply"; ctx.globalAlpha = alpha * (look.texK ?? 0.6);
+    ctx.fillStyle = pat;
+    let a0 = Infinity, a1 = -Infinity, b0 = Infinity, b1 = -Infinity;
+    for (const q of f.p) { const s = dot(q, u) * k, t = -dot(q, v) * k; a0 = Math.min(a0, s); a1 = Math.max(a1, s); b0 = Math.min(b0, t); b1 = Math.max(b1, t); }
+    ctx.fillRect(a0 - 1, b0 - 1, a1 - a0 + 2, b1 - b0 + 2);
+  }
+  ctx.restore();
+  if (look.ao && f.n[2] < 0.5) {
+    let lo: P3 = f.p[0], hi: P3 = f.p[0];
+    for (const q of f.p) { if (q[2] < lo[2]) lo = q; if (q[2] > hi[2]) hi = q; }
+    if (hi[2] - lo[2] > 0.05) {
+      const a = cam.project(lo[0], lo[1], lo[2]), b = cam.project(lo[0], lo[1], Math.min(hi[2], lo[2] + 0.9));
+      const g = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
+      g.addColorStop(0, `rgba(0,0,0,${look.ao * 0.55})`); g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.globalAlpha = alpha; ctx.fillStyle = g; ctx.fill();
+    }
+  }
 }
 
 // ------------------------------------------------------------------------------------------------ slicing

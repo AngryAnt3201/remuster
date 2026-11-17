@@ -6,6 +6,8 @@ import { H, UNITS, W, ZONE_DEPTH, bodyDef, toWorld, type BodyKind, type Obstacle
 import { arenaFor, propRect, propVariant, type Arena } from "./arena";
 import { TerrainLayer, kitLook } from "./terrain";
 import { World } from "./world";
+import { applyPost } from "./post";
+import { TERRAIN } from "../game/terrain";
 import type { Block } from "@engine/core/terrain";
 import type { ArenaMark } from "@engine/core/arena";
 import { BEND, Camera, DIST, TILT, sortDrawables, type Drawable, type Rect, type ScreenPt } from "./camera";
@@ -165,7 +167,8 @@ export class BoardView {
   get s() { return this.cam.scaleAt(H / 2); }
 
   layout(cssW: number, cssH: number, area: Rect) {
-    this.dpr = Math.min(3, window.devicePixelRatio || 1);
+    this.dpr = TERRAIN.post?.lowres ? 1 / TERRAIN.post.lowres : Math.min(3, window.devicePixelRatio || 1);
+    if (TERRAIN.post?.lowres) this.canvas.style.imageRendering = "pixelated";
     this.cssW = cssW; this.cssH = cssH;
     this.canvas.width = Math.round(cssW * this.dpr);
     this.canvas.height = Math.round(cssH * this.dpr);
@@ -642,6 +645,8 @@ export class BoardView {
       ctx.fillRect(this.area.x, this.area.y, this.area.w, this.area.h);
       ctx.restore();
     }
+    // the game's lens over the finished picture (post.ts): grade, grain, bloom, fog, scanlines, palette
+    applyPost(ctx, TERRAIN.post, this.time, this.area, this.dpr);
     // JUICE: the board half of the round-end banner, steady (outside the shake).
     if (this.juice.banner && scene.mode === "battle") {
       ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);

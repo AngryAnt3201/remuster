@@ -9,6 +9,9 @@ export type Roof = "gable" | "hip" | "flat" | "dome" | "pagoda" | "barrel";
 export type Tree = "round" | "pine" | "palm" | "cactus" | "dead" | "pylon" | "blossom" | "bamboo";
 export type Lamp = "post" | "brazier" | "neon" | "lantern";
 
+/** Surface textures a material can carry (drawn in code, multiplied over the face's shaded colour). */
+export type Texture = "brick" | "block" | "plank" | "plate" | "stucco" | "concrete" | "tech" | "flesh" | "tile" | "camo";
+
 export interface Materials {
   /** Masonry: walls, towers, wells, plinths. */
   stone: string; stoneDark: string;
@@ -56,6 +59,15 @@ export interface WorldStyle {
   sky: [string, string]; soil: [string, string]; halo: string;
   /** Scenery standing around the battlefield, per 100 square units of ground. */
   scenery: { trees: number; rocks: number; houses: number; lamps: number };
+  /** Surfaces: a texture per material (absent = flat colour), how strong it is (0..1) and how many world units one
+   *  tile of it covers. Textured, unlined, smoothly shaded surfaces read as "real"; flat inked ones as a cartoon. */
+  tex?: Partial<Record<keyof Materials, Texture>>; texK?: number; texSize?: number;
+  /** 0..1: walls darken toward the ground (grounds buildings; realism). */
+  ao?: number;
+  /** What is in the sky: nothing, stars, a low sun, drifting smoke, or a burning sky. */
+  skyKind?: "clear" | "stars" | "sun" | "smoke" | "hell";
+  /** The lens over the whole battle picture (../render/post.ts): grade, grain, bloom, fog, scanlines, palette. */
+  post?: import("../render/post").Post;
 }
 
 export const TERRAIN: WorldStyle = {
