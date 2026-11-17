@@ -82,9 +82,9 @@ export const SCENES: Record<string, Scene> = {
 for (const [name, terrain, arena, title, seed] of [["crossing", "the-crossing", 3, "The Crossing", 33], ["market", "crate-yard", 2, "Market Square", 7]] as const)
   SCENES[name] = { ...SCENES.arena, armies: [SCENES.arena.armies[1], SCENES.arena.armies[0]], arena, terrain, title, seed };
 
-// The rival's side of it (src/replay.ts), for the trailer: a short Arena fight the player wins, ending on the real
-// results sheet with its "See it in <rival>'s game" button; and the same fight as the rival's game shows it, from
-// the rival's end of the field.
+// "See it in their game" (src/replay.ts), for the trailer: a short Arena fight the player wins, ending on the real
+// results sheet with its "See it in <rival>'s game" button. Filmed in two games, the edit wipes between them with
+// the compare slider.
 SCENES.peek = {
   arena: 3, seed: 2, names: ["You", "Captain Varro"], title: "The Crossing", terrain: "the-crossing", sheet: true,
   armies: [
@@ -92,7 +92,6 @@ SCENES.peek = {
     [["ravager", 2.4, 5.2, 2], ["hook", 6.6, 5.0, 2], ["rime", 3.0, 3.0, 2], ["grenadier", 6.0, 2.6, 2]],
   ],
 };
-SCENES.peekview = { ...SCENES.peek, sheet: false };
 
 // `?film=kit`: every look the set builders know, laid out on one board, for checking a game's world style.
 const KIT: [kind: string, look: string, w: number, h: number][] = [
@@ -154,7 +153,6 @@ export function seedDemoSave() {
  *  in, then keeps turning: the zoom rides up as the board turns side-on, so the fight stays large in a tall frame. */
 export function filmCamera(scene: string, t: number): { yaw: number; tilt: number; zoom: number } {
   if (scene === "peek") return { yaw: 0.12 * Math.sin(t * 0.5), tilt: 0.66, zoom: 1 };
-  if (scene === "peekview") return { yaw: Math.PI + 0.12 * Math.sin(t * 0.5), tilt: 0.7, zoom: 1 }; // from the rival's end
   const ease = (x: number) => { const k = Math.max(0, Math.min(1, x)); return k * k * (3 - 2 * k); };
   const dir = scene === "arena" ? -1 : 1, rate = scene === "siege" ? 0.16 : 0.24;
   const yaw = dir * (-0.5 + rate * t + 0.25 * Math.sin(t * 0.37));

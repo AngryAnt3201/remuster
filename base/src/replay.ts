@@ -1,6 +1,6 @@
-// "Their side of it": after an Arena battle a player can look at the same battle in the rival's game. Every game
-// runs the same engine, so the deciding round is handed to the rival's game as a link, and that game fights it again
-// in its own look, seen from the rival's end of the field. Optional (a setting), and only offered when the rival's
+// "See it in their game": after an Arena battle a player can look at the same battle in the rival's game, next to
+// their own, with a slider to wipe between the two. Every game runs the same engine, so the deciding round is handed
+// to both games as a link and each fights it again in its own look, started together. Optional (a setting), and only offered when the rival's
 // game can be reached: a published game from the backend's gallery, or a peer given at build time or in the address.
 //
 //   this game                                        the rival's game (in an overlay, or opened directly)
@@ -88,25 +88,54 @@ export function peerFor(foe: string, list: Peer[]): Peer | null {
   return list[h % list.length];
 }
 
-/** Show the rival's game over this one: a full-screen frame with one Close button. */
-export function openPeek(url: string, caption: string) {
-  const wrap = document.createElement("div");
+/** Show the same round in both games at once: this game underneath, the rival's game on top, and a slider between
+ *  them that the player drags to wipe from one to the other. One Close button. Both replays wait until both have
+ *  loaded and are started together, so the two pictures are the same moment of the same battle. */
+export function openPeek(mine: string, theirs: string, labels: [string, string]) {
+  const css = (e: HTMLElement, t: string) => { e.style.cssText = t; return e; };
+  const wrap = css(document.createElement("div"), "position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;touch-action:none");
   wrap.className = "peek";
-  wrap.style.cssText = "position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column";
-  const bar = document.createElement("div");
-  bar.style.cssText = "display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px;color:#fff;font:600 14px system-ui,sans-serif;background:#111";
-  const label = document.createElement("span");
-  label.textContent = caption; label.style.cssText = "flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
-  const close = document.createElement("button");
+  const bar = css(document.createElement("div"), "display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px;color:#fff;font:600 13px system-ui,sans-serif;background:#111");
+  const l = css(document.createElement("span"), "flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"), r = css(document.createElement("span"), "flex:1;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap");
+  l.textContent = labels[0]; r.textContent = labels[1];
+  const close = css(document.createElement("button"), "font:600 15px system-ui,sans-serif;padding:9px 18px;border:0;border-radius:9px;background:#e5484d;color:#fff");
   close.textContent = "Close"; close.className = "peek-close";
-  close.style.cssText = "font:600 15px system-ui,sans-serif;padding:9px 18px;border:0;border-radius:9px;background:#e5484d;color:#fff";
-  const shut = () => { wrap.remove(); removeEventListener("message", onMsg); };
-  const onMsg = (e: MessageEvent) => { if (e.data === "remuster:peek-close") shut(); };
+  const stage = css(document.createElement("div"), "position:relative;flex:1;overflow:hidden");
+  const frame = (url: string) => { const f = document.createElement("iframe"); f.src = url; f.allow = "autoplay"; css(f, "position:absolute;inset:0;width:100%;height:100%;border:0;background:#000"); return f; };
+  const a = frame(mine), b = frame(theirs);
+  a.title = labels[0]; b.title = labels[1];
+  const handle = css(document.createElement("div"), "position:absolute;top:0;bottom:0;width:44px;margin-left:-22px;cursor:ew-resize;z-index:3;display:flex;align-items:center;justify-content:center");
+  handle.className = "peek-slider";
+  handle.innerHTML = '<div style="position:absolute;top:0;bottom:0;left:20px;width:4px;background:#fff;box-shadow:0 0 8px rgba(0,0,0,.7)"></div><div style="position:relative;width:44px;height:44px;border-radius:22px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font:700 18px system-ui;color:#111">\u2194</div>';
+  let at = 0.5;
+  const place = () => { b.style.clipPath = `inset(0 0 0 ${at * 100}%)`; handle.style.left = `${at * 100}%`; };
+  place();
+  const drag = (e: PointerEvent) => { const q = stage.getBoundingClientRect(); at = Math.max(0.04, Math.min(0.96, (e.clientX - q.left) / q.width)); place(); };
+  // while dragging, the frames must not swallow the pointer
+  const grab = (e: PointerEvent) => { a.style.pointerEvents = b.style.pointerEvents = "none"; handle.setPointerCapture(e.pointerId); drag(e); };
+  const drop = () => { a.style.pointerEvents = b.style.pointerEvents = ""; };
+  handle.addEventListener("pointerdown", grab); handle.addEventListener("pointermove", (e) => { if (handle.hasPointerCapture(e.pointerId)) drag(e); });
+  handle.addEventListener("pointerup", drop); handle.addEventListener("pointercancel", drop);
+  // start both together: each replay says when it is ready and waits to be told to go (or four seconds, whichever first)
+  let ready = 0, gone = false;
+  const go = () => { if (gone) return; gone = true; for (const f of [a, b]) f.contentWindow?.postMessage("remuster:go", "*"); };
+  const timer = setTimeout(go, 4000);
+  const shut = () => { clearTimeout(timer); wrap.remove(); removeEventListener("message", onMsg); };
+  const onMsg = (e: MessageEvent) => { if (e.data === "remuster:peek-close") shut(); else if (e.data === "remuster:ready" && ++ready >= 2) go(); };
   addEventListener("message", onMsg);
   close.onclick = shut;
-  const frame = document.createElement("iframe");
-  frame.src = url; frame.title = caption; frame.allow = "autoplay";
-  frame.style.cssText = "flex:1;border:0;width:100%;background:#000";
-  bar.append(label, close); wrap.append(bar, frame);
+  stage.append(a, b, handle); bar.append(l, close, r); wrap.append(bar, stage);
   document.body.append(wrap);
+}
+/** In a compare frame: tell the page that opened us we are ready, and wait for its word (so both sides start
+ *  together). Outside a frame it resolves at once. */
+export function waitForGo(): Promise<void> {
+  if (typeof parent === "undefined" || parent === window) return Promise.resolve();
+  return new Promise((res) => {
+    const done = () => { removeEventListener("message", on); res(); };
+    const on = (e: MessageEvent) => { if (e.data === "remuster:go") done(); };
+    addEventListener("message", on);
+    setTimeout(done, 6000);
+    try { parent.postMessage("remuster:ready", "*"); } catch { done(); }
+  });
 }

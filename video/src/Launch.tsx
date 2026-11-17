@@ -69,29 +69,38 @@ const ShotView: React.FC<{ s: Shot }> = ({ s }) => {
   );
 };
 
-/** "See it in the rival's game": the player's results sheet, a tap on its button, and the rival's game sliding up
- *  over it under the bar the real overlay has, replaying the same round from the rival's end of the field. */
+/** "See it in their game": the player's results sheet, a tap on its button, and the compare view coming up over it:
+ *  the same round in the player's game and the rival's at once, with the slider wiping from one to the other. */
 const Peek: React.FC = () => {
   const f = useCurrentFrame();
-  const P = PEEK, to = game(P.to);
+  const P = PEEK, to = game(P.to), from = game(P.from);
   const tap = interpolate(f, [P.tapAt, P.tapAt + 16], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   const open = spring({ frame: f - P.openAt, fps: FPS, config: { stiffness: 170, damping: 22, mass: 0.9 } });
   // the capture is 1080 x 2338 and fills the frame by height crop: its rows sit (2338 - 1920) / 2 higher on screen
   const bx = P.button[0], by = P.button[1] - (2338 - H) / 2;
+  // the slider: rest in the middle, out to the left, right across, back to the middle
+  const o = P.openAt, ease = (x: number) => x * x * (3 - 2 * x);
+  const cut = interpolate(f, [o + 30, o + 95, o + 125, o + 215, o + 245, o + 300], [0.5, 0.14, 0.14, 0.86, 0.86, 0.5], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: ease });
+  const BARH = 150, SH = H - BARH;
+  const label: React.CSSProperties = { color: "#fff", fontFamily: "system-ui, sans-serif", fontWeight: 600, fontSize: 36, whiteSpace: "nowrap", flex: 1 };
   return (
     <AbsoluteFill style={{ background: INK }}>
-      <Footage g={P.from} clip="peek" t={P.fromT} />
+      <Footage g={P.from} clip="peek" t={P.sheetT} />
       {f >= P.tapAt && f < P.tapAt + 26 ? (
         <div style={{ position: "absolute", left: bx - 90, top: by - 90, width: 180, height: 180, borderRadius: 90, border: "10px solid #fff", opacity: 1 - tap, transform: `scale(${0.35 + tap * 0.9})`, boxShadow: "0 0 40px rgba(255,255,255,0.8)" }} />
       ) : null}
       {f >= P.openAt ? (
         <AbsoluteFill style={{ transform: `translateY(${(1 - open) * H}px)`, background: "#000" }}>
-          <div style={{ position: "absolute", left: 0, top: 0, width: W, height: 150, background: "#111", display: "flex", alignItems: "center", padding: "0 36px", boxSizing: "border-box", gap: 24 }}>
-            <div style={{ flex: 1, color: "#fff", fontFamily: "system-ui, sans-serif", fontWeight: 600, fontSize: 40, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{P.rival} plays <span style={{ color: to.color }}>{to.name}</span></div>
-            <div style={{ background: "#e5484d", color: "#fff", fontFamily: "system-ui, sans-serif", fontWeight: 600, fontSize: 40, padding: "18px 44px", borderRadius: 22 }}>Close</div>
+          <div style={{ position: "absolute", left: 0, top: 0, width: W, height: BARH, background: "#111", display: "flex", alignItems: "center", padding: "0 30px", boxSizing: "border-box", gap: 20 }}>
+            <div style={label}>You: <span style={{ color: from.color }}>{from.name}</span></div>
+            <div style={{ background: "#e5484d", color: "#fff", fontFamily: "system-ui, sans-serif", fontWeight: 600, fontSize: 36, padding: "16px 36px", borderRadius: 20 }}>Close</div>
+            <div style={{ ...label, textAlign: "right" }}>{P.rival}: <span style={{ color: to.color }}>{to.name}</span></div>
           </div>
-          <div style={{ position: "absolute", left: 0, top: 150, width: W, height: H - 150, overflow: "hidden" }}>
-            <Footage g={P.to} clip="peekview" t={P.toT} />
+          <div style={{ position: "absolute", left: 0, top: BARH, width: W, height: SH, overflow: "hidden" }}>
+            <Footage g={P.from} clip="peek" t={P.fightT} />
+            <AbsoluteFill style={{ clipPath: `inset(0 0 0 ${cut * 100}%)` }}><Footage g={P.to} clip="peek" t={P.fightT} /></AbsoluteFill>
+            <div style={{ position: "absolute", left: cut * W - 5, top: 0, width: 10, height: SH, background: "#fff", boxShadow: "0 0 24px rgba(0,0,0,0.8)" }} />
+            <div style={{ position: "absolute", left: cut * W - 62, top: SH * 0.52 - 62, width: 124, height: 124, borderRadius: 62, background: "#fff", boxShadow: "0 6px 26px rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui, sans-serif", fontWeight: 800, fontSize: 64, color: "#111" }}>{"\u2194"}</div>
           </div>
         </AbsoluteFill>
       ) : null}

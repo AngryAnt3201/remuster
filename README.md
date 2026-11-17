@@ -77,10 +77,11 @@ boards against what it can see of yours.
 
 ## Seeing the rival's game
 
-After an Arena battle the results offer "See it in <rival>'s game": the rival's game opens over yours and fights the
-deciding round again in its own look, from the rival's end of the field, with one Close button. It works because
-every game runs the same engine: the round travels as a link (`<their game>#replay=<payload>`, `base/src/replay.ts`)
-and is re-fought, not recorded as video. It is optional (Settings: "Rival's game after Arena battles") and only
+After an Arena battle the results offer "See it in <rival>'s game": a compare view opens with the deciding round
+playing in your game and in the rival's game at once, and a slider you drag to wipe from one to the other, with one
+Close button. It works because every game runs the same engine: the round travels as a link
+(`<game>#replay=<payload>`, `base/src/replay.ts`), each game fights it again in its own look, and the two are started
+together. Nothing is recorded as video. It is optional (Settings: "Rival's game after Arena battles") and only
 appears when another game can be reached: the backend's gallery of published games, `VITE_REMUSTER_PEERS` at build
 time (`id|Name|url,...`), or `?peer=<url>&peername=<Name>` in the address to try it locally. Today's Arena rivals
 are AI, so each is given a game from that list (the same rival always plays the same one); with real players the

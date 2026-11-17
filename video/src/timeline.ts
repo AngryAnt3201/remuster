@@ -60,9 +60,9 @@ export const SHOTS: Shot[] = [
   { bar: 16, beats: 4, game: "neonhold", clip: "clash", tag: true },
   { bar: 17, beats: 4, game: "inkfall", clip: "clash", tag: true },
   ...cycle(ALL, 6).map((g, i): Shot => ({ bar: 18 + i * 0.5, beats: 2, game: g, clip: "clash" })), // bars 18-20, a cut every two beats
-  // bars 21-24: all six at once (drawn by the grid, not as shots); bar 25: two front doors
-  { bar: 25, beats: 2, game: "blackridge", clip: "home", t: 0.6 }, { bar: 25.5, beats: 2, game: "cindermaw", clip: "home", t: 0.6 },
-  // bars 26-28: the rival's side of it (drawn by Peek in Launch.tsx: Crownfall's results sheet, a tap, Cindermaw over it)
+  // bars 21-24: all six at once (drawn by the grid, not as shots)
+  // bars 25-28: see it in their game (drawn by Peek in Launch.tsx: Crownfall's results sheet, a tap on its button,
+  // then the same round in Crownfall and Cindermaw at once with the compare slider wiping between them)
   // real places: each opens on the whole globe and comes in. A village (bars 29-31), a river crossing (32-33), a
   // market square (34-36), the game changing on every bar
   ...cycle(ALL, 8, 0).map((g, i): Shot => ({ bar: 29 + i, beats: 4, game: g, clip: i < 3 ? "arena" : i < 5 ? "crossing" : "market", tag: i > 0 && i < 6 })),
@@ -70,9 +70,10 @@ export const SHOTS: Shot[] = [
   ...cycle(ALL, 16, 1).map((g, i): Shot => ({ bar: 39 + i * 0.5, beats: 2, game: g, clip: ["clash", "crossing", "arena", "market", "siege"][i % 5], t: [6.2, 4.0, 5.0, 9.4, 7.5, 8.2, 12.0, 10.4, 11.0, 14.6, 12.8, 13.4, 16.0, 14.2, 15.0, 17.5][i] })),
 ];
 
-/** The peek shot (bars 26-28): whose results sheet, whose game opens over it, where each clip starts (seconds), and
- *  where the button is in the first clip's 1080-wide frame. */
-export const PEEK = { bar: 26, bars: 3, from: "base" as GameId, fromT: 15.0, to: "cindermaw" as GameId, toT: 1.6, rival: "Captain Varro", tapAt: 82, openAt: 98, button: [540, 1701] as [number, number] };
+/** The compare shot (bars 25-28): whose results sheet, whose game it is compared with, where the sheet clip and the
+ *  battle clips start (seconds), when the tap lands and the compare view opens (frames), and where the button is in
+ *  the first clip's 1080-wide frame. */
+export const PEEK = { bar: 25, bars: 4, from: "base" as GameId, sheetT: 15.0, to: "cindermaw" as GameId, fightT: 1.8, rival: "Captain Varro", tapAt: 66, openAt: 84, button: [540, 1701] as [number, number] };
 
 /** The prompts typed on screen: start typing at `bar`, finished and sent by `send`, which is the cut. */
 export const PROMPTS: { bar: number; send: number; text: string }[] = [
@@ -88,8 +89,8 @@ export const CAPTIONS: { bar: number; beats: number; lines: string[]; big?: bool
   { bar: 1.5, beats: 9, lines: ["One game."], big: true },
   { bar: 18, beats: 12, lines: ["Same battle.", "Same rules."] },
   { bar: 21, beats: 15, lines: ["We run the game.", "You own the look."] },
-  { bar: 26, beats: 5, lines: ["After the fight..."], y: 0.86 },
-  { bar: 27.5, beats: 6, lines: ["...see it in their game."], y: 0.2 },
+  { bar: 25, beats: 3, lines: ["After the fight..."], y: 0.86 },
+  { bar: 26, beats: 11, lines: ["...see it in their game."], y: 0.13 },
   { bar: 29, beats: 4, lines: ["Every level", "A REAL PLACE"], big: true },
   { bar: 31, beats: 6, lines: ["Streets. Cover. Ambushes."], y: 0.16 },
   { bar: 33.5, beats: 9, lines: ["Spin it like a globe."], y: 0.16 },

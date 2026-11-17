@@ -640,19 +640,19 @@ async function offerPeek(next: import("@engine/core/arena").ArenaMatch, m: Match
   const shown = sheetEl, peer = peerFor(next.foe.name, await loadPeers(__GAME__));
   const payload = peer && replayOf(next, m, { id: __GAME__, name: document.title || __GAME__ });
   if (!peer || !payload || sheetEl !== shown || !shown) return;
-  const b = btn(`See it in ${next.foe.name}'s game`, "ghost peek-btn", () => openPeek(replayUrl(peer, payload), `${next.foe.name} plays ${peer.name}: the last round, from their side`));
+  const here = { id: __GAME__, name: document.title || __GAME__, url: location.href.replace(/[?#].*$/, "") };
+  const b = btn(`See it in ${next.foe.name}'s game`, "ghost peek-btn", () => openPeek(replayUrl(here, payload), replayUrl(peer, payload), [`You: ${here.name}`, `${next.foe.name}: ${peer.name}`]));
   shown.querySelector(".results")?.append(b);
 }
 /** This game was opened to show a battle from another game: fight that one round, watch only, save nothing. */
 async function playReplay(p: import("./replay").ReplayPayload) {
-  const { replayConfig } = await import("./replay");
+  const { replayConfig, waitForGo } = await import("./replay");
   const a = arenaById(p.arena)!;
   clear();
+  await waitForGo(); // in a compare view, both games start the round together
   game = new GameScreen(app, {
     cfg: replayConfig(p), you: { ...DEFAULT_AI, difficulty: 0 }, mode: "watch", scripted: true, board: p.pieces,
-    title: a.name, arena: ARENA_BACKDROP[a.id], marks: a.marks, intro: `${a.name} · as ${p.names[1]} saw it`,
-    // from the rival's end of the field: the world turned half way round
-    camera: () => ({ yaw: Math.PI }),
+    title: a.name, arena: ARENA_BACKDROP[a.id], marks: a.marks, intro: `${a.name} · vs ${p.names[1]}`,
     onEnd: () => { /* the battle stays on its last frame; the overlay's Close button is the way out */ }, onQuit: () => { try { parent !== window ? parent.postMessage("remuster:peek-close", "*") : title(); } catch { title(); } },
   });
 }
