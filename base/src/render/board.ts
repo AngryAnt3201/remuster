@@ -945,7 +945,9 @@ export class BoardView {
     // The battle's clock stops with its last blow; the bodies that fell with it finish falling on the board's.
     const now = b.time + (b.done ? this.endT : 0);
     const live = b.bodies.filter((bd) => bd.kind !== "mine" && (bd.alive || now - bd.diedAt < 0.45) && !(fading(bd) && vanish <= 0));
-    const fadeOf = (bd: Body) => (bd.alive ? 1 : Math.max(0, 1 - (now - bd.diedAt) / 0.45)) * (fading(bd) ? vanish : 1);
+    // a unit hidden in brush (engine: Body.hidden) is drawn faint: yours so you can see your ambush, theirs fainter still
+    const hid = (bd: Body) => ((bd as Body & { hidden?: boolean }).hidden ? (bd.side === 0 ? 0.6 : 0.4) : 1);
+    const fadeOf = (bd: Body) => (bd.alive ? 1 : Math.max(0, 1 - (now - bd.diedAt) / 0.45)) * (fading(bd) ? vanish : 1) * hid(bd);
     for (const bd of live) {
       const [x, y] = pos(bd);
       const st = as?.pose(bd.id);
