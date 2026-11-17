@@ -64,7 +64,7 @@ export const SCENES: Record<string, Scene> = {
   // Arena mode: the same kind of fight, but around houses, a hall and barricades. Shots stop on walls, the charge
   // has to go round, bombs come over the roofs and the barricades get smashed.
   arena: {
-    arena: 10, seed: 41, names: ["You", "Rival"], title: "Old Village", terrain: "old-village",
+    arena: 10, seed: 25, names: ["You", "Rival"], title: "Old Village", terrain: "old-village",
     armies: [
       [["bulwark", 4.5, 5.3, 2], ["blades", 2.6, 5.2, 2], ["golem", 6.3, 5.0, 3], ["lancer", 0.9, 4.6, 2], ["ranger", 3.4, 3.0, 2],
         ["ranger", 5.6, 3.0, 2], ["grenadier", 2.2, 2.2, 3], ["bombard", 6.8, 1.2, 2], ["storm", 4.5, 2.2, 3], ["harrier", 8.0, 3.4, 2],
@@ -75,6 +75,10 @@ export const SCENES: Record<string, Scene> = {
     ],
   },
 };
+
+// More places, the same two armies as `arena`: a river with two bridges, a market square.
+for (const [name, terrain, arena, title, seed] of [["crossing", "the-crossing", 3, "The Crossing", 33], ["market", "crate-yard", 2, "Market Square", 7]] as const)
+  SCENES[name] = { ...SCENES.arena, armies: [SCENES.arena.armies[1], SCENES.arena.armies[0]], arena, terrain, title, seed };
 
 // `?film=kit`: every look the set builders know, laid out on one board, for checking a game's world style.
 const KIT: [kind: string, look: string, w: number, h: number][] = [
@@ -89,7 +93,7 @@ const KIT: [kind: string, look: string, w: number, h: number][] = [
 const kitBlocks = (): Block[] => KIT.map(([kind, look, w, h], i) => ({ id: i + 1, kind: kind as Block["kind"], look, x: 1.1 + (i % 4) * 2.25, y: 0.9 + Math.floor(i / 4) * 1.5, w: Math.min(w, 1.9), h: Math.min(h, 1.3) }));
 SCENES.kit = {
   arena: 1, seed: 1, title: "Kit", blocks: kitBlocks(),
-  marks: [{ look: "tree", x: -0.6, y: 3, w: 0, h: 0 }, { look: "lamp", x: -0.5, y: 5, w: 0, h: 0 }, { look: "banner", x: 9.5, y: 5, w: 0, h: 0 }, { look: "signpost", x: 9.5, y: 7, w: 0, h: 0 }] as unknown as ArenaMark[],
+  marks: [{ look: "tree", x: -0.6, y: 3, w: 0, h: 0 }, { look: "lamp", x: -0.5, y: 5, w: 0, h: 0 }, { look: "banner", x: 9.5, y: 5, w: 0, h: 0 }, { look: "signpost", x: 9.5, y: 7, w: 0, h: 0 }] as ArenaMark[],
   armies: [[], []],
 };
 

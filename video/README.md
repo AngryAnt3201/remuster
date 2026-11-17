@@ -16,10 +16,11 @@ cd video && npx remotion studio src/index.ts     scrub the edit in a browser
 Every game runs the same engine, and a film scene (`base/src/film.ts`) is a fixed seed and two fixed armies. So
 `?film=clash` is the same battle, blow for blow, in every game. The recorder (`tools/film.mjs`) drives the page on a
 virtual clock, one frame at a time, so frame 600 of the steampunk capture is the same instant as frame 600 of the
-western one. The edit just switches which game's file it is reading.
+western one. The edit just switches which game's file it is reading. The camera move (`filmCamera` in `base/src/film.ts`: open on
+the whole globe, come in, keep turning) is a function of scene time too, so it carries across every cut.
 
-Scenes: `clash` (two full armies, the player wins at about 26 s), `arena` (the same kind of fight around a village's
-houses and barricades), `siege` (artillery and walls of shields), plus `home` and `army` (the game's front door and
+Scenes: `clash` (two full armies, the player wins at about 26 s), `arena` (a fight through a village's street and
+alleys), `crossing` (a river with two bridges), `market` (a square with a fountain and stalls), `siege` (artillery and walls of shields), plus `home` and `army` (the game's front door and
 card collection, with the `?demo` mid-game save). `npx vite-node tools/film-tune.ts <scene> [seedFrom] [count]`
 shows how a scene plays out per seed (who wins, when, how busy it stays) when you want to change one.
 
@@ -61,7 +62,7 @@ first. To replace it with a produced track, keep 144 BPM and the bar count and d
 | 18-20 | A cut every two beats through all six as the battle is won |
 | 21-24 | All six at once. "We run the game. You own the look." |
 | 25-28 | Each game's home and Army screens |
-| 29-36 | Arenas: one Arena battle across the games |
+| 29-36 | Real places: a village, a river crossing and a market square, each opening on the whole globe and turning |
 | 37-38 | Break. "One game. Make it yours." |
 | 39-46 | A cut every two beats: the best moments of everything |
 | 47-48 | End card |

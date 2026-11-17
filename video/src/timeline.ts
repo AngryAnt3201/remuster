@@ -45,9 +45,9 @@ export const SECTIONS: Section[] = [
 ];
 
 /** Scene clocks: the bar at which each continuous scene's time 0 falls. */
-export const SCENE_START: Record<string, number> = { clash: 5, siege: 21, arena: 29 };
+export const SCENE_START: Record<string, number> = { clash: 5, siege: 21, arena: 29, crossing: 32, market: 34 };
 /** Seconds of each capture to skip: the game's own opening banner before the armies move. */
-export const SCENE_SKIP: Record<string, number> = { clash: 1.0, arena: 2.0, siege: 2.0 };
+export const SCENE_SKIP: Record<string, number> = { clash: 1.0, arena: 1.2, crossing: 1.2, market: 1.2, siege: 2.0 };
 
 export const SHOTS: Shot[] = [
   // intro: the base game's home screen
@@ -62,10 +62,11 @@ export const SHOTS: Shot[] = [
   ...cycle(ALL, 6).map((g, i): Shot => ({ bar: 18 + i * 0.5, beats: 2, game: g, clip: "clash" })), // bars 18-20, a cut every two beats
   // bars 21-24: all six at once (drawn by the grid, not as shots); bars 25-28: every game's front door
   ...cycle(ALL, 8).map((g, i): Shot => ({ bar: 25 + i * 0.5, beats: 2, game: g, clip: i < 6 ? "home" : "army", t: 0.6 })),
-  // arenas: a title over the first bar, then one arena battle across the games
-  ...cycle(ALL, 8, 0).map((g, i): Shot => ({ bar: 29 + i, beats: 4, game: g, clip: "arena", tag: i > 0 && i < 6 })),
+  // real places: each opens on the whole globe and comes in. A village (bars 29-31), a river crossing (32-33), a
+  // market square (34-36), the game changing on every bar
+  ...cycle(ALL, 8, 0).map((g, i): Shot => ({ bar: 29 + i, beats: 4, game: g, clip: i < 3 ? "arena" : i < 5 ? "crossing" : "market", tag: i > 0 && i < 6 })),
   // finale: every two beats, the best moments of everything
-  ...cycle(ALL, 16, 1).map((g, i): Shot => ({ bar: 39 + i * 0.5, beats: 2, game: g, clip: ["clash", "siege", "arena"][i % 3], t: [6.2, 4.0, 5.0, 9.4, 7.5, 8.2, 12.0, 10.4, 11.0, 14.6, 12.8, 13.4, 16.0, 14.2, 15.0, 17.5][i] })),
+  ...cycle(ALL, 16, 1).map((g, i): Shot => ({ bar: 39 + i * 0.5, beats: 2, game: g, clip: ["clash", "crossing", "arena", "market", "siege"][i % 5], t: [6.2, 4.0, 5.0, 9.4, 7.5, 8.2, 12.0, 10.4, 11.0, 14.6, 12.8, 13.4, 16.0, 14.2, 15.0, 17.5][i] })),
 ];
 
 /** The prompts typed on screen: start typing at `bar`, finished and sent by `send`, which is the cut. */
@@ -82,8 +83,9 @@ export const CAPTIONS: { bar: number; beats: number; lines: string[]; big?: bool
   { bar: 1.5, beats: 9, lines: ["One game."], big: true },
   { bar: 18, beats: 12, lines: ["Same battle.", "Same rules."] },
   { bar: 21, beats: 15, lines: ["We run the game.", "You own the look."] },
-  { bar: 29, beats: 4, lines: ["New mode", "ARENAS"], big: true },
-  { bar: 31, beats: 8, lines: ["Walls. Cover. Choke points."], y: 0.16 },
+  { bar: 29, beats: 4, lines: ["Every level", "A REAL PLACE"], big: true },
+  { bar: 31, beats: 6, lines: ["Streets. Cover. Ambushes."], y: 0.16 },
+  { bar: 33.5, beats: 9, lines: ["Spin it like a globe."], y: 0.16 },
   { bar: 37, beats: 4, lines: ["One game."], big: true },
   { bar: 38, beats: 4, lines: ["Make it yours."], big: true },
 ];

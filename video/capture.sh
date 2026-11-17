@@ -16,5 +16,7 @@ film() { lockf -k ~/Desktop/game_development/.heavy.lock nice -n 10 node tools/f
 film --scene clash --seconds 28
 film --scene arena --seconds 20
 film --scene siege --seconds 16
+film --scene crossing --seconds 16
+film --scene market --seconds 16
 film --url "/?demo" --name home --seconds 8
 film --url "/?demo&tab=army" --name army --seconds 3
