@@ -8,7 +8,7 @@ import {
 import { Match } from "./match";
 import { freeSpotIn } from "./placement";
 import { Rng, hashSeed } from "./rng";
-import type { Block } from "./terrain";
+import { pointInBlock, type Block } from "./terrain";
 
 export type Tactic = "balanced" | "swarm" | "fortress" | "artillery" | "ambush" | "blitz" | "siege";
 export const TACTICS: Tactic[] = ["balanced", "swarm", "fortress", "artillery", "ambush", "blitz", "siege"];
@@ -305,10 +305,13 @@ export function formation(side: Side, pieces: Piece[], theirs: Piece[], ai: AIPr
 const SHOOTERS = new Set<UnitKind>(["ranger", "rime", "storm", "outrider", "lamp"]);
 /** Soft units that need no line of sight to do their work, so a wall in front of them is pure gain. */
 const LOBBERS = new Set<UnitKind>(["grenadier", "bombard", "thorn", "hive", "grave", "medic", "banner"]);
+/** Who gains from lying in wait in brush: they start hidden, hold until the enemy is close, and strike first. */
+const AMBUSHERS = new Set<UnitKind>(["blades", "duelist", "ravager", "lancer", "keg", "trickster", "pikeman", "hook", "lion", "bulwark", "golem"]);
 /**
- * A terrain-aware variation of a layout (in place): shooters move up behind cover blocks in their zone, and units
- * that work over walls move behind a wall or building. Each block offers a few spots along its own-side face; pieces
- * take the nearest free one. Purely a candidate: planSteps tests it in simulation like any other.
+ * A terrain-aware variation of a layout (in place): shooters move up behind cover blocks in their zone, units that
+ * work over walls move behind a wall or building, and some of the hand-to-hand units lie in wait in brush. Each block
+ * offers a few spots along its own-side face (brush: a grid of spots inside it); pieces take the nearest free one.
+ * Purely a candidate: planSteps tests it in simulation like any other (the simulation plays the hiding rules).
  */
 export function shelter(side: Side, layout: { id: number; x: number; y: number }[], pieces: Piece[], terrain: Block[], rng: Rng) {
   const back = side === 0 ? 1 : -1; // toward this side's own edge
@@ -328,11 +331,23 @@ export function shelter(side: Side, layout: { id: number; x: number; y: number }
     return out;
   };
   const cover = spots((k) => k === "cover", 0.45, 0), walls = spots((k) => k === "wall" || k === "building" || k === "barricade", 0.6, 1.4);
+  // Brush: a grid of spots inside each patch, those that lie in this side's zone.
+  const brush: { x: number; y: number; used: boolean }[] = [];
+  for (const b of terrain) {
+    if (b.kind !== "brush") continue;
+    const nx = Math.max(1, Math.floor(b.w / 0.75)), ny = Math.max(1, Math.floor(b.h / 0.75));
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+      const x = b.x - b.w / 2 + (b.w * (i + 0.5)) / nx, y = b.y - b.h / 2 + (b.h * (j + 0.5)) / ny;
+      const c = clampToZone(side, x, y, 0.3);
+      if (Math.abs(c.x - x) < 1e-6 && Math.abs(c.y - y) < 1e-6 && pointInBlock(b, x, y)) brush.push({ x, y, used: false });
+    }
+  }
+  const sneak = brush.length > 0 && rng.chance(0.6);
   for (const l of layout) {
     const p = pieces.find((q) => q.id === l.id);
     if (!p) continue;
-    const pool = SHOOTERS.has(p.kind) ? cover : LOBBERS.has(p.kind) ? walls : null;
-    if (!pool || !rng.chance(0.75)) continue;
+    const pool = SHOOTERS.has(p.kind) ? cover : LOBBERS.has(p.kind) ? walls : sneak && AMBUSHERS.has(p.kind) ? brush : null;
+    if (!pool || !rng.chance(pool === brush ? 0.5 : 0.75)) continue;
     let best: { x: number; y: number; used: boolean } | undefined, bd = 4.5;
     for (const s of pool) {
       const d = Math.hypot(s.x - l.x, s.y - l.y);
@@ -340,7 +355,7 @@ export function shelter(side: Side, layout: { id: number; x: number; y: number }
     }
     if (!best) continue;
     const c = freeSpotIn(terrain, side, p.kind, best.x, best.y);
-    if (!c) continue;
+    if (!c || (pool === brush && Math.hypot(c.x - best.x, c.y - best.y) > 1e-6)) continue;
     best.used = true;
     l.x = c.x; l.y = c.y;
   }

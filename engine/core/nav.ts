@@ -6,9 +6,12 @@
 // Two metrics are used on purpose:
 //  - collision is exact (a circle against a rectangle), so a body can stand anywhere it physically fits;
 //  - navigation is conservative (rectangles grown square by the body's radius less NAV_TOL), so every route it
-//    returns is one the body can physically walk, and a corridor exactly as wide as the body still counts as open.
+//    returns is one the body can physically walk. On top of the grown rectangles each cell knows the largest body
+//    that can really stand somewhere in it (`fit`: exact distances, sampled across the cell), so a corridor a little
+//    narrower than a body is never taken for open: without that a body would plan a route through a gap it cannot
+//    squeeze into and press against it for the rest of the battle.
 import { H, W } from "./defs";
-import { BLOCK_HP, blocksShots, breakable, type Block, type BlockState } from "./terrain";
+import { BLOCK_HP, blocksShots, breakable, isZone, type Block, type BlockState } from "./terrain";
 
 /** Nav grid cell, world units (the board is 36 x 56 cells). */
 export const NAV_CELL = 0.25;
@@ -16,6 +19,8 @@ export const NAV_CELL = 0.25;
 export const NAV_TOL = 0.126;
 const NX = Math.round(W / NAV_CELL), NY = Math.round(H / NAV_CELL), N = NX * NY;
 const FAR = 99;
+/** What a step along a road costs the route planner, against 1 on open ground (roads are 1.25 times as fast). */
+const ROAD_COST = 0.8;
 const TAU = Math.PI * 2;
 
 /** Entry parameter (0..1) of the segment from (x0, y0) along (dx, dy) into a rectangle, or -1 when it misses. */
@@ -44,7 +49,9 @@ function rectDist(x: number, y: number, l: number, t: number, r: number, b: numb
   return Math.hypot(dx, dy);
 }
 
-interface Fields { hard: Float32Array; soft: Float32Array; near: Int16Array; }
+interface Fields { hard: Float32Array; soft: Float32Array; near: Int16Array; road: Uint8Array; roads: boolean; fitH: Float32Array; fitA: Float32Array; }
+/** Where a cell is sampled for `fit`, as offsets from its centre along each axis. */
+const FIT_OFF = [0, -0.05, 0.05, -0.1, 0.1];
 /** The clearance fields of an arena with every block standing, shared by all the battles fought on it. */
 const fieldCache = new WeakMap<object, Fields>();
 
@@ -56,12 +63,22 @@ export class Nav {
   private g = new Float64Array(0); private gi: number[] = []; private gn = 0; // everything that blocks ground movement
   private s = new Float64Array(0); private si: number[] = []; private sn = 0; // blocks shots and sight
   private c = new Float64Array(0); private ci: number[] = []; private cn = 0; // cover
+  // The ground zones (they never break): roads and brush, as flat quads.
+  private zr = new Float64Array(0); private zrn = 0;
+  private zb = new Float64Array(0); private zbn = 0;
+  /** Which nav cells are road (their centre is on one), and whether the arena has any. */
+  private road: Uint8Array;
+  private roads: boolean;
   /** Square (Chebyshev) distance from each cell centre to the nearest unbreakable block or board edge. */
   private hard: Float32Array;
   /** The same to the nearest live breakable block, and which block that is. */
   private soft: Float32Array;
   private near: Int16Array;
   private ownsSoft = false;
+  /** The radius of the largest body that can stand somewhere in each cell, against the unbreakable blocks (`fitH`)
+   * and against every live block (`fitA`). */
+  private fitH: Float32Array;
+  private fitA: Float32Array;
   // A* scratch.
   private gs = new Float32Array(N);
   private par = new Int16Array(N);
@@ -92,13 +109,31 @@ export class Nav {
     });
     let f = fieldCache.get(terrain);
     if (!f) {
-      f = { hard: new Float32Array(N), soft: new Float32Array(N), near: new Int16Array(N) };
+      f = { hard: new Float32Array(N), soft: new Float32Array(N), near: new Int16Array(N), road: new Uint8Array(N), roads: false, fitH: new Float32Array(N), fitA: new Float32Array(N) };
       this.fillHard(f.hard);
       this.fillSoft(f.soft, f.near);
+      this.fillFit(f.fitH, f.hard, f.soft, false);
+      this.fillFit(f.fitA, f.hard, f.soft, true);
+      for (const b of this.blocks) {
+        if (b.kind !== "road") continue;
+        f.roads = true;
+        for (let cy = 0; cy < NY; cy++) for (let cx = 0; cx < NX; cx++) {
+          const x = (cx + 0.5) * NAV_CELL, y = (cy + 0.5) * NAV_CELL;
+          if (Math.abs(x - b.x) <= b.w / 2 && Math.abs(y - b.y) <= b.h / 2) f.road[cy * NX + cx] = 1;
+        }
+      }
       fieldCache.set(terrain, f);
     }
-    this.hard = f.hard; this.soft = f.soft; this.near = f.near;
+    this.hard = f.hard; this.soft = f.soft; this.near = f.near; this.road = f.road; this.roads = f.roads;
+    this.fitH = f.fitH; this.fitA = f.fitA;
     this.lists();
+    const quads = (kind: "road" | "brush") => {
+      const list = this.blocks.filter((b) => b.kind === kind), q = new Float64Array(list.length * 4);
+      list.forEach((b, k) => { q[k * 4] = b.x - b.w / 2; q[k * 4 + 1] = b.y - b.h / 2; q[k * 4 + 2] = b.x + b.w / 2; q[k * 4 + 3] = b.y + b.h / 2; });
+      return q;
+    };
+    this.zr = quads("road"); this.zrn = this.zr.length >> 2;
+    this.zb = quads("brush"); this.zbn = this.zb.length >> 2;
   }
 
   // ------------------------------------------------------------ upkeep
@@ -113,7 +148,7 @@ export class Nav {
       });
       return [q, idx];
     };
-    [this.g, this.gi] = pack(() => true); this.gn = this.gi.length;
+    [this.g, this.gi] = pack((b) => !isZone(b.kind)); this.gn = this.gi.length;
     [this.s, this.si] = pack((b) => blocksShots(b.kind)); this.sn = this.si.length;
     [this.c, this.ci] = pack((b) => b.kind === "cover"); this.cn = this.ci.length;
   }
@@ -122,7 +157,7 @@ export class Nav {
       const x = (cx + 0.5) * NAV_CELL, y = (cy + 0.5) * NAV_CELL;
       let d = Math.min(x, W - x, y, H - y);
       for (const b of this.blocks) {
-        if (breakable(b.kind)) continue;
+        if (breakable(b.kind) || isZone(b.kind)) continue;
         const k = Math.max(b.x - b.w / 2 - x, x - b.x - b.w / 2, b.y - b.h / 2 - y, y - b.y - b.h / 2, 0);
         if (k < d) d = k;
       }
@@ -142,13 +177,57 @@ export class Nav {
       out[cy * NX + cx] = d; near[cy * NX + cx] = who;
     }
   }
+  /**
+   * The largest body that fits somewhere in each cell: the greatest, over a few points across the cell, of the exact
+   * distance to the nearest block (and board edge). `all` counts every live block, otherwise only the unbreakable ones.
+   * Cells well clear of everything are skipped (FAR).
+   */
+  private fillFit(out: Float32Array, hard: Float32Array, soft: Float32Array, all: boolean) {
+    const q: number[] = [];
+    for (const b of this.blocks) if (b.alive && !isZone(b.kind) && (all || !breakable(b.kind))) q.push(b.x - b.w / 2, b.y - b.h / 2, b.x + b.w / 2, b.y + b.h / 2);
+    for (let cy = 0; cy < NY; cy++) for (let cx = 0; cx < NX; cx++) {
+      const c = cy * NX + cx;
+      if (hard[c] > 0.9 && (!all || soft[c] > 0.9)) { out[c] = FAR; continue; }
+      const x0 = (cx + 0.5) * NAV_CELL, y0 = (cy + 0.5) * NAV_CELL;
+      let best = 0;
+      for (const oy of FIT_OFF) for (const ox of FIT_OFF) {
+        const x = x0 + ox, y = y0 + oy;
+        let d = Math.min(x, W - x, y, H - y);
+        for (let k = 0; k < q.length && d > best; k += 4) {
+          const dx = x < q[k] ? q[k] - x : x > q[k + 2] ? x - q[k + 2] : 0, dy = y < q[k + 1] ? q[k + 1] - y : y > q[k + 3] ? y - q[k + 3] : 0;
+          const e = dx && dy ? Math.hypot(dx, dy) : dx + dy;
+          if (e < d) d = e;
+        }
+        if (d > best) best = d;
+      }
+      out[c] = best;
+    }
+  }
   /** Call after a block's `alive` goes false: the block lists and the clearance grid follow, routes go stale. */
   rebuild() {
     this.lists();
-    if (!this.ownsSoft) { this.soft = new Float32Array(N); this.near = new Int16Array(N); this.ownsSoft = true; }
+    if (!this.ownsSoft) { this.soft = new Float32Array(N); this.near = new Int16Array(N); this.fitA = new Float32Array(N); this.ownsSoft = true; }
     this.fillSoft(this.soft, this.near);
+    this.fillFit(this.fitA, this.hard, this.soft, true);
     this.ver++;
   }
+
+  // ------------------------------------------------------------ zones
+  /** Is the point on a road. */
+  onRoad(x: number, y: number): boolean {
+    const q = this.zr;
+    for (let k = 0, n = this.zrn * 4; k < n; k += 4) if (x >= q[k] && x <= q[k + 2] && y >= q[k + 1] && y <= q[k + 3]) return true;
+    return false;
+  }
+  /** Is the point in brush. */
+  inBrush(x: number, y: number): boolean {
+    const q = this.zb;
+    for (let k = 0, n = this.zbn * 4; k < n; k += 4) if (x >= q[k] && x <= q[k + 2] && y >= q[k + 1] && y <= q[k + 3]) return true;
+    return false;
+  }
+  /** Does the arena have any brush (a battle without it skips the hiding rules). */
+  get hasBrush(): boolean { return this.zbn > 0; }
+  get hasRoads(): boolean { return this.zrn > 0; }
 
   // ------------------------------------------------------------ sight and shots
   /** Line of sight: true when no live wall, building or barricade crosses the segment. */
@@ -344,7 +423,8 @@ export class Nav {
   /** The open cell nearest (x, y) within `rings` cells; `softOk` also takes cells only a breakable block closes. */
   private cellNear(x: number, y: number, rr: number, rings: number, softOk: boolean, flip = false): number {
     const c0 = this.cellOf(x, y), cx0 = c0 % NX, cy0 = (c0 - cx0) / NX;
-    const open = (c: number) => this.hard[c] >= rr && (softOk || this.soft[c] >= rr);
+    const rad = rr + NAV_TOL;
+    const open = (c: number) => this.hard[c] >= rr && this.fitH[c] >= rad && (softOk || (this.soft[c] >= rr && this.fitA[c] >= rad));
     if (open(c0)) return c0;
     for (let k = 1; k <= rings; k++) {
       let best = -1, bd = Infinity;
@@ -400,7 +480,12 @@ export class Nav {
    * exact mirror images and ties between equal routes favour neither.
    */
   path(x0: number, y0: number, x1: number, y1: number, rad: number, pen: number, flip = false): boolean {
-    const rr = rad - NAV_TOL, hard = this.hard, soft = this.soft;
+    const rr = rad - NAV_TOL, hard = this.hard, soft = this.soft, road = this.road, fitH = this.fitH, fitA = this.fitA;
+    // Shut to this body by an unbreakable block; shut by a breakable one (or by the gap one leaves).
+    const wall = (c: number) => hard[c] < rr || fitH[c] < rad;
+    const soft0 = (c: number) => soft[c] < rr || fitA[c] < rad;
+    // With roads on the map a step can cost less than 1, so the estimate is scaled to stay a lower bound.
+    const hk = this.roads ? ROAD_COST : 1;
     this.np = 0; this.breach = -1; this.partial = false;
     const s = this.cellNear(x0, y0, rr, 4, false, flip);
     if (s < 0) return false;
@@ -411,7 +496,7 @@ export class Nav {
     this.heapC.length = 0; this.heapF.length = 0;
     const h = (c: number) => {
       const ax = Math.abs((c % NX) - gx), ay = Math.abs(Math.floor(c / NX) - gy);
-      return ax > ay ? ax + 0.4142 * ay : ay + 0.4142 * ax;
+      return (ax > ay ? ax + 0.4142 * ay : ay + 0.4142 * ax) * hk;
     };
     gs[s] = 0; seen[s] = stamp; par[s] = -1;
     this.push(s, h(s));
@@ -423,23 +508,24 @@ export class Nav {
       if (c === g) { found = c; break; }
       const hc = h(c);
       if (hc < bh) { bh = hc; best = c; }
-      const cx = c % NX, cy = (c - cx) / NX, cSoft = soft[c] < rr;
+      const cx = c % NX, cy = (c - cx) / NX, cSoft = soft0(c);
       for (let iy = -1; iy <= 1; iy++) for (let ix = -1; ix <= 1; ix++) {
         if (!ix && !iy) continue;
         const dx = flip ? -ix : ix, dy = flip ? -iy : iy;
         const nx = cx + dx, ny = cy + dy;
         if (nx < 0 || ny < 0 || nx >= NX || ny >= NY) continue;
         const n = ny * NX + nx;
-        if (closed[n] === stamp || hard[n] < rr) continue;
-        const nSoft = soft[n] < rr;
+        if (closed[n] === stamp || wall(n)) continue;
+        const nSoft = soft0(n);
         if (nSoft && pen <= 0) continue;
         if (dx && dy) {
           // No cutting corners.
           const a = cy * NX + nx, b = ny * NX + cx;
-          if (hard[a] < rr || hard[b] < rr || (pen <= 0 && (soft[a] < rr || soft[b] < rr))) continue;
+          if (wall(a) || wall(b) || (pen <= 0 && (soft0(a) || soft0(b)))) continue;
         }
         let cost = dx && dy ? 1.4142 : 1;
-        if (nSoft && !cSoft) cost += (pen * this.blocks[this.near[n]].hp) / NAV_CELL;
+        if (road[n]) cost *= ROAD_COST; // roads are quicker, so a route takes one where it can
+        if (nSoft && !cSoft) cost += (pen * (this.near[n] >= 0 ? this.blocks[this.near[n]].hp : 0)) / NAV_CELL;
         else if (hard[n] < rad + 0.12 || soft[n] < rad + 0.12) cost += 0.5; // keep off the walls where there is room
         const ng = gs[c] + cost;
         if (seen[n] === stamp && ng >= gs[n]) continue;
@@ -454,7 +540,7 @@ export class Nav {
     for (let c = found; c >= 0; c = par[c]) cells.push(c);
     cells.reverse();
     let m = cells.length;
-    for (let i = 0; i < m; i++) if (soft[cells[i]] < rr) { this.breach = this.near[cells[i]]; m = i; break; }
+    for (let i = 0; i < m; i++) if (soft0(cells[i]) && this.near[cells[i]] >= 0) { this.breach = this.near[cells[i]]; m = i; break; }
     // Pull the cell path straight: keep only the corners.
     const pts = this.pts;
     let ax = x0, ay = y0, n = 0, i = 0;

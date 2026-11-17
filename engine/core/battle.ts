@@ -7,7 +7,10 @@ import {
 } from "./defs";
 import { levelDmg, levelHp, levelOf, type Levels } from "./levels";
 import { NAV_TOL, Nav } from "./nav";
-import { COVER_KEEP, COVER_REACH, breakable, circleHitsBlock, type Block, type BlockKind, type BlockState } from "./terrain";
+import {
+  AMBUSH_RANGE, AMBUSH_WAIT, BRUSH_EXPOSE, BRUSH_REVEAL, COVER_KEEP, COVER_REACH, ROAD_SPEED, breakable, circleHitsBlock,
+  type Block, type BlockKind, type BlockState,
+} from "./terrain";
 import { Rng } from "./rng";
 
 export interface Body {
@@ -26,7 +29,15 @@ export interface Body {
   cd: number;
   alive: boolean;
   structure: boolean;
+  /** Out of the other side's sight, for renderers (updated every step): a buried mine, a cloaked Shade, or a ground
+   * unit standing in brush that has not been revealed (see terrain.ts). Its own side should still draw it. */
   hidden: boolean;
+  /** Nobody can target it at any distance: a buried mine, a cloaked Shade. */
+  stealth: boolean;
+  /** Battle time until which brush does not hide it (it attacked, cast or took damage). */
+  reveal: number;
+  /** Lying in wait: it started the battle in brush and has not moved yet (see AMBUSH_RANGE, AMBUSH_WAIT). */
+  ambush: boolean;
   taunt: boolean;
   stun: number;
   flash: number;
@@ -169,7 +180,7 @@ export type BattleEvent =
 export interface BattleOptions {
   seed?: number;
   obstacles?: Obstacle[];
-  /** Arena terrain (engine/core/terrain.ts): walls, buildings, barricades, cover and water. Omitted or empty = open field. */
+  /** Terrain (engine/core/terrain.ts): walls, buildings, barricades, cover, water, roads and brush. Omitted or empty = open field. */
   terrain?: Block[];
   mods?: [Mods | undefined, Mods | undefined];
   /** Persistent troop levels per side (engine/core/levels.ts). Missing = level 1, which leaves every stat unchanged. */
@@ -284,6 +295,9 @@ export class Battle {
   /** Terrain queries and navigation; null on an open field (every terrain rule is behind this check). */
   private nav: Nav | null;
   private routes = new Map<number, Route>();
+  /** The terrain has brush / roads (the hiding and road rules are skipped without them). */
+  private brushOn = false;
+  private roadsOn = false;
   // Where the body now acting is heading (set by seek), for steer().
   private goalOn = false;
   private goalX = 0;
@@ -299,7 +313,15 @@ export class Battle {
     this.levels = [opts.levels?.[0], opts.levels?.[1]];
     this.nav = opts.terrain?.length ? new Nav(opts.terrain) : null;
     this.blocks = this.nav ? this.nav.blocks : [];
+    this.brushOn = !!this.nav?.hasBrush;
+    this.roadsOn = !!this.nav?.hasRoads;
     for (const p of pieces) this.addPiece(p);
+    if (this.brushOn) for (const b of this.bodies) {
+      // Whoever is placed in brush starts hidden, and lies in wait there.
+      if (!this.inBrush(b)) continue;
+      b.hidden = true;
+      b.ambush = !isSpawn(b.kind) && b.kind !== "shade";
+    }
     for (const b of this.bodies) if (b.kind === "hive" && this.mods[b.side].broodStart) { this.spawnMite(b); this.spawnMite(b); }
     for (const b of this.bodies) {
       if (!this.mods[b.side].litStart || b.kind === "mine" || isSpawn(b.kind)) continue;
@@ -360,6 +382,8 @@ export class Battle {
       alive: true,
       structure: kind === "mine" || kind === "turret" || (!isSpawn(kind) && !!UNITS[kind].structure),
       hidden: kind === "mine" || kind === "shade",
+      stealth: kind === "mine" || kind === "shade",
+      reveal: 0, ambush: false,
       taunt: kind === "bulwark",
       stun: 0, flash: 0,
       state: kind === "mine" ? "armed" : kind === "lancer" ? "aim" : kind === "shade" ? "flank" : kind === "sapper" ? "burrow"
@@ -389,10 +413,48 @@ export class Battle {
   }
   /** Can a body of this side and kind attack e: alive, hostile, seen, above ground, and reachable if it flies. */
   private canTarget(side: Side, kind: BodyKind, e: Body) {
-    return e.alive && e.side !== side && !e.hidden && !e.burrowed && (!e.flying || AIR_HITTERS.has(kind));
+    return e.alive && e.side !== side && !e.stealth && !e.burrowed && (!e.flying || AIR_HITTERS.has(kind));
   }
   private targetable(b: Body, e: Body) {
-    return this.canTarget(b.side, b.kind, e);
+    return this.canTarget(b.side, b.kind, e) && !(this.brushOn && this.veiled(b, e));
+  }
+  /** Is this ground body standing in brush (structures, fliers and burrowers never count). */
+  private inBrush(b: Body) {
+    return !b.structure && !b.flying && !b.burrowed && this.nav!.inBrush(b.x, b.y);
+  }
+  /** Is `e` hidden in brush from `a`: on the other side, unrevealed and farther than BRUSH_REVEAL edge to edge. */
+  private veiled(a: Body, e: Body) {
+    return e.hidden && !e.stealth && e.side !== a.side && hyp(a.x - e.x, a.y - e.y) - a.radius - e.radius > BRUSH_REVEAL;
+  }
+  /** Brush stops hiding a body for a while: it attacked, cast or was hurt. Ends its ambush too. */
+  private expose(b: Body) {
+    if (!this.brushOn) return;
+    b.reveal = this.time + BRUSH_EXPOSE;
+    b.ambush = false;
+    if (!b.stealth) b.hidden = false;
+  }
+  /** The nearest enemy hidden in brush from `b`: nobody to attack yet, but somewhere to search when no one is in sight
+   * (so two armies in the grass still find each other). */
+  private lurker(b: Body): Body | undefined {
+    if (!this.brushOn) return undefined;
+    let best: Body | undefined, bd = Infinity;
+    for (const e of this.bodies) {
+      if (!this.canTarget(b.side, b.kind, e) || !this.veiled(b, e)) continue;
+      const d = this.dist(b, e) - e.radius;
+      if (d < bd) { bd = d; best = e; }
+    }
+    return best;
+  }
+  /** A body lying in wait in brush: true while it should keep still. It breaks cover when an enemy it can see is
+   * within AMBUSH_RANGE (or its own reach), when it has been revealed or moved out of the brush, or after AMBUSH_WAIT. */
+  private lieLow(b: Body): boolean {
+    if (this.time >= AMBUSH_WAIT || !b.hidden) { b.ambush = false; return false; }
+    const reach = Math.max(AMBUSH_RANGE, b.range);
+    for (const e of this.bodies) {
+      if (!this.targetable(b, e) || e.kind === "mine") continue;
+      if (hyp(e.x - b.x, e.y - b.y) - e.radius - b.radius <= reach) { b.ambush = false; return false; }
+    }
+    return true;
   }
   private dist(a: { x: number; y: number }, b: { x: number; y: number }) {
     return hyp(a.x - b.x, a.y - b.y);
@@ -400,13 +462,15 @@ export class Battle {
   /** Gap between two bodies' edges. */
   private gap(a: Body, b: Body) {
     const g = this.dist(a, b) - a.radius - b.radius;
-    // Across a wall nobody is in reach, however close.
-    return this.nav && g < 1.6 && !this.sees(a, b) ? 99 : g;
+    // Across a wall nobody is in reach, however close; nor is anyone hidden in brush.
+    return this.nav && ((g < 1.6 && !this.sees(a, b)) || (this.brushOn && this.veiled(a, b))) ? 99 : g;
   }
   /** Line of sight between two bodies' centres: walls, buildings and barricades block it. Always true on an open
    * field, and to or from anything in the air. */
   private sees(a: Body, b: Body) {
-    return !this.nav || a.flying || b.flying || this.nav.los(a.x, a.y, b.x, b.y);
+    if (!this.nav) return true;
+    if (this.brushOn && this.veiled(a, b)) return false;
+    return a.flying || b.flying || this.nav.los(a.x, a.y, b.x, b.y);
   }
   /** Distance for a direct shot: infinite with no line of sight, so a shooter closes in until it has one. */
   private shotDist(a: Body, b: Body) {
@@ -435,12 +499,17 @@ export class Battle {
   }
   nearestEnemy(b: Body, opts: { max?: number; filter?: (e: Body) => boolean; taunt?: boolean } = {}): Body | undefined {
     let best: Body | undefined, bd = opts.max ?? Infinity;
+    let lurk: Body | undefined, ld = Infinity;
     for (const e of this.bodies) {
-      if (!this.targetable(b, e) || (opts.filter && !opts.filter(e))) continue;
+      if (!this.canTarget(b.side, b.kind, e) || (opts.filter && !opts.filter(e))) continue;
       let d = this.dist(b, e) - e.radius;
       if (e.kind === "decoy") d -= DECOY_LURE;
+      if (this.brushOn && this.veiled(b, e)) { if (d < ld) { ld = d; lurk = e; } continue; }
       if (d < bd) { bd = d; best = e; }
     }
+    // Nobody in sight: with no reach limit, search toward the nearest enemy hidden in brush (gap() and shotDist()
+    // keep it out of reach until it is seen).
+    if (!best) return opts.max === undefined ? lurk : undefined;
     if (this.nav && best && !b.flying && !b.burrowed && !best.flying && !this.nav.los(b.x, b.y, best.x, best.y)) {
       // The nearest is behind a wall: take the nearest in plain sight instead. With no reach limit and nobody in
       // sight, keep the hidden one (to walk toward).
@@ -550,7 +619,8 @@ export class Battle {
       }
     }
     target.flash = 0.12;
-    if (target.kind === "shade" && target.cloak > 0) { target.cloak = 0; target.hidden = false; }
+    if (target.kind === "shade" && target.cloak > 0) { target.cloak = 0; target.stealth = false; target.hidden = false; }
+    if (this.brushOn) { this.expose(target); if (by) this.expose(by); }
     this.emit({ t: "hit", id: target.id, x: target.x, y: target.y, dmg: Math.round(amount), side, shielded, big });
     if (by && by.alive && !by.flying && target.kind === "pikeman" && target.braced && target.rank >= 4) {
       this.damage(by, amount * 0.3, target, target.side); // Hedgehog
@@ -894,6 +964,13 @@ export class Battle {
     this.time += dt;
     for (const b of this.bodies) { b.px = b.x; b.py = b.y; }
     for (const p of this.projs) { p.px = p.x; p.py = p.y; }
+    if (this.brushOn) for (const b of this.bodies) {
+      // Who is hidden this step: in brush and not revealed (on top of buried mines and cloaked Shades).
+      if (!b.alive) continue;
+      const cover = this.inBrush(b);
+      b.hidden = b.stealth || (cover && this.time >= b.reveal);
+      if (b.ambush && !cover) b.ambush = false;
+    }
     if (this.banners.length) this.auras();
     // Update in a fresh shuffled order every step so neither side gains from acting first or last.
     const order = this.order;
@@ -912,7 +989,7 @@ export class Battle {
       b.blinkCd -= dt;
       b.parryCd -= dt;
       b.aux -= dt;
-      if (b.cloak > 0) { b.cloak -= dt; if (b.cloak <= 0) b.hidden = false; }
+      if (b.cloak > 0) { b.cloak -= dt; if (b.cloak <= 0) { b.stealth = false; b.hidden = false; } }
       if (b.slow > 0) b.slow -= dt;
       if (b.buff > 0) b.buff -= dt;
       if (b.rally > 0) b.rally -= dt;
@@ -922,10 +999,16 @@ export class Battle {
       let want: [number, number] = [0, 0];
       if (b.frozen > 0) b.frozen -= dt;
       else if (b.stun > 0) b.stun -= dt;
-      else {
+      else if (!(b.ambush && this.lieLow(b))) {
         this.goalOn = false;
+        const cd0 = b.cd;
         want = this.act(b, dt);
-        if (this.nav && !b.structure && !b.flying && !b.burrowed && b.alive) want = this.steer(b, want);
+        // An attack or a cast (anything that starts its cooldown) gives away a body in brush.
+        if (this.brushOn && b.cd > cd0 && b.cd > 0.35) this.expose(b);
+        if (this.nav && !b.structure && !b.flying && !b.burrowed && b.alive) {
+          want = this.steer(b, want);
+          if (this.roadsOn && this.nav.onRoad(b.x, b.y)) want = [want[0] * ROAD_SPEED, want[1] * ROAD_SPEED];
+        }
       }
       if (b.structure) { b.vx = 0; b.vy = 0; continue; }
       if (b.slow > 0) want = [want[0] * 0.5, want[1] * 0.5];
@@ -1109,7 +1192,7 @@ export class Battle {
       for (const e of this.bodies) {
         if (!e.alive || e.side === b.side || e.structure || e.flying || e.burrowed) continue;
         if (this.dist(b, e) <= 0.62 + e.radius && this.sees(b, e)) {
-          b.state = "fuse"; b.t = 0; b.hidden = false;
+          b.state = "fuse"; b.t = 0; b.stealth = false; b.hidden = false;
           this.emit({ t: "fuse", id: b.id, x: b.x, y: b.y });
           break;
         }
@@ -1154,7 +1237,7 @@ export class Battle {
       const reach = b.radius + b.range + (spin ? 0.4 : 0.25);
       this.emit({ t: "slash", id: b.id, x: b.x, y: b.y, a, r: reach, side: b.side, spin });
       for (const e of this.enemiesNear(b.side, b.x, b.y, reach)) {
-        if ((spin || Math.abs(angleDiff(a, Math.atan2(e.y - b.y, e.x - b.x))) <= 1.0) && !e.hidden) this.damage(e, b.dmg, b, b.side, false, b);
+        if ((spin || Math.abs(angleDiff(a, Math.atan2(e.y - b.y, e.x - b.x))) <= 1.0) && !e.stealth) this.damage(e, b.dmg, b, b.side, false, b);
       }
     }
     // Surround: each sword takes its own angle around the target, relative to where the pack comes from.
@@ -1326,7 +1409,7 @@ export class Battle {
     }
     if (!t) return [0, 0];
     const d = this.dist(b, t);
-    if (d < 2.6 && b.blinkCd <= 0) {
+    if (d < 2.6 && b.blinkCd <= 0 && !(this.brushOn && this.veiled(b, t))) {
       // Blink to the far side of the target and stab.
       const back = -fwd(t.side);
       const x0 = b.x, y0 = b.y;
@@ -1337,7 +1420,7 @@ export class Battle {
       b.vx = 0; b.vy = 0;
       b.face = Math.atan2(t.y - b.y, t.x - b.x);
       this.emit({ t: "blink", id: b.id, x0, y0, x: b.x, y: b.y, side: b.side });
-      b.cloak = 0; b.hidden = false;
+      b.cloak = 0; b.stealth = false; b.hidden = false;
       b.blinkCd = 5;
       b.state = "fight";
       b.cd = b.cooldown;
@@ -1363,7 +1446,7 @@ export class Battle {
       const s = (ROLE_BACKLINE.has(e.kind) ? backline : 0) + (1 - e.hp / e.maxHp) * 2 + (e.maxHp < 150 ? 1 : 0) - this.dist(b, e) * distW;
       if (s > bs) { bs = s; best = e; }
     }
-    return best;
+    return best ?? this.lurker(b);
   }
 
   /** Aims, charges in a straight line through everything, wheels round in an arc, aims again. */
@@ -1372,7 +1455,7 @@ export class Battle {
       const t = this.nearestEnemy(b, { taunt: false });
       if (!t) return [0, 0];
       const a = Math.atan2(t.y - b.y, t.x - b.x);
-      if (this.nav && this.chargeBlocked(b, t)) {
+      if (this.nav && (this.chargeBlocked(b, t) || (this.brushOn && this.veiled(b, t)))) {
         // No straight run at anyone: trot round the blocks to where there is one.
         if (hyp(b.vx, b.vy) > 0.3) b.face = turnToward(b.face, Math.atan2(b.vy, b.vx), 5 * dt);
         b.t = Math.min(b.t, 0.2);
@@ -1611,7 +1694,7 @@ export class Battle {
         const s = (AIR_HITTERS.has(e.kind) ? -2.5 : 0) + (ROLE_BACKLINE.has(e.kind) ? 1.5 : 0) + (1 - e.hp / e.maxHp) * 1.5 + (e.maxHp < 160 ? 0.8 : 0) - this.dist(b, e) * 0.25;
         if (s > bs) { bs = s; best = e; }
       }
-      t = best;
+      t = best ?? this.lurker(b);
       b.target = t ? t.id : -1;
     }
     if (!t) { b.z = Math.min(1.2, b.z + dt * 2); return [0, 0]; }
@@ -1619,7 +1702,7 @@ export class Battle {
       b.z = Math.min(1.2, b.z + dt * 2);
       const a = Math.atan2(b.y - t.y, b.x - t.x) + b.hand * 0.9;
       const v = this.seek(b, t.x + Math.cos(a) * 1.6, t.y + Math.sin(a) * 1.6, 1, 0.3);
-      if (b.cd <= 0 && b.t > 0.6) {
+      if (b.cd <= 0 && b.t > 0.6 && !(this.brushOn && this.veiled(b, t))) {
         b.state = "dive"; b.t = 0;
         this.emit({ t: "dive", id: b.id, x: b.x, y: b.y, target: t.id, tx: t.x, ty: t.y, side: b.side });
       }
@@ -1692,7 +1775,7 @@ export class Battle {
         const s = e.hp - this.dist(b, e) * 45;
         if (s > bs) { bs = s; best = e; }
       }
-      t = best;
+      t = best ?? this.lurker(b);
       b.target = t ? t.id : -1;
     }
     if (!t) return [0, 0];
@@ -1779,7 +1862,7 @@ export class Battle {
       return [0, 0];
     }
     if (threat && b.aux <= 0 && this.owned(b, "turret") < (b.rank >= 4 ? 2 : 1)) {
-      const ec = this.enemyCentroid(b)!;
+      const ec = this.enemyCentroid(b) ?? threat;
       const dx = ec.x - b.x, dy = ec.y - b.y, d = hyp(dx, dy) || 1;
       b.ax = clamp(b.x + (dx / d) * 0.7, 0.4, W - 0.4);
       b.ay = clamp(b.y + (dy / d) * 0.7, 0.4, H - 0.4);
@@ -1819,7 +1902,7 @@ export class Battle {
         const s = (isMeleeKind(e.kind) ? 2.5 : 0) + (e.kind === "decoy" ? 1 : 0) - this.dist(b, e) * 0.45;
         if (s > bs) { bs = s; best = e; }
       }
-      t = best;
+      t = best ?? this.lurker(b);
       b.target = t ? t.id : -1;
     }
     if (!t) return [0, 0];
@@ -1889,7 +1972,7 @@ export class Battle {
         const s = n * 3 - this.dist(b, e) * 0.35;
         if (s > bs) { bs = s; best = e; }
       }
-      t = best;
+      t = best ?? this.lurker(b);
       b.target = t ? t.id : -1;
     }
     if (!t) return [0, 0];
@@ -2016,6 +2099,7 @@ export class Battle {
       if (chosen.length) {
         b.aux = HOOK_CD;
         b.state = "cast";
+        this.expose(b);
         b.hits = chosen.map((e) => e.id);
         const far = Math.max(...chosen.map((e) => this.dist(b, e)));
         b.budget = this.time + far / HOOK_SPEED;
@@ -2144,6 +2228,7 @@ export class Battle {
       vx, vy, x0: b.x, y0: b.y, tx: 0, ty: 0, target: -1, dmg: b.dmg, t: 0, life: 2, z: 0, hits: [], owner: b.id, rank: b.rank, alive: true, fx: "", over: false,
     };
     p.px = p.x; p.py = p.y;
+    if (this.brushOn) this.expose(b);
     this.projs.push(p);
     this.emit({ t: "shot", id: b.id, kind, x: p.x, y: p.y });
     return p;

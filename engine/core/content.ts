@@ -2,8 +2,11 @@
 // gauntlet.ts; the UI only uses what is exported here and there.
 import type { AIProfile } from "./ai";
 import { supplyFor, type Mods, type Obstacle, type UnitKind } from "./defs";
+import type { ArenaMark } from "./layout";
 import type { Match, MatchConfig, StartPiece } from "./match";
 import { hashSeed } from "./rng";
+import type { SetId } from "./sets";
+import type { Block } from "./terrain";
 
 export type Objective =
   | { kind: "win" }
@@ -28,6 +31,12 @@ export interface LevelDef {
   supply?: [number, number];
   start?: [StartPiece[] | undefined, StartPiece[] | undefined];
   obstacles?: Obstacle[];
+  /** The set piece the level is fought on (engine/core/sets.ts), if any; `terrain` and `marks` are that set's. */
+  set?: SetId;
+  /** The set's blocks (walls, buildings, cover, water, roads, brush): what levelConfig passes as MatchConfig.terrain. */
+  terrain?: Block[];
+  /** The set's decoration (gates, bridges, trees, lamps...) for a renderer; the sim never reads it. */
+  marks?: ArenaMark[];
   mods?: [Mods | undefined, Mods | undefined];
   noReroll?: boolean;
   maxRounds?: number;
@@ -82,6 +91,7 @@ export function levelConfig(level: LevelDef, attempt = 0): MatchConfig {
     supply: level.supply,
     start: level.start,
     obstacles: level.obstacles,
+    terrain: level.terrain,
     mods: level.mods,
     noReroll: level.noReroll,
     maxRounds: level.maxRounds,

@@ -1,15 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_AI, TACTICS, applyPlan, draftArmy, planTurn } from "../engine/core/ai";
 import {
-  ARENAS, ARENA_DAILY_CAP, ARENA_LOOKS, ARENA_PROMOTION_COINS, ARENA_WIN_COINS, KEEPS, LEAGUES, TROPHY_LOSS, TROPHY_WIN,
+  ARENAS, ARENA_DAILY_CAP, ARENA_LOOKS, ARENA_PROMOTION_COINS, ARENA_RULES, ARENA_WIN_COINS, LEAGUES, LOOKS_BY_KIND, TROPHY_LOSS, TROPHY_WIN,
   arenaById, arenaCoins, arenaConfig, arenaDifficulty, arenaFoeLevel, arenaFoeRoster, arenaFor, arenaOpponent, arenaUnlocked,
-  blankArena, finishArena, leagueOf, leagueProgress, nextLeague, normalizeArena, trophyChange, zoneFree,
+  blankArena, chokepoint, finishArena, leagueOf, leagueProgress, nextLeague, normalizeArena, roadJoins, terrainIssues, trophyChange, zoneFree,
 } from "../engine/core/arena";
-import { H, START_HP, UNITS, UNIT_KINDS, W, inZone, type Side } from "../engine/core/defs";
+import { H, START_HP, UNIT_KINDS, W, inZone, type Side } from "../engine/core/defs";
 import { Match } from "../engine/core/match";
-import { Nav } from "../engine/core/nav";
 import { footprint, freeSpotIn, spotBlocked } from "../engine/core/placement";
-import { blockBottom, blockLeft, blockRight, blockTop, circleHitsBlock } from "../engine/core/terrain";
+import { blockBottom, blockTop, isZone, type Block } from "../engine/core/terrain";
 import { arenaLadder, arenaLoadout, arenaRoster, awardArena, nextArenaMatch, setArenaLadder, settleArena } from "../engine/progression/troops";
 import { wallet } from "../engine/economy/wallet";
 import { load, resetSave } from "../engine/save";
@@ -25,47 +24,52 @@ describe("arenas", () => {
       expect(a.blurb.length).toBeGreaterThan(10);
       expect(LEAGUES[a.league - 1].arenas).toContain(a.id);
       expect(new Set(a.blocks.map((b) => b.id)).size).toBe(a.blocks.length);
-      for (const b of a.blocks) expect(ARENA_LOOKS).toContain(b.look);
+      for (const b of a.blocks) {
+        expect(ARENA_LOOKS).toContain(b.look);
+        expect(LOOKS_BY_KIND[b.kind] as readonly string[]).toContain(b.look);
+      }
+      expect(a.blocks.some((b) => isZone(b.kind))).toBe(true);
     }
     expect(arenaById("nope")).toBeUndefined();
   });
 
   for (const a of ARENAS) {
     describe(a.name, () => {
-      it("is the same after a half turn about the board centre", () => {
-        for (const b of a.blocks) {
-          const twin = a.blocks.find((o) => o.kind === b.kind && Math.abs(o.x - (W - b.x)) < 1e-9 && Math.abs(o.y - (H - b.y)) < 1e-9 && Math.abs(o.w - b.w) < 1e-9 && Math.abs(o.h - b.h) < 1e-9 && (o.hp ?? 0) === (b.hp ?? 0));
-          expect(twin, `block ${b.id} has no mirror`).toBeTruthy();
+      it("is a sound, designed place: legal blocks, symmetric, a road joining the sides, cover and brush each side, no single chokepoint", () => {
+        // terrainIssues is the whole rule book (engine/core/arena.ts): in bounds, known looks, blocking blocks clear of
+        // each other and the keeps, zones clear of blocking blocks, the same after a half turn, 14-30 blocks, 75% of each
+        // deploy zone free, a road chain from zone to zone, 2+ cover and 1+ brush per side, the largest unit can reach
+        // every free spot breaking nothing, and no gap under 1.2 wide is the only way across.
+        expect(terrainIssues(a.blocks, ARENA_RULES)).toEqual([]);
+        expect(a.blocks.length).toBeGreaterThanOrEqual(14);
+        expect(a.blocks.length).toBeLessThanOrEqual(30);
+        expect(roadJoins(a.blocks)).toBe(true);
+        expect(chokepoint(a.blocks)).toBeNull();
+        expect(a.idea.length).toBeGreaterThan(60);
+      });
+      it("has cover and brush on each side, and they are where a side can use them", () => {
+        for (const side of [0, 1] as Side[]) {
+          const mine = (b: Block) => (side === 0 ? b.y > H / 2 : b.y < H / 2);
+          expect(a.blocks.filter((b) => b.kind === "cover" && mine(b)).length, `side ${side} cover`).toBeGreaterThanOrEqual(2);
+          const brush = a.blocks.filter((b) => b.kind === "brush" && (side === 0 ? blockBottom(b) > H / 2 : blockTop(b) < H / 2));
+          expect(brush.length, `side ${side} brush`).toBeGreaterThanOrEqual(1);
+          // An ambush position: brush big enough to hold a unit, reaching into the side's deploy zone or the middle ground.
+          expect(brush.some((b) => b.w >= 0.7 && b.h >= 0.7)).toBe(true);
         }
       });
-      it("is in bounds, on the nav grid, clear of the keeps and without overlapping blocks", () => {
-        for (const b of a.blocks) {
-          expect(blockLeft(b)).toBeGreaterThanOrEqual(0);
-          expect(blockRight(b)).toBeLessThanOrEqual(W);
-          expect(blockTop(b)).toBeGreaterThanOrEqual(0);
-          expect(blockBottom(b)).toBeLessThanOrEqual(H);
-          expect(b.w).toBeGreaterThanOrEqual(0.39);
-          expect(b.h).toBeGreaterThanOrEqual(0.39);
-          for (const k of KEEPS) expect(circleHitsBlock(b, k.x, k.y, k.r + 0.3)).toBe(false);
-          for (const o of a.blocks) {
-            if (o.id <= b.id) continue;
-            const apart = blockRight(b) <= blockLeft(o) + 1e-9 || blockRight(o) <= blockLeft(b) + 1e-9 || blockBottom(b) <= blockTop(o) + 1e-9 || blockBottom(o) <= blockTop(b) + 1e-9;
-            expect(apart, `blocks ${b.id} and ${o.id} overlap`).toBe(true);
-          }
+      it("keeps its marks decorative and in range", () => {
+        for (const m of a.marks) {
+          expect(["gate", "bridge", "tree", "lamp", "banner", "door", "signpost"]).toContain(m.look);
+          expect(m.x).toBeGreaterThanOrEqual(-1); expect(m.x).toBeLessThanOrEqual(10);
+          expect(m.y).toBeGreaterThanOrEqual(-1); expect(m.y).toBeLessThanOrEqual(15);
+          const twin = a.marks.find((o) => o.look === m.look && Math.abs(o.x - (W - m.x)) < 1e-9 && Math.abs(o.y - (H - m.y)) < 1e-9);
+          expect(twin, `${m.look} at ${m.x}, ${m.y} has no mirror`).toBeTruthy();
         }
+        expect(a.marks.length).toBeGreaterThanOrEqual(6);
       });
-      it("leaves at least 60% of each deploy zone free", () => {
-        expect(zoneFree(a.blocks, 0)).toBeGreaterThanOrEqual(0.6);
+      it("leaves room to deploy: at least 75% of each zone free, the same on both sides", () => {
+        expect(zoneFree(a.blocks, 0)).toBeGreaterThanOrEqual(0.75);
         expect(zoneFree(a.blocks, 1)).toBeCloseTo(zoneFree(a.blocks, 0), 6);
-      });
-      it("has a ground route for the largest unit between any two free spots, breaking nothing", () => {
-        const nav = new Nav(a.blocks);
-        const r = UNITS.golem.radius;
-        const spots: [number, number][] = [];
-        for (let y = 0.75; y < H; y += 0.5) for (let x = 0.75; x < W; x += 0.5) if (!nav.hitsGround(x, y, r + 0.13)) spots.push([x, y]);
-        expect(spots.length).toBeGreaterThan(200);
-        const [ax, ay] = spots.find(([, y]) => y > 12)!;
-        for (const [x, y] of spots) expect(nav.reachable(ax, ay, x, y, r), `${a.id}: (${x}, ${y}) cut off from (${ax}, ${ay})`).toBe(true);
       });
       it("lets an AI place a full army on each side with nothing on a block", () => {
         for (const side of [0, 1] as Side[]) for (const tactic of ["balanced", "fortress", "blitz"] as const) {
@@ -77,8 +81,46 @@ describe("arenas", () => {
           }
         }
       });
+      it("has room for twelve of the largest unit in each deploy zone", () => {
+        for (const side of [0, 1] as Side[]) {
+          const placed: { x: number; y: number }[] = [];
+          for (let d = 0.6; d < 5.9 && placed.length < 12; d += 0.6) for (let lx = 0.7; lx < W - 0.6 && placed.length < 12; lx += 0.6) {
+            const x = side === 0 ? lx : W - lx, y = side === 0 ? H - 0.5 - d : 0.5 + d;
+            if (spotBlocked(a.blocks, "golem", x, y) || placed.some((q) => Math.hypot(q.x - x, q.y - y) < 1.15)) continue;
+            placed.push({ x, y });
+          }
+          expect(placed.length, `${a.id} side ${side}`).toBe(12);
+        }
+      });
     });
   }
+
+  it("the rule book catches a bad map", () => {
+    const good = arenaById("twin-gates")!.blocks;
+    expect(terrainIssues(good)).toEqual([]);
+    const wall = (id: number, x0: number, y0: number, x1: number, y1: number): Block => ({ id, kind: "wall", look: "wall", x: (x0 + x1) / 2, y: (y0 + y1) / 2, w: x1 - x0, h: y1 - y0 });
+    // One 1.0 gate in a wall right across: a single chokepoint.
+    const gate = [wall(1, 0, 6.75, 4, 7.25), wall(2, 5, 6.75, 9, 7.25)];
+    expect(chokepoint(gate)).not.toBeNull();
+    // Two such gates: a way round each.
+    expect(chokepoint([wall(1, 0, 6.75, 1.5, 7.25), wall(2, 2.5, 6.75, 6.5, 7.25), wall(3, 7.5, 6.75, 9, 7.25)])).toBeNull();
+    // One gate, but wide: nothing under 1.2 to squeeze through.
+    expect(chokepoint([wall(1, 0, 6.75, 3, 7.25), wall(2, 6, 6.75, 9, 7.25)])).toBeNull();
+    // A barricaded second way counts (it can be broken).
+    expect(chokepoint([...gate.slice(0, 1), { ...wall(2, 5, 6.75, 7, 7.25) }, { id: 3, kind: "barricade", look: "barricade", x: 8, y: 7, w: 2, h: 0.5 }])).toBeNull();
+    const issues = terrainIssues(gate);
+    expect(issues.some((i) => i.includes("chokepoint"))).toBe(true);
+    expect(issues.some((i) => i.includes("no road"))).toBe(true);
+    expect(issues.some((i) => i.includes("cover"))).toBe(true);
+    expect(issues.some((i) => i.includes("brush"))).toBe(true);
+    expect(issues.some((i) => i.includes("blocks (want"))).toBe(true);
+    // A road laid over a wall, a block with no mirror, a road that stops short.
+    const over = [...good, { id: 99, kind: "road" as const, look: "road", x: 4.5, y: 7, w: 1, h: 0.5 }];
+    expect(terrainIssues(over).some((i) => i.includes("overlaps"))).toBe(true);
+    expect(terrainIssues([...good, wall(98, 0.2, 2, 0.7, 2.5)]).some((i) => i.includes("no mirror"))).toBe(true);
+    expect(roadJoins(good.filter((b) => b.kind !== "road"))).toBe(false);
+    expect(roadJoins([{ id: 1, kind: "road", look: "road", x: 4.5, y: 4, w: 1, h: 4 }])).toBe(false);
+  });
 
   it("a whole AI-vs-AI match on an arena keeps every piece off the blocks, every round", () => {
     const a = arenaById("old-village")!;

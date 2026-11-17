@@ -161,7 +161,7 @@ describe("settling a match", () => {
     const edit = (f: (r: MatchRecord) => void) => { const r: MatchRecord = JSON.parse(JSON.stringify(lost)); f(r); return r; };
     const k = (r: MatchRecord) => (r.kinds.includes("golem") ? r.kinds.indexOf("golem") : r.kinds.push("golem") - 1);
     const cheats: [string, unknown][] = [
-      ["gold", edit((r) => { for (let i = 0; i < 3; i++) r.rounds[0][1].push([900 + i, k(r), 2 + i * 2, 12, 3]); })],
+      ["gold", edit((r) => { for (let i = 0; i < 3; i++) r.rounds[0][1].push([900 + i, k(r), 2.5 + i * 1.25, 12, 3]); })], // free ground on every Bronze arena
       ["supply", edit((r) => { for (let i = 0; i < 8; i++) r.rounds[0][1].push([900 + i, k(r), 1 + i, 12, 1]); })],
       ["zone", edit((r) => { r.rounds[0][1].push([900, k(r), 4.5, 2, 1]); })],
       ["unfinished", edit((r) => { r.rounds.length = 1; })],
@@ -232,8 +232,8 @@ describe("settling a match", () => {
 
 describe("what a replay costs", () => {
   it("re-fights a full 15-round match in well under a second", () => {
-    // Seed 11 on Twin Gates runs 15 rounds with both sides fielding full boards by the end.
-    const a = arenaConfig(blankArena() as ArenaSave, { seed: 11, arena: "twin-gates" });
+    // Seed 2 on Twin Gates runs 16 rounds with both sides fielding full boards by the end.
+    const a = arenaConfig(blankArena() as ArenaSave, { seed: 2, arena: "twin-gates" });
     const m = new Match(a.cfg);
     while (m.phase !== "over") {
       applyPlan(m, 1, planTurn(m, 1, a.foe.ai));

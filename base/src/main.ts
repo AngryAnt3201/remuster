@@ -34,6 +34,7 @@ import { underLevelledHint } from "./ui/army";
 import { onlineArenaFinish, onlineArenaForfeit, onlineArenaMatch, startOnline, trackMatchEnd, trackScreen } from "./online";
 import { arenaLadder, settleArena, awardArena, awardCampaign, awardDaily, awardGauntletRival, awardSkirmish, nextArenaMatch, settleLegacyCoins, withLevels } from "@engine/progression/troops";
 import { LEAGUES, arenaById, arenaUnlocked, leagueProgress, trophyChange, type ArenaDef } from "@engine/core/arena";
+import { isZone } from "@engine/core/terrain";
 import { ARENA_BACKDROP, TERRAIN } from "./game/terrain";
 import { foeLevelForAct } from "@engine/progression/economy";
 import { attachReward, barracksScreen } from "./ui/barracks";
@@ -362,6 +363,7 @@ function playLevel(l: LevelDef, attempt = 0) {
     mode: "campaign",
     title: l.name,
     arena: l.act,
+    marks: l.marks, // [arena] the level's set piece: its blocks are cfg.terrain
     hint: l.id === 1 && !load().campaign[1],
     onEnd: (m) => {
       const n = starsFor(l, m);
@@ -539,7 +541,7 @@ function arenaThumb(a: ArenaDef, px = 54) {
   c.style.width = `${9 * k}px`; c.style.height = `${14 * k}px`;
   const g = c.getContext("2d")!;
   g.scale(k * dpr, k * dpr);
-  const M = TERRAIN.mat, zone = (b: { kind: string }) => b.kind === "road" || b.kind === "brush";
+  const M = TERRAIN.mat, zone = (b: { kind: import("@engine/core/terrain").BlockKind }) => isZone(b.kind);
   for (const b of [...a.blocks.filter(zone), ...a.blocks.filter((b) => !zone(b))]) {
     const k = b.kind as string;
     g.fillStyle = k === "water" ? TERRAIN.water.shallow : k === "road" ? TERRAIN.road.fill : k === "brush" ? TERRAIN.brush.b : k === "building" ? M.roof : k === "wall" ? M.stone : M.timber;

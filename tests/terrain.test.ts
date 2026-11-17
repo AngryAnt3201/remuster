@@ -119,7 +119,7 @@ describe("battles on every arena", () => {
       for (const seed of [ai + 1, ai + 13, ai + 25]) {
         const b = new Battle(army(seed), { seed: seed * 7, terrain: a.blocks, events: true });
         const was = new Map<number, { x: number; y: number; ground: boolean }>();
-        const live = () => b.blocks.filter((k) => k.alive);
+        const live = () => b.blocks.filter((k) => k.alive && blocksGround(k.kind)); // roads and brush are ground, not blocks
         let bad = "";
         const fail = (what: string) => { bad ||= `${a.id} seed ${seed} t ${b.time.toFixed(2)}: ${what}`; };
         const check = (events: BattleEvent[]) => {
@@ -233,7 +233,7 @@ describe("navigation", () => {
     let routes = 0;
     for (const a of ARENAS) {
       const nav = new Nav(a.blocks);
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0; i < 20; i++) {
         const x0 = rng.range(0.8, W - 0.8), y0 = rng.range(8, 13), x1 = rng.range(0.8, W - 0.8), y1 = rng.range(1, 6);
         const rad = [0.15, 0.25, 0.36, 0.55][i % 4], pen = i % 3 === 0 ? 1 / 32 : 0;
         if (nav.hitsGround(x0, y0, rad + 0.2) || nav.hitsGround(x1, y1, rad + 0.2)) continue;
