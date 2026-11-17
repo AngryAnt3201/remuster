@@ -7,7 +7,7 @@ import type { WorldStyle } from "@base/game/terrain";
 export const TERRAIN: WorldStyle = {
   ink: "#0b0d0e", inkW: 0,
   light: [-0.55, 0.3, 0.62],
-  dark: 0.46, tint: "#141a22", bands: 0,
+  dark: 0.56, tint: "#1a222c", bands: 0,
   shadow: "rgba(4,6,8,0.5)",
   mat: {
     stone: "#8a8d88", stoneDark: "#5a5d5a", plaster: "#9a917f", plaster2: "#84806f", timber: "#6b5a44", timberDark: "#3a3229",
@@ -30,7 +30,7 @@ export const TERRAIN: WorldStyle = {
   scenery: { trees: 6, rocks: 5, houses: 4, lamps: 2 },
   tex: { stone: "concrete", stoneDark: "concrete", plaster: "brick", plaster2: "stucco", timber: "plank", roof: "plate", roof2: "plate", metal: "plate", rock: "concrete", sack: "camo", cloth: "camo" },
   texK: 0.6, texSize: 1.1, ao: 0.6,
-  post: { saturation: 0.55, contrast: 0.35, grade: [["#6f8794", 0.22, "soft-light"], ["#f0d9a8", 0.1, "overlay"]], bloom: 0.35, vignette: 0.6, grain: 0.22, fog: ["#8f968f", 0.42] },
+  post: { saturation: 0.72, contrast: 0.3, grade: [["#6f8794", 0.2, "soft-light"], ["#f0d9a8", 0.08, "overlay"]], bloom: 0.3, vignette: 0.42, grain: 0.085, fog: ["#8f968f", 0.26] },
 };
 
 /** Which of the game's battlefield backdrops (public/arenas/act<N>) each Arena-mode arena is fought on. */

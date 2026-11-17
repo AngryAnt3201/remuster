@@ -5,7 +5,7 @@ import { LOOKS } from "../../../artkit/looks";
 
 export const STYLE: Style = {
   ...DEFAULT_STYLE,
-  ...LOOKS.real(0.46, 0.55, 0.32),
+  ...LOOKS.real(0.54, 0.55, 0.3),
   ink: "#0b0d0e",
   shadowTint: "#2a3848", shadowAmount: 0.3,
   light: [-0.5, 0.35, 0.9],

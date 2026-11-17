@@ -77,7 +77,7 @@ one large prop and by its ring.
 | ballista | **AT Gun** | a long-barrelled gun on a split trail: the line-piercer |
 | hive | **Drone Bay** | a container whose doors open to launch crawlers |
 | storm | **Arc Tech** | a pack with a tall crackling coil mast; arcs on the blow |
-| golem | **Mammoth** | the heavy tank, the biggest body, two tankettes carried on its deck |
+| golem | **Mammoth** | the heavy tank, the biggest body; it leaves two tankettes when knocked out |
 | sapper | **Mole** | entrenching tool, headlamp, tunnel kit |
 | harrier | **Kite** | a strike drone, wide team-coloured wings |
 | banner | **Radioman** | a tall radio mast with a team pennant |

@@ -183,8 +183,8 @@ function scene(s: Scene): ArenaDef {
   };
 }
 
-const dust = (c: string, n = 14): ArenaDef["ambient"] => ({ shade: 0.25, gust: rgba(c, 0.35), motes: [{ kind: "drift", n, colors: [c], size: 2.2 }], butterflies: 0, flock: null });
-const fall = (c: string[], n: number, size = 2.4): ArenaDef["ambient"] => ({ shade: 0.3, gust: null, motes: [{ kind: "fall", n, colors: c, size }], butterflies: 0, flock: null });
+const dust = (c: string, n = 14): ArenaDef["ambient"] => ({ shade: 0.25, gust: rgba(c, 0.35), motes: [{ kind: "drift", n, colors: [c], size: 0.028 }], butterflies: 0, flock: null });
+const fall = (c: string[], n: number, size = 0.03): ArenaDef["ambient"] => ({ shade: 0.3, gust: null, motes: [{ kind: "fall", n, colors: c, size }], butterflies: 0, flock: null });
 
 export const ARENAS: ArenaArt = {
   team: { main: "#8a8d88", dark: "#5a5d5a", light: "#c9cdc8" },
@@ -194,15 +194,15 @@ export const ARENAS: ArenaArt = {
     scene({ name: "Dry Ford", obstacle: "boulders", surface: "gravel", base: "#6e695e", band: "riverbed", paint: "#d0c8ac", craters: 2, puddles: 3, tracks: 4, cracks: 4, haze: "#96958c", ambient: dust("#a39d8c") }),
     scene({ name: "Block Nine", obstacle: "rubble", surface: "slab", base: "#6a6b68", band: "scorch", paint: "#cfc9b6", craters: 6, puddles: 2, tracks: 2, cracks: 46, haze: "#8a8c8a", ambient: fall(["#5a5a58", "#8a8a86"], 22),
       extra(p) { p.scatter(X0, Y0, GW, GH, 900, (x, y, i) => p.round(x, y, p.rand(0.06, 0.3), p.rand(0.05, 0.22), 0.02, shade("#7a7a76", i % 2 ? -0.3 : 0.15)), (x, y) => x < -0.3 || x > W + 0.3 || y < -0.3 || y > H + 0.3 || p.rand() < 0.2); } }),
-    scene({ name: "Whiteout Strip", obstacle: "drifts", surface: "snow", base: "#7b8084", band: "runway", paint: "#e9d27a", craters: 2, puddles: 0, tracks: 5, cracks: 18, haze: "#c3cace", ambient: fall(["#ffffff", "#dfe8ee"], 46, 2.6) }),
+    scene({ name: "Whiteout Strip", obstacle: "drifts", surface: "snow", base: "#7b8084", band: "runway", paint: "#e9d27a", craters: 2, puddles: 0, tracks: 5, cracks: 18, haze: "#c3cace", ambient: fall(["#ffffff", "#dfe8ee"], 46, 0.034) }),
     scene({ name: "Saddle Pass", obstacle: "boulders", surface: "gravel", base: "#66625c", band: "scree", paint: "#cfc8b0", craters: 3, puddles: 1, tracks: 3, cracks: 8, haze: "#9a9c9c", ambient: dust("#a8a8a2", 18) }),
-    scene({ name: "Cracking Plant", obstacle: "drums", surface: "plate", base: "#575b5d", band: "pipes", paint: "#e0b23a", craters: 2, puddles: 5, tracks: 2, cracks: 4, haze: "#8c8a84", ambient: { shade: 0.3, gust: null, motes: [{ kind: "rise", n: 16, colors: ["#ffb060", "#ff7a2a"], size: 2 }], butterflies: 0, flock: null },
+    scene({ name: "Cracking Plant", obstacle: "drums", surface: "plate", base: "#575b5d", band: "pipes", paint: "#e0b23a", craters: 2, puddles: 5, tracks: 2, cracks: 4, haze: "#8c8a84", ambient: { shade: 0.3, gust: null, motes: [{ kind: "rise", n: 16, colors: ["#ffb060", "#ff7a2a"], size: 0.028 }], butterflies: 0, flock: null },
       extra(p) { for (let i = 0; i < 26; i++) p.glow(p.rand(X0, X0 + GW), p.rand(Y0, Y0 + GH), p.rand(0.5, 1.6), "#0c0d0e", 0.5, "source-over"); } }),
     scene({ name: "Crest Road", obstacle: "barriers", surface: "slab", base: "#74787a", band: "spillway", paint: "#d8d4c4", craters: 1, puddles: 6, tracks: 2, cracks: 22, haze: "#a0a8ac", ambient: dust("#b4bcc0", 10),
       extra(p) { for (let y = -1; y < H + 1; y += 4.66) for (const x of [1.5, 4.5, 7.5]) { p.rect(x - 0.35, y - 0.12, 0.7, 0.24, "#2a2d2e"); for (let k = 0; k < 6; k++) p.line([[x - 0.3 + k * 0.12, y - 0.1], [x - 0.3 + k * 0.12, y + 0.1]], "#6f7476", 0.03, 0.9); } } }),
     scene({ name: "Sump Flats", obstacle: "stumps", surface: "marsh", base: "#4c4f44", band: "duckboard", paint: "#c4c0a0", craters: 2, puddles: 12, tracks: 4, cracks: 0, haze: "#868c84", ambient: dust("#8f9688", 16),
       extra(p) { p.scatter(X0, Y0, GW, GH, 2400, (x, y, i) => p.line([[x, y], [x + p.rand(-0.05, 0.05), y - p.rand(0.1, 0.26)]], i % 3 ? "#6c7450" : "#8a8a5c", 0.025, 0.7), (x, y) => (x < -0.4 || x > W + 0.4 || y < -0.4 || y > H + 0.4) || p.rand() < 0.12); } }),
-    scene({ name: "Cinder Row", obstacle: "wrecks", surface: "ash", base: "#4a4846", band: "scorch", paint: "#c8bfa8", craters: 7, puddles: 0, tracks: 3, cracks: 16, haze: "#7c7570", ambient: { shade: 0.35, gust: null, motes: [{ kind: "rise", n: 22, colors: ["#ff9a3a", "#ff5a1a", "#ffd27a"], size: 2 }, { kind: "fall", n: 20, colors: ["#3a3836", "#8a8680"], size: 2.2 }], butterflies: 0, flock: null },
+    scene({ name: "Cinder Row", obstacle: "wrecks", surface: "ash", base: "#4a4846", band: "scorch", paint: "#c8bfa8", craters: 7, puddles: 0, tracks: 3, cracks: 16, haze: "#7c7570", ambient: { shade: 0.35, gust: null, motes: [{ kind: "rise", n: 22, colors: ["#ff9a3a", "#ff5a1a", "#ffd27a"], size: 0.028 }, { kind: "fall", n: 20, colors: ["#3a3836", "#8a8680"], size: 0.028 }], butterflies: 0, flock: null },
       extra(p) { for (let i = 0; i < 40; i++) { const x = p.rand(X0, X0 + GW), y = p.rand(Y0, Y0 + GH); if (x > -0.5 && x < W + 0.5 && y > -0.5 && y < H + 0.5) continue; p.glow(x, y, p.rand(0.2, 0.6), "#ff7a2a", 0.5, "lighter"); } } }),
   ],
 };
