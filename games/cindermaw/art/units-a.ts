@@ -2,7 +2,7 @@
 // the helmet stripe, the shoulder plates and one big piece of kit each.
 import { gripAim, type UnitDef } from "../../../artkit/rig";
 import { norm, type V3 } from "../../../artkit/toon3d";
-import { P, R, blade, burst, cape, chop, flash, glint, gun, gunHands, helmet, offHand, pack, pads, pike, poleHand, puff, rank, slab, slashArc, staff, sword, tanks, thrust, trim, trooper, zigzag } from "./parts";
+import { P, R, blade, burst, cape, chop, flash, glint, gun, gunHands, helmet, offHand, pack, pads, pike, poleHand, puff, rank, slab, slashArc, sword, tanks, thrust, trim, trooper, zigzag } from "./parts";
 
 const r = R;
 
@@ -208,8 +208,8 @@ export const duelist: UnitDef = {
     cape(m, h, p, P.coat, 0.5, 0.17);
     m.at(h.chest, () => m.decal(0.02, () => m.box([0.12, 0, 0.0], [0.08, 0.08, 0.34], P.team)));
     m.at(h.head, () => {
-      m.group(() => { m.cylinder([0, 0, r * 0.5], [0, 0, r * 0.9], r * 1.1, P.coat, r * 1.35, { segs: 10 }); m.cylinder([r * 0.6, 0, r * 0.45], [r * 0.6, 0, r * 0.52], r * 0.9, P.black, r * 0.9, { segs: 8 }); });
-      m.decal(0.03, () => m.cylinder([0, 0, r * 0.92], [0, 0, r * 0.98], r * 1.36, P.team, r * 1.36, { segs: 10 }));
+      m.group(() => { m.cylinder([0, 0, r * 0.5], [0, 0, r * 0.9], r * 1.0, P.coat, r * 1.15, { segs: 10 }); m.cylinder([r * 0.6, 0, r * 0.45], [r * 0.6, 0, r * 0.52], r * 0.9, P.black, r * 0.9, { segs: 8 }); });
+      m.decal(0.03, () => m.cylinder([0, 0, r * 0.7], [0, 0, r * 0.99], r * 1.17, P.team, r * 1.17, { segs: 10 }));
       m.decal(0.03, () => m.box([r * 0.95, 0, -r * 0.05], [r * 0.3, r * 1.3, r * 0.3], P.visor));
       rank(m, p, r * 1.2);
     });
@@ -347,4 +347,3 @@ export const lion: UnitDef = {
     if (rally && p.after) for (const a of [0.4, 2.0, 3.6, 5.2]) glint(m, h.pt([0.15 + Math.cos(a) * 0.4, 0.2 + Math.sin(a) * 0.4, 1.3]), 0.035, P.gloryInk);
   },
 };
-export { staff };

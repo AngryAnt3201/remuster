@@ -92,7 +92,7 @@ export function eyes(m: Model, r: number, eye: Material = P.visor, brow: Materia
 // ------------------------------------------------------------------------------------------------ kit (on the rig)
 /** Shoulder plates in the side's colour: the biggest thing the camera sees of a marine. */
 export function pads(m: Model, h: HumanoidRig, col: Material = P.team, k = 1, bulk = 1) {
-  m.at(h.chest, () => { for (const s of [1, -1]) m.with(() => { m.move(0, s * 0.22 * bulk, 0.17).rotX(s * 24); m.box([0, 0, 0], [0.2 * k, 0.17 * k, 0.07 * k], col); }); });
+  m.at(h.chest, () => { for (const s of [1, -1]) m.with(() => { m.move(0, s * 0.22 * bulk, 0.17).rotX(s * 24); m.box([0, 0, 0], [0.17 * k, 0.15 * k, 0.06 * k], col); }); });
 }
 /** A backpack with a side-colour lid. */
 export function pack(m: Model, h: HumanoidRig, col: Material = P.armorDk, lid: Material | null = P.team, s = 1) {

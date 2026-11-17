@@ -2,7 +2,7 @@
 // eyes, wings, plates and pustules.
 import { crawler, flyer, gripAim, quadruped, structure, type Pose, type UnitDef } from "../../../artkit/rig";
 import { Model, norm, type Material, type V3 } from "../../../artkit/toon3d";
-import { P, R, blade, boneBlade, burst, cape, chop, cleaver, eyes, fiend, flash, glint, gun, helmet, horns, offHand, pads, pike, poleHand, puff, rank, robe, skull, slashArc, staff, trim, trooper } from "./parts";
+import { P, R, blade, boneBlade, burst, cape, chop, cleaver, eyes, fiend, flash, glint, gun, helmet, horns, offHand, pads, pike, poleHand, puff, rank, robe, skull, slashArc, trim, trooper } from "./parts";
 
 const r = R;
 
@@ -398,4 +398,3 @@ export const hive: UnitDef = {
     });
   },
 };
-export { cape, staff };

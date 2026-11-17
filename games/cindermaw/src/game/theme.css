@@ -311,3 +311,16 @@ html, body { background: #120a08; }
 :root .gem-card.best { background: #5a3a1c; }
 :root { --gem: #b040b0; --gem-d: #ff9aff; }
 :root .td-thumb { filter: grayscale(1) sepia(0.9) hue-rotate(-28deg) saturate(1.6) brightness(0.75) contrast(1.25); }
+/* Holdout, Killbox, caches */
+:root .td-run { background: #2a1c14; }
+:root .td-unit { background: var(--cm-grit) 0 0 / 4px 4px, #3c3a38; border: 2px solid var(--k-ink); box-shadow: var(--cm-up-dk); color: var(--k-text); }
+:root .td-chip { background: #140000; border: 2px solid var(--k-ink); box-shadow: var(--cm-down); font-family: var(--display); color: var(--cm-led); }
+:root .td-hp { background: #140000; border: 0; box-shadow: var(--cm-down); }
+:root .td-hp-fill { background: var(--tide); }
+:root .tile { background: var(--cm-grit) 0 0 / 4px 4px, #a8160c; border: 2px solid var(--k-ink); box-shadow: inset 2px 2px 0 #ff6a3a, inset -2px -2px 0 #4a0806, 0 3px 0 var(--k-ink); }
+:root .tile.done { background: var(--cm-grit) 0 0 / 4px 4px, #4a6a1c; box-shadow: inset 2px 2px 0 #b8e03a, inset -2px -2px 0 #2c4a10, 0 3px 0 var(--k-ink); }
+:root .tile.locked { background: #24221f; box-shadow: var(--cm-down); color: #6a665e; }
+:root .ch-overlay { background: rgba(10, 4, 2, 0.8); }
+:root .ch-overlay.opening { background: #120a08; background-image: repeating-linear-gradient(0deg, rgba(255, 60, 20, 0.05) 0 2px, rgba(0, 0, 0, 0) 2px 4px); }
+:root .ch-art svg { filter: grayscale(1) sepia(1) hue-rotate(-18deg) saturate(1.9) contrast(1.35) brightness(0.85); }
+:root .ch-title, :root .ch-overlay h2 { font-family: var(--display); color: var(--cm-led); }
