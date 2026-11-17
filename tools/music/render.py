@@ -32,7 +32,7 @@ from mixer import Session  # noqa: E402
 # after its id, or is rendered with --style.
 GAMES = {"base": "fantasy", "brasswick": "steampunk", "dustline": "western", "neonhold": "synthwave",
          "pixelkeep": "chiptune", "inkfall": "ink"}
-STYLES = ["fantasy", "steampunk", "western", "synthwave", "chiptune", "ink"]
+STYLES = ["fantasy", "blackridge", "chiptune", "cindermaw", "synthwave", "ink"]
 KINDS = ["home", "battle", "boss", "win", "lose"]
 GAME_SR, GAME_LUFS = 44100, -16.0
 VIDEO_SR, VIDEO_LUFS = 48000, -14.0

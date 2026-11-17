@@ -13,10 +13,10 @@
  "loudness_lufs": -14.0,
  "stems": {
   "fantasy": "stem_fantasy.flac",
-  "steampunk": "stem_steampunk.flac",
-  "western": "stem_western.flac",
-  "synthwave": "stem_synthwave.flac",
+  "blackridge": "stem_blackridge.flac",
   "chiptune": "stem_chiptune.flac",
+  "cindermaw": "stem_cindermaw.flac",
+  "synthwave": "stem_synthwave.flac",
   "ink": "stem_ink.flac"
  },
  "sections": [
@@ -160,35 +160,15 @@
    "final": -12.6,
    "end": -12.1
   },
-  "steampunk": {
-   "intro": -19.7,
-   "A": -15.4,
-   "B": -15.3,
-   "A2": -13.7,
-   "B2": -12.1,
-   "break": -18.5,
-   "final": -12.8,
-   "end": -12.5
-  },
-  "western": {
-   "intro": -18.2,
-   "A": -14.0,
-   "B": -15.6,
-   "A2": -12.9,
-   "B2": -14.1,
-   "break": -17.8,
-   "final": -12.4,
-   "end": -12.8
-  },
-  "synthwave": {
-   "intro": -18.1,
-   "A": -15.4,
-   "B": -13.2,
-   "A2": -13.9,
-   "B2": -12.8,
-   "break": -15.6,
-   "final": -13.6,
-   "end": -12.7
+  "blackridge": {
+   "intro": -17.8,
+   "A": -15.3,
+   "B": -14.1,
+   "A2": -13.8,
+   "B2": -12.9,
+   "break": -16.2,
+   "final": -13.2,
+   "end": -12.2
   },
   "chiptune": {
    "intro": -18.3,
@@ -199,6 +179,26 @@
    "break": -15.4,
    "final": -13.6,
    "end": -13.2
+  },
+  "cindermaw": {
+   "intro": -16.6,
+   "A": -14.9,
+   "B": -13.4,
+   "A2": -14.2,
+   "B2": -13.0,
+   "break": -14.8,
+   "final": -13.6,
+   "end": -13.1
+  },
+  "synthwave": {
+   "intro": -18.1,
+   "A": -15.4,
+   "B": -13.2,
+   "A2": -13.9,
+   "B2": -12.8,
+   "break": -15.6,
+   "final": -13.6,
+   "end": -12.7
   },
   "ink": {
    "intro": -17.6,
