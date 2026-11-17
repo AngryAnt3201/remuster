@@ -65,6 +65,8 @@ export interface GameOpts {
   marks?: import("@engine/core/arena").ArenaMark[];
   /** [film] Both armies are already on the board as authored: nobody plans, the battle just starts. */
   scripted?: boolean;
+  /** [replay] Both boards exactly as recorded (ids, places, ranks): set before the first round, nobody plans. */
+  board?: Piece[];
   /** [film] A camera move: called every frame for the view (turn in radians, tilt from straight down, zoom). */
   camera?: () => { yaw: number; tilt?: number; zoom?: number };
   /** Line under the opening banner (default "vs <rival>"). */
@@ -119,6 +121,8 @@ export class GameScreen {
   constructor(host: HTMLElement, opts: GameOpts) {
     this.o = opts;
     this.match = new Match(opts.cfg);
+    if (opts.board) for (const sd of [0, 1] as const) this.match.sides[sd].pieces = opts.board.filter((p) => p.side === sd).map((p) => ({ ...p }));
+
     this.hpShown = [this.match.sides[0].hp, this.match.sides[1].hp];
     this.trail = [...this.hpShown];
     this.root = el("div", { class: `game mode-${opts.mode}` });

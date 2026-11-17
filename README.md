@@ -75,6 +75,17 @@ The sim is pure TypeScript and deterministic (`engine/core`): no DOM, no clock, 
 renderer turns into pictures and sound. The AI (`engine/core/ai.ts`) drafts and places by simulating candidate
 boards against what it can see of yours.
 
+## Seeing the rival's game
+
+After an Arena battle the results offer "See it in <rival>'s game": the rival's game opens over yours and fights the
+deciding round again in its own look, from the rival's end of the field, with one Close button. It works because
+every game runs the same engine: the round travels as a link (`<their game>#replay=<payload>`, `base/src/replay.ts`)
+and is re-fought, not recorded as video. It is optional (Settings: "Rival's game after Arena battles") and only
+appears when another game can be reached: the backend's gallery of published games, `VITE_REMUSTER_PEERS` at build
+time (`id|Name|url,...`), or `?peer=<url>&peername=<Name>` in the address to try it locally. Today's Arena rivals
+are AI, so each is given a game from that list (the same rival always plays the same one); with real players the
+server already knows which game each is playing (`setGame`) and would hand each the other's.
+
 ## Backend
 
 `infra/` is one Cloudflare Worker with a D1 database and an R2 bucket: anonymous player accounts, cloud saves, the

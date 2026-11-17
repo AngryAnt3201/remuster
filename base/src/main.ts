@@ -196,8 +196,18 @@ function settingsSheet() {
       music: musicOn(), setMusic: (on) => { try { localStorage.setItem(MUSIC_KEY, on ? "1" : "0"); } catch { /* private mode */ } setMusic(on); },
       setSpeed: (n) => save((x) => { x.settings.speed = n; }),
     }),
+    peekToggle(),
     btn("Done", "primary", closeSheet),
   ]));
+}
+/** [replay] The setting for "see it in the rival's game" after Arena battles. */
+function peekToggle(): HTMLElement {
+  let on = true;
+  try { on = localStorage.getItem("remuster.peek") !== "0"; } catch { /* private mode */ }
+  const b = btn("", "ghost", () => { on = !on; try { localStorage.setItem("remuster.peek", on ? "1" : "0"); } catch { /* private mode */ } paint(); });
+  const paint = () => { b.textContent = `Rival's game after Arena battles: ${on ? "On" : "Off"}`; };
+  paint();
+  return b;
 }
 
 // ---------------------------------------------------------------- [home] PASS TAB: the lead swaps in the War Pass here
@@ -613,11 +623,37 @@ async function playArena(o: { arena?: string; seed?: number } = {}) {
         primary: ["Next battle", () => void playArena()],
         secondary: ["Arena", arena],
       });
+      void offerPeek(next, m); // [replay] "see it in the rival's game", when there is one to show
       attachReward(end.reward, barracks);
       if (end.chest) chestEarned(end.chest);
     },
     // Walking out of a ladder match the server issued is a loss (otherwise a match could be retried until won).
     onQuit: () => { if (srv) void onlineArenaForfeit(srv).finally(arena); else arena(); },
+  });
+}
+
+// ---------------------------------------------------------------- [replay] the rival's side of an Arena battle
+/** Adds "See it in <rival>'s game" to the open results sheet, if the setting is on and a rival's game can be reached. */
+async function offerPeek(next: import("@engine/core/arena").ArenaMatch, m: Match) {
+  const { peekOn, loadPeers, peerFor, replayOf, replayUrl, openPeek } = await import("./replay");
+  if (!peekOn()) return;
+  const shown = sheetEl, peer = peerFor(next.foe.name, await loadPeers(__GAME__));
+  const payload = peer && replayOf(next, m, { id: __GAME__, name: document.title || __GAME__ });
+  if (!peer || !payload || sheetEl !== shown || !shown) return;
+  const b = btn(`See it in ${next.foe.name}'s game`, "ghost peek-btn", () => openPeek(replayUrl(peer, payload), `${next.foe.name} plays ${peer.name}: the last round, from their side`));
+  shown.querySelector(".results")?.append(b);
+}
+/** This game was opened to show a battle from another game: fight that one round, watch only, save nothing. */
+async function playReplay(p: import("./replay").ReplayPayload) {
+  const { replayConfig } = await import("./replay");
+  const a = arenaById(p.arena)!;
+  clear();
+  game = new GameScreen(app, {
+    cfg: replayConfig(p), you: { ...DEFAULT_AI, difficulty: 0 }, mode: "watch", scripted: true, board: p.pieces,
+    title: a.name, arena: ARENA_BACKDROP[a.id], marks: a.marks, intro: `${a.name} · as ${p.names[1]} saw it`,
+    // from the rival's end of the field: the world turned half way round
+    camera: () => ({ yaw: Math.PI }),
+    onEnd: () => { /* the battle stays on its last frame; the overlay's Close button is the way out */ }, onQuit: () => { try { parent !== window ? parent.postMessage("remuster:peek-close", "*") : title(); } catch { title(); } },
   });
 }
 
@@ -869,6 +905,8 @@ async function boot() {
   // Dev only: play any level from a script without a reload (tools/sprite-mem.mjs plays several back to back).
   if (import.meta.env.DEV) (window as any).__playLevel = (id: number) => { const l = LEVELS.find((x) => x.id === id); if (l) playLevel(l); return !!l; };
   // Deep links for checks: ?level=3, ?puzzle=2, ?lab, ?daily, ?gauntlet, ?watch, ?shop
+  // [replay] #replay=<payload>: another game handed this one a battle to show (src/replay.ts)
+  { const rp = (await import("./replay")).readReplay(); if (rp) return playReplay(rp); }
   // [film] ?film=<scene>: a scripted battle for the video recorder (src/film.ts, tools/film.mjs)
   if (q.has("film")) return playFilm(q.get("film") || "clash", Number(q.get("speed")) || 0);
   if (q.has("skin")) await import("./ui/skins").then((m) => m.debugSkin(q.get("skin")!, q.get("keepstate")));
