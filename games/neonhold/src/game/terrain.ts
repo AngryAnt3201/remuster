@@ -35,29 +35,41 @@ export interface TerrainStyle {
   spark: string;
 }
 
-const stone = { top: "#b9b2a4", front: "#8d8778", side: "#726d61", trim: "#5a564d" };
-const timber = { top: "#b98a55", front: "#8f6238", side: "#734c2b", trim: "#4f331c" };
+// Neonhold: every block is a dark body with a light edge. The shared outline (`ink`) is a pale violet tube, so walls,
+// stalls and containers read by their glowing rims on wet asphalt. Magenta, violet, blue and coolant green belong to
+// the city; argon cyan and neon orange-red are the two crews' and never appear here.
+const chassis = { top: "#3a3766", front: "#211f45", side: "#16142f", trim: "#8a5cff" };
+const container = { top: "#4a3f96", front: "#2f2870", side: "#1f1a4e", trim: "#ff6fe6" };
 
 export const TERRAIN: TerrainStyle = {
-  ink: "#231c18",
+  ink: "#c9b6ff",
   looks: {
-    wall: { h: 0.95, ...stone, roof: "crenel", detail: "brick" },
-    building: { h: 1.0, top: "#e9dcc0", front: "#cdbb98", side: "#a8977a", trim: "#6d5a43", roof: "gable", roofLit: "#c2553c", roofDark: "#8f3a2a", detail: "house", glow: "#ffd98a" },
-    house: { h: 1.0, top: "#e9dcc0", front: "#cdbb98", side: "#a8977a", trim: "#6d5a43", roof: "gable", roofLit: "#c2553c", roofDark: "#8f3a2a", detail: "house", glow: "#ffd98a" },
-    hall: { h: 1.25, top: "#ddd3bd", front: "#b9ad93", side: "#978c75", trim: "#5d5241", roof: "gable", roofLit: "#4f6f9c", roofDark: "#364e72", detail: "house", glow: "#ffe2a0" },
-    tower: { h: 2.1, ...stone, roof: "cone", roofLit: "#4f6f9c", roofDark: "#364e72", detail: "brick", glow: "#ffd98a" },
-    barricade: { h: 0.5, ...timber, detail: "stake" },
-    logs: { h: 0.45, top: "#a97b4b", front: "#7f5631", side: "#684526", trim: "#3f2a17", detail: "log" },
-    crates: { h: 0.55, top: "#d2a565", front: "#a87a42", side: "#8b6233", trim: "#5d3f1f", detail: "crate" },
-    cover: { h: 0.5, top: "#d2a565", front: "#a87a42", side: "#8b6233", trim: "#5d3f1f", detail: "crate" },
-    fence: { h: 0.5, top: "#c79a62", front: "#9c6f3f", side: "#7f5830", trim: "#523720", detail: "rail" },
+    // hard-light barrier: a sheet of magenta light between emitter posts, lattice lines across its face
+    wall: { h: 0.95, top: "#ff8cee", front: "#c026a8", side: "#8a177c", trim: "#ffd0fa", roof: "crenel", detail: "brick" },
+    // night-market kiosks: dark boxes under a lit awning, a bright service hatch
+    building: { h: 1.0, ...chassis, roof: "gable", roofLit: "#ff3fd0", roofDark: "#7d1f9e", detail: "house", glow: "#fff27a" },
+    house: { h: 1.0, ...chassis, roof: "gable", roofLit: "#ff3fd0", roofDark: "#7d1f9e", detail: "house", glow: "#fff27a" },
+    // the server hall: taller, cold blue roof lights
+    hall: { h: 1.25, top: "#3d4a8c", front: "#232b5e", side: "#171c42", trim: "#6f8cff", roof: "gable", roofLit: "#5b7bff", roofDark: "#2a3794", detail: "house", glow: "#d9e2ff" },
+    // server towers: a rack stack with status rows and a violet beacon cap
+    tower: { h: 2.1, top: "#4b4780", front: "#2a2757", side: "#1a183b", trim: "#9f7bff", roof: "cone", roofLit: "#b48cff", roofDark: "#5a37b8", detail: "brick", glow: "#ff5fe0" },
+    // hazard barricade: a kerb of dark plate with yellow warning spikes
+    barricade: { h: 0.5, top: "#ffe84a", front: "#3b3a52", side: "#262538", trim: "#ffe84a", detail: "stake" },
+    // pipe stacks
+    logs: { h: 0.45, top: "#7f89c4", front: "#4a5290", side: "#353b6e", trim: "#c4ccff", detail: "log" },
+    // shipping containers, and vending machines for loose cover
+    crates: { h: 0.6, ...container, detail: "crate" },
+    cover: { h: 0.62, top: "#6a3fb0", front: "#3d2278", side: "#2a1657", trim: "#ffe84a", detail: "crate" },
+    // neon tube railing
+    fence: { h: 0.5, top: "#ffd0fa", front: "#ff4fdc", side: "#2a2757", trim: "#8a5cff", detail: "rail" },
   },
-  water: { deep: "#2f6f9f", shallow: "#58a6c9", foam: "rgba(235,250,255,0.75)", bank: "rgba(60,45,30,0.45)" },
-  gate: "rgba(240,225,190,0.28)",
-  bridge: { deck: "#a47a4a", plank: "#7a5630", rail: "#5d3f1f" },
-  rubble: "#5a4a3a",
-  dust: "#cdbf9f",
-  spark: "#ffe9a8",
+  // coolant pools: luminous green, the one colour nothing else in the city wears
+  water: { deep: "#0d6b45", shallow: "#4df0a0", foam: "rgba(214,255,232,0.85)", bank: "rgba(120,255,190,0.28)" },
+  gate: "rgba(255,43,214,0.16)",
+  bridge: { deck: "#2c2f55", plank: "#6f74c9", rail: "#ff4fdc" },
+  rubble: "#3a3566",
+  dust: "#8f86c9",
+  spark: "#ff9df2",
 };
 
 /** Which of the game's battlefield backdrops (public/arenas/act<N>) each Arena-mode arena is fought on. */
