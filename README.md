@@ -20,7 +20,7 @@ The same battle with the same seed plays out identically in every game; only the
 | `REMIX.md` | how a game is made: direction, words, art, interface, sound, checks |
 | `CLAUDE.md`, `.claude/` | the hand-off to Claude Code: the `/remix` command and a hook that keeps `engine/` locked |
 | `artkit/README.md` | drawing units, arenas, keeps and effects in code and baking them |
-| `docs/ARENA.md`, `docs/EVENTS.md` | Arena rules; what a renderer reads from a battle |
+| `docs/ARENA.md`, `docs/EVENTS.md` | terrain rules (walls, cover, roads, brush), the arenas and campaign sets; what a renderer reads from a battle |
 | `infra/README.md` | the backend: local server, one-step deploy, publishing games |
 | `video/README.md` | the launch video: captures, soundtrack, edit, voice-over |
 | `tools/music/README.md` | the soundtrack synth and how a new style gets its arrangement |
@@ -61,8 +61,9 @@ own: free steering, no grid, every unit with its own behaviour and one ability. 
 base that grows each round plus twice the threat of the winner's survivors. Upgrade a placed unit to rank 2, 3 and 4;
 sell for half; unspent gold earns interest.
 
-Modes: **Campaign** (10 acts of 6 levels, a boss each), **Arena** (battles around walls, buildings, cover and water
-on a trophy ladder; `docs/ARENA.md`), **Daily**, **Gauntlet**, **Breakpoint** puzzles, **Skirmish** (the AI lab) and
+Modes: **Campaign** (10 acts of 6 levels, a boss each; many are fought on a small designed set: a farmstead, a ford,
+a toll gate), **Arena** (twelve designed places on a trophy ladder: villages, river crossings, a mill farm, with roads
+that speed a march, cover to shoot from and brush to lie in wait in; `docs/ARENA.md`), **Daily**, **Gauntlet**, **Breakpoint** puzzles, **Skirmish** (the AI lab) and
 **Bastion** (tower defence).
 
 The sim is pure TypeScript and deterministic (`engine/core`): no DOM, no clock, no `Math.random`. It emits events a

@@ -2,7 +2,8 @@
 
 Source of truth: `engine/core/battle.ts` (`BattleEvent`, `Body`, `Proj`, `Zone`, `Fuse`). Events go in `battle.events` only when the
 Battle was made with `events: true`; everything else is plain state to read each frame. Positions are world units (board 9 x 14).
-Items marked **v2** are new.
+Items marked **v2** are new; **v3** (engine lock 3) adds roads and brush: no new events, three new `Body` fields and
+two new block kinds (see "Terrain").
 
 ## Events
 Existing:
@@ -58,6 +59,14 @@ New in v2:
 - `flying`: harrier. Skip ground shadows under it at altitude. `z`: altitude, 1.2 cruising, down to about 0.15 at the bottom of a dive.
 - `slow`: seconds of frost slow left (half speed, attacks 25% slower). `frozen`: seconds frozen solid left (draw ice).
 - `braced`: pikeman has its pikes set.
+- **v3** `hidden`: out of the other side's sight, updated every step. True for a buried mine, a cloaked Shade, and a ground unit
+  standing in brush that has not been revealed (it has not attacked, cast or been hurt in the last 1.5 s). Draw the player's own
+  hidden units faint; draw the enemy's not at all (or as a rustle in the grass) until `hidden` goes false. Always false for fliers
+  and structures (mines apart), and in a battle without brush it is exactly what it was in v2 (mines and cloaked Shades).
+- **v3** `stealth`: nobody can target it at any distance (a buried mine, a cloaked Shade). `hidden && !stealth` = hidden by brush.
+- **v3** `reveal`: the battle time until which brush does not hide this body (set to `time + 1.5` when it attacks, casts or is hurt).
+- **v3** `ambush`: lying in wait: it started the battle in brush and has not yet moved or acted. It breaks cover when an enemy it can
+  see is within 3 units (or its own attack range), when it is revealed or pushed out of the brush, or 6 s into the battle.
 - `buff`: > 0 while inside a Standard Bearer aura (attacks 25% faster). `rally`: > 0 while inside an Ascended (Rally) aura (+20% damage).
 - `parryCd`: duelist parry ready when <= 0 (a glint).
 - `ward`: Lamplighter ward left to soak (draw a warm bubble while > 0); `wardT` seconds left on it; `wardBurst` = a Beacon ward.
@@ -81,11 +90,11 @@ New in v2:
 - A volley side arrow with `target: -1` flies straight and stops in the first enemy it touches.
 - **Arena** `over`: true on a direct shot loosed at something in the air; it flies over the arena's blocks instead of stopping on them.
 
-## Arena terrain (battles made with `terrain`)
+## Terrain (battles made with `terrain`: every Arena battle, and campaign levels with a set piece)
 Rules: `docs/ARENA.md`. Types: `engine/core/terrain.ts`. None of this exists in a battle without `BattleOptions.terrain` (`battle.blocks` is then `[]` and none of these events is sent).
 
 State, read every frame:
-- `battle.blocks: BlockState[]`: every block of the arena as it stands now: `{id, kind, x, y, w, h, look?, hp, maxHp, alive}`. `(x, y)` is the centre, `w` across, `h` along the board. `kind`: `wall`, `building`, `barricade`, `cover`, `water`. `hp` counts down for `barricade` and `cover` (`maxHp` is the starting health; both are 0 for the kinds that never break). `alive` goes false when one breaks: draw rubble; it no longer blocks anything. The array's order and the ids never change during a battle.
+- `battle.blocks: BlockState[]`: every block of the arena as it stands now: `{id, kind, x, y, w, h, look?, hp, maxHp, alive}`. `(x, y)` is the centre, `w` across, `h` along the board. `kind`: `wall`, `building`, `barricade`, `cover`, `water`, and **v3** the two ground zones `road` and `brush` (`isZone(kind)`: flat ground under the units, never in the way, always `alive`, `hp` 0; a ground body on a road moves 1.25x as fast, one in brush is `hidden`). `hp` counts down for `barricade` and `cover` (`maxHp` is the starting health; both are 0 for the kinds that never break). `alive` goes false when one breaks: draw rubble; it no longer blocks anything. The array's order and the ids never change during a battle.
 
 Events (in a table, not the bullet form used above, because tests/fx.test.ts requires a VFX sheet for every bulleted
 event; move them up once base/src/render/vfx.ts plays them):

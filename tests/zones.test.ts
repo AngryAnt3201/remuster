@@ -160,7 +160,18 @@ describe("brush", () => {
     expect(hid.gap).toBeGreaterThan(BRUSH_REVEAL - 0.4);
     expect(hid.medic.hp).toBeLessThan(hid.medic.maxHp);
   });
-  it("a hit reveals it for BRUSH_EXPOSE seconds, then the brush hides it again", () => {
+  it("once the reveal runs out, the brush hides it again", () => {
+    const b = new Battle([piece(0, "medic", 4.5, 13.2), piece(1, "pikeman", 4.5, 6)], { seed: 5, terrain: grass });
+    const pike = b.bodies[1];
+    play(b, undefined, 1);
+    b.damage(pike, 5, null, 0);
+    expect(pike.hidden).toBe(false);
+    play(b, () => { pike.stun = 1; }, 1 + BRUSH_EXPOSE - 0.2); // held where it stands
+    expect(pike.hidden).toBe(false);
+    play(b, () => { pike.stun = 1; }, 1 + BRUSH_EXPOSE + 0.2);
+    expect(pike.hidden).toBe(true);
+  });
+  it("a hit reveals it for BRUSH_EXPOSE seconds, to anyone at any range", () => {
     // A fixed ballista cannot walk up: it only ever shoots the pikeman in the grass once something else has hurt it.
     const b = new Battle([piece(0, "ballista", 4.5, 10.6), piece(1, "pikeman", 4.5, 6)], { seed: 5, terrain: grass, events: true });
     const [ballista, pike] = b.bodies;
@@ -175,15 +186,15 @@ describe("brush", () => {
     expect(pike.reveal).toBeCloseTo(t0 + BRUSH_EXPOSE, 6);
     expect(pike.ambush).toBe(false);
     // Hold it where it is (stunned) so we watch the brush, not its charge.
-    let bolts = 0, shown = 0, hiddenAgain = -1;
+    let shown = 0, hiddenAgain = -1, bolt = false;
     play(b, (events) => {
       pike.stun = 1;
-      bolts += events.filter((e) => e.t === "shot" && e.id === ballista.id).length;
+      bolt ||= events.some((e) => e.t === "shot" && e.id === ballista.id);
       if (!pike.hidden) shown = b.time; else if (hiddenAgain < 0) hiddenAgain = b.time;
     }, t0 + BRUSH_EXPOSE - 0.1);
     expect(hiddenAgain).toBe(-1); // revealed the whole time
     expect(shown).toBeGreaterThan(t0 + BRUSH_EXPOSE - 0.2);
-    void bolts;
+    expect(bolt).toBe(true); // and the ballista, 4.6 away, had a target at last: it loosed
   });
   it("attacking or casting gives a hidden unit away", () => {
     // A ranger in the grass with a ballista in its bow range: its first arrow reveals it, and only then can the ballista answer.
