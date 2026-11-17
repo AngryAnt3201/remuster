@@ -50,7 +50,8 @@ npm run ios:run                      # build, install and launch on the booted i
 ```
 
 Deep links for looking at one thing: `?level=3` `?arena` `?arena=old-village` `?tab=army|shop|modes|pass` `?campaign`
-`?daily` `?gauntlet` `?puzzles` `?lab` `?watch` `?film=clash|duel|siege|arena` `?demo` (a mid-game save).
+`?daily` `?gauntlet` `?puzzles` `?lab` `?watch` `?film=clash|duel|siege|arena|kit` `?demo` (a mid-game save);
+add `&yaw=120&tilt=45&zoom=0.7` (degrees) to any battle to look at the world from a fixed side.
 `node tools/shot.mjs "/?arena" out.png` takes a phone-size screenshot.
 
 ## How a battle works
@@ -64,6 +65,10 @@ sell for half; unspent gold earns interest.
 Modes: **Campaign** (10 acts of 6 levels, a boss each), **Arena** (battles around walls, buildings, cover and water
 on a trophy ladder; `docs/ARENA.md`), **Daily**, **Gauntlet**, **Breakpoint** puzzles, **Skirmish** (the AI lab) and
 **Bastion** (tower defence).
+
+The battlefield is the top of a small globe: drag to spin and tip it, pinch to zoom, double-tap to come back. Units
+are sprites that turn to face the view; buildings, walls, trees and props are solid geometry built in code
+(`base/src/render/kit3d.ts`, `props.ts`, `world.ts`), so every level can be seen from any side.
 
 The sim is pure TypeScript and deterministic (`engine/core`): no DOM, no clock, no `Math.random`. It emits events a
 renderer turns into pictures and sound. The AI (`engine/core/ai.ts`) drafts and places by simulating candidate

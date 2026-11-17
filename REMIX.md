@@ -41,7 +41,7 @@ npm run publish -- <id>              upload the built game to the Remuster galle
 | direction | `games/<id>/DIRECTION.md` | one page, written first |
 | words | `src/game/lexicon.ts` | phrase in, phrase out |
 | units, arenas, keeps, effects, maps, key art, portraits | `art/*.ts` → `public/` | drawn in code with `artkit/`, baked |
-| Arena buildings | `src/game/terrain.ts` | colours and shapes for walls, houses, towers, cover, water |
+| the world | `src/game/terrain.ts` | materials and shapes for every building, wall, road, tree and the globe |
 | interface | `src/game/theme.css`, then shadowed `src/ui/*` | restyle, then re-lay-out where it matters |
 | sound effects | `src/game/sounds.ts` | recipes for the built-in synth |
 | music | `src/game/music.ts` + `public/music/` | `npm run music` writes both |
@@ -126,14 +126,34 @@ Two things that bite: upright faces fall in the darkest shade band, so team pain
 bakes almost black unless the material sets `shade: 0.3`; and tall parts at the back of a keep can be clipped by
 its canvas, so check the keeps sheet.
 
-### Arena buildings
+### The world: buildings, sets and the globe
 
-Arena mode fights around walls, houses, towers, barricades, crates, fences and water. The renderer builds them from
-`games/<id>/src/game/terrain.ts`: per look, a height, three face colours, a trim, a roof shape and a surface detail;
-plus water, bridges, rubble and spark colours, and which backdrop each of the 12 arenas uses. Make the walls your
-world's walls (adobe, riveted plate, hard-light barriers, paper screens) and check `?arena=old-village`,
-`?arena=twin-gates`, `?arena=the-fens`, `?arena=crate-yard`. A game that needs shapes the file can't describe
-shadows `src/render/terrain.ts`.
+Every battlefield is the top of a small globe the player can turn (drag to spin and tip it, pinch to zoom,
+double-tap to come back), so nothing on it can be a picture taken from one side. Levels are sets: houses, halls,
+towers, mills, chapels, gatehouses, walls, market stalls, carts, crates, wells, ponds, roads, plazas, tall grass,
+orchards and cornfields. The renderer builds every one of them as solid geometry from
+`games/<id>/src/game/terrain.ts`:
+
+- `mat`: the materials (stone, plaster, timber, roofs, cloth, metal, foliage, rock, lit windows...).
+- `roof`, `tree`, `lamp`: the world's shapes (gable, hip, flat, dome, pagoda or barrel roofs; round trees, pines,
+  palms, cacti, dead trees, bamboo, neon pylons; lamp posts, braziers, lanterns, neon bars).
+- `looks`: per building type, a height, wall colour, roof shape and roof colour where the default is wrong.
+- `ink`, `inkW`, `light`, `dark`, `tint`, `bands`: outline and shading (`inkW: 0` for no outlines, `bands: 0` for
+  smooth shade).
+- `road`, `plaza`, `water`, `bridge`, `brush`: the ground-level things.
+- `sky`, `soil`, `halo`, `scenery`: the sky behind the globe, the globe's rim, and how many trees, rocks, houses
+  and lamps stand around the battlefield.
+- `ARENA_BACKDROP`: which of the game's painted grounds each of the 12 arenas is fought on.
+
+Look at all of it at once with `?film=kit&still` (every building type on one board), turn it with
+`&yaw=150&tilt=50&zoom=1.4` (degrees), then check real levels: `?arena=old-village`, `?arena=the-crossing`,
+`?film=arena`. A game that needs a shape the kit can't make shadows `src/render/props.ts`, imports the original as
+`@base/render/props` and adds a builder to `BUILDERS` (a builder is a function that adds boxes, prisms, roofs and
+panels to a mesh: read `house` or `stall` there for the pattern).
+
+The painted arena ground (`art/arenas.ts`, baked to `public/arenas`) is still what the ground looks like: it is
+taken back off its camera and laid on the globe. The scenery it paints around the board is only seen blurred, as
+ground colour, so put the effort into the ground itself and let `scenery` in `terrain.ts` stand the trees.
 
 ## 4. Interface
 
