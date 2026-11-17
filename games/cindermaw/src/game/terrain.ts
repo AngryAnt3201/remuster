@@ -31,7 +31,7 @@ export const TERRAIN: WorldStyle = {
   tex: { stone: "block", stoneDark: "block", plaster: "flesh", plaster2: "flesh", timber: "plank", roof: "plate", roof2: "tile", metal: "plate", rock: "flesh", sack: "stucco" },
   texK: 0.8, texSize: 0.9, ao: 0.7,
   post: {
-    lowres: 3, contrast: 0.3, grade: [["#ff5a20", 0.16, "soft-light"]], vignette: 0.5, dither: 0.7,
+    lowres: 2, contrast: 0.3, grade: [["#ff5a20", 0.16, "soft-light"]], vignette: 0.5, dither: 0.7,
     palette: ["#000000", "#1c0c08", "#3a1410", "#5a1c14", "#8a1c12", "#b3170d", "#e03a10", "#ff7a1c", "#ffb020", "#ffe070", "#2a1c14", "#4a3830", "#6b5348", "#8f7a66", "#b8a488", "#e0d4b8",
       "#22262a", "#3a3f44", "#5d646a", "#8a9298", "#bcc4c8", "#ffffff", "#2f4a12", "#4d6a1c", "#7aa024", "#b8e03a", "#0c3a4a", "#1c6a8a", "#3aa8d0", "#6a1c6a", "#b040b0", "#5a3a1c", "#8a5a2a", "#c08a40"],
   },
