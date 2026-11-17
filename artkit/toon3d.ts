@@ -428,7 +428,10 @@ export interface Style {
    *  optional free-form remap. */
   grade?: { saturation?: number; contrast?: number; warmth?: number; map?: (rgb: V3) => V3 };
   /** A whole-sprite look applied after rendering (artkit/looks.ts): reuse models with a radically different feel. */
-  look?: { kind: "toon" } | { kind: "pixel"; scale: number; levels?: number } | { kind: "neon"; fill?: number } | { kind: "paper"; paper?: string };
+  look?: { kind: "toon" } | { kind: "pixel"; scale: number; levels?: number } | { kind: "neon"; fill?: number } | { kind: "paper"; paper?: string }
+    /** Digitised 90s sprites (looks.ts): smooth hard-lit shading with dark edges and no ink, rendered small, then
+     *  noised and ordered-dithered to `levels` shades per channel. `contrast` deepens the falloff (default 1). */
+    | { kind: "grit"; scale: number; levels?: number; noise?: number; contrast?: number };
 }
 
 export const DEFAULT_STYLE: Style = {
@@ -672,6 +675,16 @@ export function render(model: Model, o: RenderOpts): Sprite {
         if (mask) { /* flat coverage */ } else if (look === "neon") {
           const f = (st.look as { fill?: number }).fill ?? 0.16, lit = 0.6 + 0.4 * b;
           r = c[9] * f * lit + 8; g = c[10] * f * lit + 9; bl = c[11] * f * lit + 20;
+        } else if (look === "grit") {
+          // smooth lambert with a hard falloff, a dark silhouette edge instead of ink, shadows leaning to the tint
+          const gc = (st.look as { contrast?: number }).contrast ?? 1, sh = m.shade ?? 1;
+          const lam = clamp(0.5 + 0.5 * d), edge = smooth(0.02, 0.42, nz);
+          let kk = (0.07 + 1.14 * Math.pow(lam, 2.1 * gc)) * (0.42 + 0.58 * edge);
+          kk = 1 - (1 - kk) * sh;
+          const sa = clamp((1 - kk) * st.shadowAmount * 1.6), lum = (0.3 * c[9] + 0.59 * c[10] + 0.11 * c[11]) * kk;
+          r = lerp(c[9] * kk, (tint[0] / 255) * lum * 1.3, sa); g = lerp(c[10] * kk, (tint[1] / 255) * lum * 1.3, sa); bl = lerp(c[11] * kk, (tint[2] / 255) * lum * 1.3, sa);
+          const sp = Math.pow(clamp(nx * Hc[0] + ny * Hc[1] + nz * Hc[2]), 22) * (0.12 + 0.75 * metal) * sh;
+          r += (255 - r) * sp; g += (250 - g) * sp; bl += (232 - bl) * sp;
         } else if (look === "paper") {
           const pc = paper!, mixk = b >= 1.5 ? 0.3 : 0.48;
           r = lerp(pc[0], c[9], mixk); g = lerp(pc[1], c[10], mixk); bl = lerp(pc[2], c[11], mixk);
