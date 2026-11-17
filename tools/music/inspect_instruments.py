@@ -43,6 +43,8 @@ SOLOS = [
     ("ka (rim)", lambda: S.taiko(kind="ka")), ("clock tick", lambda: S.tick()), ("ratchet", lambda: S.ratchet()),
     ("anvil", lambda: S.anvil()), ("whip", lambda: S.whip()), ("steam hiss", lambda: S.steam(dur=0.8)),
     ("steam chuff", lambda: S.steam(dur=0.1, chuff=True)), ("hoof", lambda: S.clop()), ("impact", lambda: S.impact()),
+    ("fm guitar D2", lambda: S.fmguitar(D2, 1.0)), ("fm guitar mute", lambda: S.fmguitar(D2, 0.2, mute=True)),
+    ("fm lead D5", lambda: S.fmlead(D5, 1.0)), ("metal kick", lambda: S.metalkick()), ("metal snare", lambda: S.metalsnare()),
 ]
 
 

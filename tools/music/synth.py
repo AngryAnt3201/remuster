@@ -1348,3 +1348,85 @@ def master(x, target_lufs=-16.0, ceiling_db=-1.5, glue=True, drive=1.0, measure=
             break
         g *= db(err)
     return y
+
+
+# ------------------------------------------------------------------ FM sound-card metal (Cindermaw)
+def _fmsaw(ph, index):
+    """A two-operator FM voice with the modulator fed back into itself: a buzzy, slightly hollow saw. `ph` is the
+    carrier phase in radians, `index` a scalar or per-sample array."""
+    return np.sin(ph + index * np.sin(ph + 0.5 * index * np.sin(ph)))
+
+
+def fmguitar(midi, dur, vel=0.8, var=0, mute=False, power=True, gain=4.0, tone=4200.0):
+    """Distortion guitar as a 1990s FM card played it. Two detuned FM 'strings' per pitch; with power=True the root,
+    fifth and octave go into ONE clipper, so they intermodulate like a real power chord (the difference tone an octave
+    under the root is what makes it heavy). Then a speaker cabinet: no lows under 85 Hz, a bite at 2.3 kHz, nothing above
+    `tone`. mute=True is the palm mute: the note is choked to a thump and its highs die in 60 ms (the chug)."""
+    f0 = float(hz(midi))
+    rng = rng_for("fmgtr", midi, var, mute, power)
+    rel = 0.025 if mute else 0.07
+    N = int((dur + rel) * SR) + 1
+    t = np.arange(N) / SR
+    idx = (2.4 + 1.4 * vel) * (0.55 + 0.45 * np.exp(-t / (0.06 if mute else 0.3)))
+    x = np.zeros(N)
+    for ratio, a in (((1.0, 1.0), (1.4983, 0.85), (2.0, 0.6)) if power else ((1.0, 1.0),)):
+        for cents in (-3.5, 3.5):
+            f = f0 * ratio * 2 ** ((cents + rng.normal(0, 0.8)) / 1200)
+            x += a * _fmsaw(2 * np.pi * f * t + rng.random() * 6.28, idx)
+    x /= 3.2 if power else 1.6
+    if mute:
+        env = ar(N, 0.002, dur, rel) * (0.25 + 0.75 * np.exp(-t / 0.085))
+    else:
+        env = ar(N, 0.004, dur, rel) * (0.8 + 0.2 * np.exp(-t / 0.5))
+    pickn = bp(noise(N, rng), 1200, 4200) * np.exp(-t / 0.006) * 0.5
+    x = eq(hp(x, 110, 1), [("hishelf", 1200, 9.0, 0.7)])   # tighten the lows and push the highs into the clipper
+    y = saturate((x + pickn) * env * gain, 1.0, "tape")
+    y = y * (0.35 + 0.65 * env)           # the clipper flattens the envelope; put the shape back
+    y = hp(y, 85, 4)
+    y = eq(y, [("peak", 140, 2.0 if mute else 0.0, 1.2), ("peak", 520, -4.0, 0.8), ("peak", 2300, 7.0, 0.9)])
+    y = lp(y, 2200 if mute else tone, 4)
+    return fade(y * 0.5 * (0.45 + 0.55 * vel), 0.0008, 0.006)
+
+
+def fmlead(midi, dur, vel=0.8, var=0, vib=(5.6, 16.0, 0.2), drive=2.2, nasal=1150.0, att=0.006):
+    """Lead guitar on an FM card: the fed-back saw plus a voice modulated at twice the pitch (odd harmonics: the
+    square-ish, hollow half of the tone), into a soft clipper, through a narrow 'nose' around `nasal` Hz. Holds like a
+    synth lead (no decay), with a late vibrato. vib = (rate Hz, depth cents, delay s)."""
+    f0 = float(hz(midi))
+    rng = rng_for("fmlead", midi, var)
+    rel = 0.06
+    N = int((dur + rel) * SR) + 1
+    t = np.arange(N) / SR
+    cents = vibrato(N, vib[0], vib[1], vib[2], 0.22, rng) if vib[1] and dur > vib[2] + 0.1 else np.zeros(N)
+    ph = 2 * np.pi * np.cumsum(f0 * 2 ** (cents / 1200)) / SR
+    idx = (1.1 + 0.9 * vel) * (0.6 + 0.4 * np.exp(-t / 0.15))
+    k = min(1.0, 2500.0 / f0)             # ease the index off up high so nothing reaches Nyquist
+    y = _fmsaw(ph, idx * k) + 0.55 * np.sin(ph + 1.4 * idx * k * np.sin(2 * ph))
+    env = ar(N, att, dur, rel) * (0.85 + 0.15 * np.exp(-t / 0.3))
+    y = saturate(y * env * drive * 0.6, 1.0, "tape") * (0.4 + 0.6 * env)
+    y = hp(y, max(180.0, f0 * 0.6), 2)
+    y = eq(y, [("peak", nasal, 6.0, 1.6), ("peak", 3200, 2.0, 1.0)])
+    y = lp(y, 5200, 2)
+    return fade(y * 0.45 * (0.4 + 0.6 * vel), 0.001, 0.008)
+
+
+def metalkick(vel=0.9, var=0):
+    """A triggered metal kick: short 58 Hz body and a hard beater click at 3.5 kHz, so sixteenth-note double-kick
+    runs stay separate hits instead of a rumble."""
+    rng = rng_for("mkick", var)
+    n = int(0.22 * SR)
+    y = _sweep(n, 170, 56, 0.016) * decay(n, 0.2)
+    y = np.tanh(2.0 * y) * 0.85
+    y += 0.55 * bp(noise(n, rng), 2600, 5200) * decay(n, 0.012) + 0.25 * _sweep(n, 3600, 3300, 0.004) * decay(n, 0.008)
+    return fade(y * (0.3 + 0.7 * vel) * 0.9, 0.0002, 0.008)
+
+
+def metalsnare(vel=0.8, var=0):
+    """A 12-bit sampler's rock snare: a 195 Hz crack, a wide burst of wires, sample-and-held to 22 kHz for grit."""
+    rng = rng_for("msnare", var)
+    n = int(0.26 * SR)
+    t = np.arange(n) / SR
+    y = 0.9 * _sweep(n, 320, 195, 0.012) * decay(n, 0.1) + 0.3 * np.sin(2 * np.pi * 455 * t) * decay(n, 0.05)
+    y += 0.9 * bp(noise(n, rng), 900, 8500) * decay(n, 0.19 * (0.7 + 0.3 * vel)) + 0.35 * hp(noise(n, rng), 4500) * decay(n, 0.025)
+    y = lp(bitcrush_rate(np.tanh(1.6 * y), 22050.0), 9500, 2)
+    return fade(y * (0.15 + 0.85 * vel ** 1.3) * 0.7, 0.0003, 0.01)
