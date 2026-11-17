@@ -38,6 +38,9 @@ export const LOOKS = {
   pixel: (scale = 3, levels = 6): Partial<Style> => ({ look: { kind: "pixel", scale, levels }, rim: { color: "#ffffff", strength: 0, width: 0.3 } }),
   /** Dark fills with glowing edges in each part's own colour. */
   neon: (fill = 0.16): Partial<Style> => ({ look: { kind: "neon", fill }, outline: 2.2, inner: 1.4, glow: { gain: 1, radius: 8 }, rim: { color: "#ffffff", strength: 0, width: 0.3 } }),
+  /** No ink, no bands: smooth light over muted materials, for realistic figures (toon3d's "real" look). `ambient`
+   *  is how bright the unlit side stays, `spec` the strength of highlights, `edge` how much forms darken at their rim. */
+  real: (ambient = 0.36, spec = 0.5, edge = 0.3): Partial<Style> => ({ look: { kind: "real", ambient, spec, edge }, outline: 0, inner: 0, rim: { color: "#ffffff", strength: 0, width: 0.3 } }),
   /** Ink on paper: pale washes, hatched shadows, a heavy black line. */
   paper: (paper = "#f1e6cf"): Partial<Style> => ({ look: { kind: "paper", paper }, ink: "#1d1a17", outline: 3.4, inner: 1.8, rim: { color: "#ffffff", strength: 0, width: 0.3 } }),
 };

@@ -13,7 +13,7 @@
 export interface Track { file: string; loop: number; gain?: number; }
 export type Cue = "home" | "battle" | "boss" | "arena" | "win" | "lose";
 
-// D minor, 144 BPM. Written by `npm run music -- base` (fantasy arrangement); do not edit by hand.
+// D minor, 144 BPM. Written by `npm run music -- blackridge` (blackridge arrangement); do not edit by hand.
 export const MUSIC: Partial<Record<Cue, Track>> = {
   home: { file: "home.m4a", loop: 53.333333 },
   battle: { file: "battle.m4a", loop: 53.333333 },
