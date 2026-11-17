@@ -12,16 +12,16 @@ export const DURATION = BARS * BAR + TAIL;
 /** Frame at which a bar (1-based, may be fractional: 9.5 = bar 9, beat 3) starts. */
 export const at = (bar: number) => Math.round((bar - 1) * BAR);
 
-export type GameId = "base" | "brasswick" | "dustline" | "neonhold" | "pixelkeep" | "inkfall";
+export type GameId = "base" | "blackridge" | "pixelkeep" | "cindermaw" | "neonhold" | "inkfall";
 export interface GameInfo { id: GameId; name: string; prompt: string; style: string; color: string; }
 /** The six games, in the order the video meets them. `prompt` is what was typed to make it; `style` names its
  *  arrangement of the theme tune (tools/music). */
 export const GAMES: GameInfo[] = [
   { id: "base", name: "Crownfall", prompt: "", style: "fantasy", color: "#ffcf4d" },
-  { id: "brasswick", name: "Brasswick", prompt: "make it steampunk", style: "steampunk", color: "#e0a04a" },
-  { id: "dustline", name: "Dustline", prompt: "make it a western", style: "western", color: "#e8743b" },
-  { id: "neonhold", name: "Neonhold", prompt: "make it cyberpunk", style: "synthwave", color: "#ff3fd0" },
+  { id: "blackridge", name: "Blackridge", prompt: "make it a gritty modern war game", style: "blackridge", color: "#ff8a2a" },
   { id: "pixelkeep", name: "Pixelkeep", prompt: "make it 8-bit", style: "chiptune", color: "#7ce04a" },
+  { id: "cindermaw", name: "Cindermaw", prompt: "make it a 90s demon shooter", style: "cindermaw", color: "#e03a10" },
+  { id: "neonhold", name: "Neonhold", prompt: "make it cyberpunk", style: "synthwave", color: "#ff3fd0" },
   { id: "inkfall", name: "Inkfall", prompt: "make it an ink painting", style: "ink", color: "#d94a3a" },
 ];
 export const game = (id: GameId) => GAMES.find((g) => g.id === id)!;
@@ -53,11 +53,11 @@ export const SHOTS: Shot[] = [
   // intro: the base game's home screen
   { bar: 1, beats: 16, game: "base", clip: "home", t: 0 },
   // one battle, six games
-  { bar: 5, beats: 24, game: "base", clip: "clash" },                 // bars 5-10: fantasy; "make it steampunk" typed over 9-10
-  { bar: 11, beats: 12, game: "brasswick", clip: "clash", tag: true }, // bars 11-13; "make it a western" typed over 13
-  { bar: 14, beats: 4, game: "dustline", clip: "clash", tag: true },
-  { bar: 15, beats: 4, game: "neonhold", clip: "clash", tag: true },
-  { bar: 16, beats: 4, game: "pixelkeep", clip: "clash", tag: true },
+  { bar: 5, beats: 24, game: "base", clip: "clash" },                 // bars 5-10: fantasy; the first prompt typed over 9-10
+  { bar: 11, beats: 12, game: "blackridge", clip: "clash", tag: true }, // bars 11-13; the next prompt typed over 13
+  { bar: 14, beats: 4, game: "pixelkeep", clip: "clash", tag: true },
+  { bar: 15, beats: 4, game: "cindermaw", clip: "clash", tag: true },
+  { bar: 16, beats: 4, game: "neonhold", clip: "clash", tag: true },
   { bar: 17, beats: 4, game: "inkfall", clip: "clash", tag: true },
   ...cycle(ALL, 6).map((g, i): Shot => ({ bar: 18 + i * 0.5, beats: 2, game: g, clip: "clash" })), // bars 18-20, a cut every two beats
   // bars 21-24: all six at once (drawn by the grid, not as shots); bars 25-28: every game's front door
@@ -71,10 +71,10 @@ export const SHOTS: Shot[] = [
 
 /** The prompts typed on screen: start typing at `bar`, finished and sent by `send`, which is the cut. */
 export const PROMPTS: { bar: number; send: number; text: string }[] = [
-  { bar: 9, send: 11, text: game("brasswick").prompt },
-  { bar: 12.75, send: 14, text: game("dustline").prompt },
-  { bar: 14.5, send: 15, text: game("neonhold").prompt },
-  { bar: 15.5, send: 16, text: game("pixelkeep").prompt },
+  { bar: 9, send: 11, text: game("blackridge").prompt },
+  { bar: 12.75, send: 14, text: game("pixelkeep").prompt },
+  { bar: 14.5, send: 15, text: game("cindermaw").prompt },
+  { bar: 15.5, send: 16, text: game("neonhold").prompt },
   { bar: 16.5, send: 17, text: game("inkfall").prompt },
 ];
 

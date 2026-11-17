@@ -15,8 +15,8 @@ cd video && npx remotion studio src/index.ts     scrub the edit in a browser
 
 Every game runs the same engine, and a film scene (`base/src/film.ts`) is a fixed seed and two fixed armies. So
 `?film=clash` is the same battle, blow for blow, in every game. The recorder (`tools/film.mjs`) drives the page on a
-virtual clock, one frame at a time, so frame 600 of the steampunk capture is the same instant as frame 600 of the
-western one. The edit just switches which game's file it is reading. The camera move (`filmCamera` in `base/src/film.ts`: open on
+virtual clock, one frame at a time, so frame 600 of the war-game capture is the same instant as frame 600 of the
+8-bit one. The edit just switches which game's file it is reading. The camera move (`filmCamera` in `base/src/film.ts`: open on
 the whole globe, come in, keep turning) is a function of scene time too, so it carries across every cut.
 
 Scenes: `clash` (two full armies, the player wins at about 26 s), `arena` (a fight through a village's street and
@@ -37,7 +37,7 @@ Clips are large and reproducible, so they are not in git.
 
 ## Soundtrack
 
-One tune, arranged six ways (`tools/music/`): fantasy, steampunk, western, synthwave, chiptune, ink. All six video
+One tune, arranged six ways (`tools/music/`): fantasy, blackridge (modern war), chiptune, cindermaw (90s metal), synthwave, ink. All six video
 stems (`video/audio/stem_*.flac`) are the same length on the same grid: D minor, 144 BPM, one bar = 100 frames. The
 mix (`tools/music/mix.py`) switches stems on bar lines following the picture, with a short riser and hit on each cut.
 `render.sh` regenerates `audio/soundtrack.wav` whenever the edit's cut list changes.
@@ -57,8 +57,8 @@ first. To replace it with a produced track, keep 144 BPM and the bar count and d
 | bars | what happens |
 | --- | --- |
 | 1-4 | Crownfall's home screen. "One game." |
-| 5-10 | The clash, in fantasy. A prompt is typed: *make it steampunk* |
-| 11-17 | The same battle carries on in Brasswick, then Dustline, Neonhold, Pixelkeep, Inkfall, each on a typed prompt |
+| 5-10 | The clash, in fantasy. A prompt is typed: *make it a gritty modern war game* |
+| 11-17 | The same battle carries on in Blackridge, then Pixelkeep, Cindermaw, Neonhold, Inkfall, each on a typed prompt |
 | 18-20 | A cut every two beats through all six as the battle is won |
 | 21-24 | All six at once. "We run the game. You own the look." |
 | 25-28 | Each game's home and Army screens |
