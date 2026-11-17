@@ -4,7 +4,8 @@
 // Scenes are data; add one here and it works in every game.
 import type { MatchConfig, StartPiece } from "@engine/core/match";
 import type { UnitKind } from "@engine/core/defs";
-import { arenaById } from "@engine/core/arena";
+import { arenaById, type ArenaMark } from "@engine/core/arena";
+import type { Block } from "@engine/core/terrain";
 
 export interface Scene {
   /** Campaign act whose arena to fight in (1-10). */
@@ -18,6 +19,9 @@ export interface Scene {
   terrain?: string;
   /** Battle speed (1 = real time). */
   speed?: number;
+  /** Terrain given directly (the kit sheet), instead of an arena id. */
+  blocks?: Block[];
+  marks?: ArenaMark[];
 }
 type Army = [kind: UnitKind, lx: number, depth: number, rank?: number][];
 
@@ -72,13 +76,30 @@ export const SCENES: Record<string, Scene> = {
   },
 };
 
+// `?film=kit`: every look the set builders know, laid out on one board, for checking a game's world style.
+const KIT: [kind: string, look: string, w: number, h: number][] = [
+  ["building", "house", 1.3, 1.1], ["building", "hall", 1.7, 1.3], ["building", "tower", 0.9, 0.9], ["building", "barn", 1.5, 1.1], ["building", "shop", 1.3, 1.0],
+  ["building", "chapel", 1.8, 1.0], ["building", "mill", 1.1, 1.1], ["building", "gatehouse", 1.9, 0.8], ["building", "ruin", 1.4, 1.2], ["building", "rock", 1.2, 1.0],
+  ["building", "well", 0.7, 0.7], ["building", "statue", 0.7, 0.7], ["wall", "wall", 1.8, 0.45], ["wall", "palisade", 1.8, 0.3], ["wall", "hedge-wall", 1.8, 0.45],
+  ["barricade", "barricade", 1.5, 0.4], ["barricade", "logs", 1.4, 0.5], ["barricade", "wagon", 1.3, 0.7], ["cover", "crates", 1.4, 0.5], ["cover", "fence", 1.6, 0.3],
+  ["cover", "sandbags", 1.4, 0.4], ["cover", "barrels", 0.9, 0.5], ["cover", "haystack", 0.7, 0.7], ["cover", "stall", 1.2, 0.7], ["cover", "cart", 0.9, 0.6],
+  ["water", "fountain", 1.1, 1.1], ["water", "pond", 1.4, 1.0], ["road", "road", 1.2, 1.6], ["road", "plaza", 1.5, 1.5], ["brush", "brush", 1.5, 1.2],
+  ["brush", "reeds", 1.5, 1.0], ["brush", "cornfield", 1.6, 1.2], ["brush", "orchard", 1.9, 1.4],
+];
+const kitBlocks = (): Block[] => KIT.map(([kind, look, w, h], i) => ({ id: i + 1, kind: kind as Block["kind"], look, x: 1.1 + (i % 4) * 2.25, y: 0.9 + Math.floor(i / 4) * 1.5, w: Math.min(w, 1.9), h: Math.min(h, 1.3) }));
+SCENES.kit = {
+  arena: 1, seed: 1, title: "Kit", blocks: kitBlocks(),
+  marks: [{ look: "tree", x: -0.6, y: 3, w: 0, h: 0 }, { look: "lamp", x: -0.5, y: 5, w: 0, h: 0 }, { look: "banner", x: 9.5, y: 5, w: 0, h: 0 }, { look: "signpost", x: 9.5, y: 7, w: 0, h: 0 }] as unknown as ArenaMark[],
+  armies: [[], []],
+};
+
 /** The match a scene plays: both armies already on the board, no gold to change them, one decisive battle. */
 export function sceneConfig(s: Scene): MatchConfig {
   return {
     seed: s.seed, hp: [400, 400], names: s.names ?? ["You", "Rival"],
     start: [pieces(s.armies[0]), pieces(s.armies[1])],
     fixedGold: [0, 0], noReroll: true, firstRound: 9, maxRounds: 1,
-    ...(s.terrain ? { terrain: arenaById(s.terrain)?.blocks } : {}),
+    ...(s.blocks ? { terrain: s.blocks } : s.terrain ? { terrain: arenaById(s.terrain)?.blocks } : {}),
   };
 }
 

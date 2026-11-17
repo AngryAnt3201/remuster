@@ -821,7 +821,7 @@ async function playFilm(name: string, speed: number) {
   game = new GameScreen(app, {
     cfg: sceneConfig(scene), you: { ...DEFAULT_AI, difficulty: 0 }, mode: "watch", scripted: true, title: scene.title, arena: scene.arena,
     camera: still ? undefined : () => filmCamera(name, (performance.now() - t0) / 1000),
-    marks: scene.terrain ? arenaById(scene.terrain)?.marks : undefined,
+    marks: scene.marks ?? (scene.terrain ? arenaById(scene.terrain)?.marks : undefined),
     onEnd: () => { filmMark("end"); }, onQuit: title,
   });
   st.render = renderSfx; // the recorder rebuilds the scene's sound offline with this game's synth

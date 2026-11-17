@@ -145,3 +145,60 @@ describe("diorama camera", () => {
 });
 
 const xy = (p: { x: number; y: number }) => [p.x, p.y] as const;
+
+// ---- the turned, curved world (orbit camera) and the geometry kit
+import { BEND } from "../base/src/render/camera";
+import { Mesh, slice } from "../base/src/render/kit3d";
+describe("orbit camera", () => {
+  const cam = () => { const c = new Camera(9, 14); c.bend = BEND; c.fit({ x: 0, y: 0, w: 390, h: 700 }); return c; };
+  it("unprojects what it projects at any turn and tilt, on the curved ground", () => {
+    const c = cam();
+    for (const yaw of [0, 0.7, 2.4, -1.9, Math.PI]) for (const tilt of [0.35, 0.64, 0.95]) {
+      c.setView(yaw, tilt); c.fit({ x: 0, y: 0, w: 390, h: 700 });
+      for (const [x, y] of [[0, 0], [9, 14], [4.5, 7], [2, 11], [-2, 16]]) for (const z of [0, 0.6]) {
+        const p = c.project(x, y, z), w = c.unprojectAt(p.x, p.y, z);
+        expect(w.x).toBeCloseTo(x, 2); expect(w.y).toBeCloseTo(y, 2);
+      }
+    }
+  });
+  it("keeps the board inside the area at every turn", () => {
+    const c = cam();
+    for (let yaw = 0; yaw < 6.3; yaw += 0.37) {
+      c.setView(yaw); c.fit({ x: 10, y: 20, w: 370, h: 640 });
+      for (const [x, y] of [[0, 0], [9, 0], [0, 14], [9, 14]]) { const p = c.project(x, y); expect(p.x).toBeGreaterThan(9); expect(p.x).toBeLessThan(381); expect(p.y).toBeGreaterThan(19); expect(p.y).toBeLessThan(661); }
+    }
+  });
+  it("sorts by distance from the camera: y when facing the rival, reversed from behind", () => {
+    const c = cam();
+    expect(c.sortKey(3, 10)).toBeGreaterThan(c.sortKey(3, 4));
+    c.setView(Math.PI);
+    expect(c.sortKey(3, 10)).toBeLessThan(c.sortKey(3, 4));
+    c.setView(Math.PI / 2);
+    expect(Math.abs(c.sortKey(3, 10) - c.sortKey(3, 4))).toBeLessThan(1e-9);
+  });
+  it("turns a unit's facing with the view", () => {
+    const c = cam();
+    expect(c.facing8(Math.PI / 2)).toBe(2);
+    c.setView(Math.PI);
+    expect(c.facing8(Math.PI / 2)).toBe(6);
+  });
+});
+describe("geometry kit", () => {
+  const area = (p: number[][]) => { let a = 0; for (let i = 0; i < p.length; i++) { const q = p[(i + 1) % p.length]; a += p[i][0] * q[1] - q[0] * p[i][1]; } return Math.abs(a) / 2; };
+  it("slices a mesh into cells without losing or adding surface", () => {
+    const m = new Mesh();
+    m.box(0, 0, 0, 2.6, 1.1, 1, "#888888");
+    const pieces = slice(m.faces, 0, 0, 2.6, 1.1);
+    expect(pieces.length).toBe(8);
+    const top = (fs: typeof m.faces) => fs.filter((f) => f.n[2] > 0.9).reduce((s, f) => s + area(f.p), 0);
+    expect(pieces.reduce((s, p) => s + top(p.faces), 0)).toBeCloseTo(top(m.faces), 6);
+    // cut edges carry no ink
+    const cut = pieces.flatMap((p) => p.faces).filter((f) => Array.isArray(f.ink) && f.ink.some((e) => !e));
+    expect(cut.length).toBeGreaterThan(0);
+  });
+  it("faces of a solid look outward", () => {
+    const m = new Mesh();
+    m.box(1, 1, 0, 2, 2, 1, "#888888"); m.gable(1, 1, 2, 2, 1, 0.5, "#aa0000", "x"); m.prism(4, 4, 0, 1, 0.5, 6, "#888888");
+    for (const f of m.faces.slice(0, 9)) { const c = f.p.reduce((s, q) => [s[0] + q[0] / f.p.length, s[1] + q[1] / f.p.length, s[2] + q[2] / f.p.length], [0, 0, 0]); expect((c[0] - 1.5) * f.n[0] + (c[1] - 1.5) * f.n[1] + (c[2] - 0.6) * f.n[2]).toBeGreaterThan(0); }
+  });
+});

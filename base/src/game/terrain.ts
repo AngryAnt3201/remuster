@@ -61,7 +61,7 @@ export interface WorldStyle {
 export const TERRAIN: WorldStyle = {
   ink: "#231c18", inkW: 0.028,
   light: [-0.5, 0.45, 0.8],
-  dark: 0.5, tint: "#3b3560", bands: 3,
+  dark: 0.6, tint: "#3b3560", bands: 3,
   shadow: "rgba(10,12,20,0.26)",
   mat: {
     stone: "#b3ac9e", stoneDark: "#8d8778",

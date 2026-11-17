@@ -156,7 +156,7 @@ export function shade(c: string, f: number, tint?: string, flash = 0): string {
   const k = q / 40;
   if (k <= 1) {
     r *= k; g *= k; b *= k;
-    if (tint) { const t = rgb(tint), a = (1 - k) * 0.55; r += (t[0] - r) * a; g += (t[1] - g) * a; b += (t[2] - b) * a; }
+    if (tint) { const t = rgb(tint), a = (1 - k) * 0.4; r += (t[0] - r) * a; g += (t[1] - g) * a; b += (t[2] - b) * a; }
   } else { const a = k - 1; r += (255 - r) * a; g += (255 - g) * a; b += (255 - b) * a; }
   if (flash) { r += (255 - r) * flash; g += (255 - g) * flash; b += (255 - b) * flash; }
   s = `rgb(${r | 0},${g | 0},${b | 0})`;

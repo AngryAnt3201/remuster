@@ -86,7 +86,7 @@ export class Camera {
     const den = this.cos + v * this.sin;
     let X0 = 0, Y0 = 0, ze = z;
     // The curved ground has no closed form: solve on a flat plane at the height found so far, a few times over.
-    for (let i = 0; i < (this.bend ? 5 : 1); i++) {
+    for (let i = 0; i < (this.bend ? 16 : 1); i++) {
       // v (D - Y s - z c) = Y c - z s  =>  Y = (v (D - z c) + z s) / (c + v s)
       const Y = den > 1e-6 ? (v * (this.dist - ze * this.cos) + ze * this.sin) / den : -1e6;
       const X = u * (this.dist - Y * this.sin - ze * this.cos);
