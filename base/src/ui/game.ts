@@ -1,4 +1,5 @@
 // One match on screen: deploy (drag from the shop, move, upgrade, sell), then the battle plays out, then the damage.
+import { attachOrbit, type Orbit } from "./orbit";
 import { applyPlan, planTurnAsync, type AIProfile } from "@engine/core/ai";
 import type { Battle } from "@engine/core/battle";
 import { BODY_EXTRA, DT, UNITS, inZone, upgradeCost, type Piece, type Side, type SpawnKind, type UnitKind } from "@engine/core/defs";
@@ -64,6 +65,8 @@ export interface GameOpts {
   marks?: import("@engine/core/arena").ArenaMark[];
   /** [film] Both armies are already on the board as authored: nobody plans, the battle just starts. */
   scripted?: boolean;
+  /** [film] A camera move: called every frame for the view (turn in radians, tilt from straight down, zoom). */
+  camera?: () => { yaw: number; tilt?: number; zoom?: number };
   /** Line under the opening banner (default "vs <rival>"). */
   intro?: string;
   /** First-time coaching: drag a card down, then Fight. */
@@ -124,6 +127,7 @@ export class GameScreen {
     this.buildHud();
     host.append(this.root);
     this.view = new BoardView(this.canvas);
+    this.orbit = attachOrbit(this.canvas, this.view, () => !!this.drag);
     // Each side's recruits and the bodies they spawn, in that side's colours, warmed up front; higher tiers tint on
     // demand (the lower tier shows meanwhile). Warm only: a late act's rosters outgrow the sheet budget, so each
     // fight pins just what is on the board (pinBattle).
@@ -154,7 +158,9 @@ export class GameScreen {
 
   private ro?: ResizeObserver;
 
+  private orbit?: Orbit;
   destroy() {
+    this.orbit?.dispose();
     this.ro?.disconnect();
     this.destroyed = true;
     cancelAnimationFrame(this.raf);
@@ -558,6 +564,7 @@ export class GameScreen {
       } else if (this.assault && (this.phase === "result" || this.phase === "over")) this.stepAssault(dt);
       this.view.update(dt * (this.phase === "battle" ? Math.min(this.speed, 2) : 1));
     }
+    if (this.o.camera) { const c = this.o.camera(); this.view.setView(c.yaw, c.tilt, c.zoom); }
     this.view.render(this.scene());
     this.raf = requestAnimationFrame(this.frame);
   };

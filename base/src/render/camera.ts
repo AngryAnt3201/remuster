@@ -27,13 +27,24 @@ export const DIST = 30;
 export const HEADROOM = 1.1;
 export const SLAB = 0.45;
 
+/** Default curvature of the world: the ground falls away from the board centre by BEND * distance squared, so the
+ *  battlefield reads as the top of a small globe. 0 = a flat table. */
+export const BEND = 0.011;
+
 export class Camera {
   readonly W: number;
   readonly H: number;
-  readonly tilt: number;
-  readonly dist: number;
-  readonly sin: number;
-  readonly cos: number;
+  tilt: number;
+  dist: number;
+  sin: number;
+  cos: number;
+  /** Turn of the world about the board centre, radians (0 = you look from your own edge toward the rival). */
+  yaw = 0;
+  private cy_ = 1; private sy_ = 0;
+  /** Globe curvature (see BEND). */
+  bend = 0;
+  /** Bumped whenever the view changes: caches of projected geometry compare it. */
+  rev = 0;
   /** px per unit of normalised image plane */
   k = 1;
   /** screen position of the board centre on the ground */
@@ -45,79 +56,98 @@ export class Camera {
     this.sin = Math.sin(tilt); this.cos = Math.cos(tilt);
   }
 
-  private depth(y: number, z: number) { return this.dist - (y - this.H / 2) * this.sin - z * this.cos; }
+  /** Turn and tilt the view. */
+  setView(yaw: number, tilt = this.tilt) {
+    this.yaw = yaw; this.cy_ = Math.cos(yaw); this.sy_ = Math.sin(yaw);
+    this.tilt = tilt; this.sin = Math.sin(tilt); this.cos = Math.cos(tilt);
+    this.rev++;
+  }
 
   /** World to screen. */
   project(x: number, y: number, z = 0): ScreenPt {
-    const cz = this.depth(y, z);
-    const Y = y - this.H / 2;
-    return {
-      x: this.cx + (this.k * (x - this.W / 2)) / cz,
-      y: this.cy + (this.k * (Y * this.cos - z * this.sin)) / cz,
-      s: this.k / cz,
-    };
+    const X0 = x - this.W / 2, Y0 = y - this.H / 2;
+    if (this.bend) z -= this.bend * (X0 * X0 + Y0 * Y0);
+    const X = X0 * this.cy_ - Y0 * this.sy_, Y = X0 * this.sy_ + Y0 * this.cy_;
+    const cz = Math.max(0.5, this.dist - Y * this.sin - z * this.cos);
+    return { x: this.cx + (this.k * X) / cz, y: this.cy + (this.k * (Y * this.cos - z * this.sin)) / cz, s: this.k / cz };
+  }
+
+  /** Depth order on the ground: larger = nearer the camera (draw later). Equals y when the view is not turned. */
+  sortKey(x: number, y: number): number {
+    return (x - this.W / 2) * this.sy_ + (y - this.H / 2) * this.cy_ + this.H / 2;
   }
 
   /** Screen to the ground point under it (z = 0). */
-  unproject(px: number, py: number): Pt {
-    const u = (px - this.cx) / this.k, v = (py - this.cy) / this.k;
-    const den = this.cos + v * this.sin;
-    // Above the horizon there is no ground: clamp far away rather than flip behind the camera.
-    const Y = den > 1e-6 ? (v * this.dist) / den : -1e6;
-    const X = u * (this.dist - Y * this.sin);
-    return { x: X + this.W / 2, y: Y + this.H / 2 };
-  }
+  unproject(px: number, py: number): Pt { return this.unprojectAt(px, py, 0); }
 
   /** Screen to the point at height z under the pointer (for picking things that stand up). */
   unprojectAt(px: number, py: number, z: number): Pt {
     const u = (px - this.cx) / this.k, v = (py - this.cy) / this.k;
-    // v (D - Y s - z c) = Y c - z s  =>  Y = (v (D - z c) + z s) / (c + v s)
     const den = this.cos + v * this.sin;
-    const Y = den > 1e-6 ? (v * (this.dist - z * this.cos) + z * this.sin) / den : -1e6;
-    const X = u * (this.dist - Y * this.sin - z * this.cos);
-    return { x: X + this.W / 2, y: Y + this.H / 2 };
+    let X0 = 0, Y0 = 0, ze = z;
+    // The curved ground has no closed form: solve on a flat plane at the height found so far, a few times over.
+    for (let i = 0; i < (this.bend ? 5 : 1); i++) {
+      // v (D - Y s - z c) = Y c - z s  =>  Y = (v (D - z c) + z s) / (c + v s)
+      const Y = den > 1e-6 ? (v * (this.dist - ze * this.cos) + ze * this.sin) / den : -1e6;
+      const X = u * (this.dist - Y * this.sin - ze * this.cos);
+      X0 = X * this.cy_ + Y * this.sy_; Y0 = -X * this.sy_ + Y * this.cy_;
+      const d2 = Math.min(900, X0 * X0 + Y0 * Y0);
+      ze = z - this.bend * d2;
+    }
+    return { x: X0 + this.W / 2, y: Y0 + this.H / 2 };
   }
 
-  /** Pixels per world unit across the screen at ground row y (and height z). */
-  scaleAt(y: number, z = 0) { return this.k / this.depth(y, z); }
+  private depthAt(x: number, y: number, z: number) {
+    const X0 = x - this.W / 2, Y0 = y - this.H / 2;
+    return Math.max(0.5, this.dist - (X0 * this.sy_ + Y0 * this.cy_) * this.sin - (z - this.bend * (X0 * X0 + Y0 * Y0)) * this.cos);
+  }
 
-  /** How much a ground length along y shrinks against one along x at row y (< 1: the ground is foreshortened). */
-  squashAt(y: number) { return (this.cos * this.dist) / this.depth(y, 0); }
+  /** Pixels per world unit across the screen at ground row y (and height z); pass x when the view may be turned. */
+  scaleAt(y: number, z = 0, x = this.W / 2) { return this.k / this.depthAt(x, y, z); }
+
+  /** How much a ground length running away from the camera shrinks against one running across (< 1: foreshortened). */
+  squashAt(y: number, x = this.W / 2) { return (this.cos * this.dist) / this.depthAt(x, y, 0); }
 
   /** Fit the board (plus headroom over the far edge and the front face) inside an area, centred. */
   fit(area: Rect, headroom = HEADROOM, slab = SLAB) {
     this.k = 1; this.cx = 0; this.cy = 0;
-    const pts = [
-      this.project(0, 0, headroom), this.project(this.W, 0, headroom),
-      this.project(0, 0), this.project(this.W, 0),
-      this.project(0, this.H, -slab), this.project(this.W, this.H, -slab),
-    ];
     let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
-    for (const p of pts) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); }
+    for (const [x, y] of [[0, 0], [this.W, 0], [0, this.H], [this.W, this.H]]) for (const z of [headroom, 0, -slab]) {
+      const p = this.project(x, y, z);
+      // only the far corners need headroom and only the near ones the slab
+      const far = this.sortKey(x, y) < this.H / 2;
+      if ((z > 0 && !far) || (z < 0 && far)) continue;
+      x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y);
+    }
     const k = Math.min(area.w / (x1 - x0), area.h / (y1 - y0));
     this.k = k;
     this.cx = area.x + area.w / 2 - ((x0 + x1) / 2) * k;
     this.cy = area.y + area.h / 2 - ((y0 + y1) / 2) * k;
+    this.rev++;
   }
 
   /** The screen box the board's ground covers. */
   groundRect(): Rect {
-    const a = this.project(0, 0), b = this.project(this.W, 0), c = this.project(0, this.H), d = this.project(this.W, this.H);
-    const x0 = Math.min(a.x, c.x), x1 = Math.max(b.x, d.x);
-    return { x: x0, y: a.y, w: x1 - x0, h: c.y - a.y };
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const [x, y] of [[0, 0], [this.W, 0], [0, this.H], [this.W, this.H]]) {
+      const p = this.project(x, y);
+      x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y);
+    }
+    return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
   }
 
   /** The 8-way screen facing for a world heading (radians, 0 = +x, pi/2 = +y toward you).
    *  0 = right, 1 = down-right, 2 = down (toward the camera), 3 = down-left, 4 = left, 5 = up-left, 6 = up, 7 = up-right.
    *  With mirroring, frames 3, 4, 5 are 1, 0, 7 flipped horizontally (see mirror8). */
   facing8(face: number, y = this.H / 2): number {
-    const a = Math.atan2(Math.sin(face) * this.squashAt(y), Math.cos(face));
+    const f = face + this.yaw;
+    const a = Math.atan2(Math.sin(f) * this.squashAt(y), Math.cos(f));
     return ((Math.round(a / (Math.PI / 4)) % 8) + 8) % 8;
   }
 
   /** Path a ground circle (exactly projected) into ctx. Use for shadows, rings, ranges, zones. */
   groundPath(ctx: PathSink, x: number, y: number, r: number, z = 0) {
-    const n = Math.max(12, Math.min(64, Math.round(r * this.scaleAt(y) * 0.6)));
+    const n = Math.max(12, Math.min(64, Math.round(r * this.scaleAt(y, 0, x) * 0.6)));
     for (let i = 0; i <= n; i++) {
       const a = (i / n) * Math.PI * 2;
       const p = this.project(x + Math.cos(a) * r, y + Math.sin(a) * r, z);
@@ -140,7 +170,10 @@ export function mirror8(dir: number): { frame: number; flip: boolean } {
 
 /** Painter's order: ground layer first, then upright things by ground y (far first), then the air layer by y.
  *  Ties keep insertion order (Array.prototype.sort is stable). */
-export interface Drawable { y: number; layer: 0 | 1 | 2; draw(): void; }
-export function sortDrawables<T extends { y: number; layer: number }>(list: T[]): T[] {
-  return list.sort((a, b) => a.layer - b.layer || a.y - b.y);
+export interface Drawable { y: number; /** ground x, for a turned camera (default: the board's middle) */ x?: number; layer: 0 | 1 | 2; draw(): void; }
+export function sortDrawables<T extends { y: number; x?: number; layer: number }>(list: T[], cam?: Camera): T[] {
+  if (!cam || !cam.yaw) return list.sort((a, b) => a.layer - b.layer || a.y - b.y);
+  const key = new Map<T, number>();
+  for (const d of list) key.set(d, cam.sortKey(d.x ?? cam.W / 2, d.y));
+  return list.sort((a, b) => a.layer - b.layer || key.get(a)! - key.get(b)!);
 }

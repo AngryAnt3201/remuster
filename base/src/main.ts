@@ -539,9 +539,10 @@ function arenaThumb(a: ArenaDef, px = 54) {
   c.style.width = `${9 * k}px`; c.style.height = `${14 * k}px`;
   const g = c.getContext("2d")!;
   g.scale(k * dpr, k * dpr);
-  for (const m of a.marks) { g.fillStyle = m.look === "bridge" ? TERRAIN.bridge.deck : TERRAIN.gate; g.fillRect(m.x - m.w / 2, m.y - m.h / 2, m.w, m.h); }
-  for (const b of a.blocks) {
-    g.fillStyle = b.kind === "water" ? TERRAIN.water.shallow : (TERRAIN.looks[b.look ?? ""] ?? TERRAIN.looks[b.kind] ?? TERRAIN.looks.wall)[b.kind === "building" ? "roofLit" : "top"] ?? "#bbb";
+  const M = TERRAIN.mat, zone = (b: { kind: string }) => b.kind === "road" || b.kind === "brush";
+  for (const b of [...a.blocks.filter(zone), ...a.blocks.filter((b) => !zone(b))]) {
+    const k = b.kind as string;
+    g.fillStyle = k === "water" ? TERRAIN.water.shallow : k === "road" ? TERRAIN.road.fill : k === "brush" ? TERRAIN.brush.b : k === "building" ? M.roof : k === "wall" ? M.stone : M.timber;
     g.fillRect(b.x - b.w / 2, b.y - b.h / 2, b.w, b.h);
   }
   return c;
@@ -811,13 +812,15 @@ function gemDemo(kind: string) {
 
 // ---------------------------------------------------------------- [film] scripted battles for video capture
 async function playFilm(name: string, speed: number) {
-  const { SCENES, sceneConfig, filmState, filmMark } = await import("./film");
+  const { SCENES, sceneConfig, filmState, filmMark, filmCamera } = await import("./film");
+  const t0 = performance.now(), still = new URLSearchParams(location.search).has("still");
   const scene = SCENES[name] ?? SCENES.clash;
   const st = filmState(name);
   save((s) => { s.settings.speed = speed || scene.speed || 1; });
   clear();
   game = new GameScreen(app, {
     cfg: sceneConfig(scene), you: { ...DEFAULT_AI, difficulty: 0 }, mode: "watch", scripted: true, title: scene.title, arena: scene.arena,
+    camera: still ? undefined : () => filmCamera(name, (performance.now() - t0) / 1000),
     marks: scene.terrain ? arenaById(scene.terrain)?.marks : undefined,
     onEnd: () => { filmMark("end"); }, onQuit: title,
   });

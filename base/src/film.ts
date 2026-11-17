@@ -109,3 +109,16 @@ export function seedDemoSave() {
   };
   try { localStorage.setItem("muster.save.v1", JSON.stringify(save)); } catch { /* private mode */ }
 }
+
+/** The camera move of a scene, by seconds since it started. It is the same in every game, so a cut from one game's
+ *  capture to another's lands on the same view of the same instant. Every move opens on the whole globe and comes
+ *  in, then keeps turning: the zoom rides up as the board turns side-on, so the fight stays large in a tall frame. */
+export function filmCamera(scene: string, t: number): { yaw: number; tilt: number; zoom: number } {
+  const ease = (x: number) => { const k = Math.max(0, Math.min(1, x)); return k * k * (3 - 2 * k); };
+  const dir = scene === "arena" ? -1 : 1, rate = scene === "siege" ? 0.16 : 0.24;
+  const yaw = dir * (-0.5 + rate * t + 0.25 * Math.sin(t * 0.37));
+  const side = Math.abs(Math.sin(yaw));
+  const zoom = (0.5 + 0.42 * ease(t / 2.2)) * (1 + 0.42 * side) * (1 + 0.06 * Math.sin(t * 0.8));
+  const tilt = (scene === "arena" ? 0.86 : 0.74) + 0.1 * Math.sin(t * 0.29 + 1) - 0.22 * (1 - ease(t / 2.2));
+  return { yaw, tilt, zoom };
+}

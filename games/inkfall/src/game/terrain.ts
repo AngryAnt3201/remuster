@@ -1,69 +1,24 @@
-// How Inkfall draws Arena terrain (engine/core/terrain.ts blocks, engine/core/arena.ts looks): plaster-and-timber
-// walls under a tiled coping, thatched houses, pagoda towers, bamboo fences and stake lines, rice-straw bales, and
-// koi ponds crossed by arched timber bridges. All in paper, wash greys and a little tea stain, so the two clans stay
-// the only colour on the sheet.
-export type Roof = "flat" | "gable" | "cone" | "crenel";
-export type Detail = "brick" | "plank" | "house" | "stake" | "log" | "crate" | "rail";
+// Inkfall's world: the materials and shapes its buildings, walls, cover, roads, brush, trees and props are built
+// from (see base/src/game/terrain.ts for what each field does, base/src/render/props.ts for the builders).
+export type { Lamp, Materials, Roof, Tree, WorldStyle } from "@base/game/terrain";
+import type { WorldStyle } from "@base/game/terrain";
 
-export interface LookStyle {
-  h: number;
-  top: string; front: string; side: string; trim: string;
-  roof?: Roof;
-  /** Roof colours (lit slope, shaded slope). */
-  roofLit?: string; roofDark?: string;
-  detail?: Detail;
-  /** Window / lamp glow for "house" detail. */
-  glow?: string;
-}
-
-export interface TerrainStyle {
-  /** Outline colour for every block. */
-  ink: string;
-  /** Keyed by block.look, then block.kind as the fallback. */
-  looks: Record<string, LookStyle>;
-  water: { deep: string; shallow: string; foam: string; bank: string };
-  /** Decoration marks: a gate's paving and a bridge's deck and rails. */
-  gate: string;
-  bridge: { deck: string; plank: string; rail: string };
-  rubble: string;
-  dust: string;
-  /** Sparks when a shot glances off a wall. */
-  spark: string;
-}
-
-const plaster = { top: "#f7f1e1", front: "#e9e0c9", side: "#cfc5ad", trim: "#2a2622" };
-const tile = { roofLit: "#6f6a62", roofDark: "#3b3833" };
-const thatch = { roofLit: "#cdb884", roofDark: "#a08a58" };
-const bamboo = { top: "#a9b596", front: "#84946f", side: "#687859", trim: "#3f4a38" };
-const straw = { top: "#e2cf9c", front: "#c9b27c", side: "#a8925e", trim: "#6e5c3a" };
-
-export const TERRAIN: TerrainStyle = {
-  ink: "#1d1a17",
-  looks: {
-    // a plaster wall with black timbers and a tiled coping along its top
-    wall: { h: 0.8, ...plaster, roof: "gable", ...tile, detail: "plank" },
-    // thatched houses with paper windows
-    building: { h: 0.85, ...plaster, roof: "gable", ...thatch, detail: "house", glow: "#f1d894" },
-    house: { h: 0.85, ...plaster, roof: "gable", ...thatch, detail: "house", glow: "#f1d894" },
-    // a tiled hall, taller
-    hall: { h: 1.15, ...plaster, roof: "gable", ...tile, detail: "house", glow: "#f1d894" },
-    // a pagoda tower: plaster under a tall pointed tiled roof
-    tower: { h: 1.9, ...plaster, roof: "cone", ...tile, detail: "plank", glow: "#f1d894" },
-    // bamboo: stake lines, fences
-    barricade: { h: 0.5, ...bamboo, detail: "stake" },
-    fence: { h: 0.5, ...bamboo, detail: "rail" },
-    logs: { h: 0.45, ...bamboo, detail: "log" },
-    // rice-straw bales
-    crates: { h: 0.55, ...straw, detail: "log" },
-    cover: { h: 0.5, ...straw, detail: "log" },
-  },
-  // koi ponds: a grey-green wash with a dark wet bank and pale ripples
+export const TERRAIN: WorldStyle = {
+  ink: "#1d1a17", inkW: 0.036,
+  light: [-0.5, 0.45, 0.8],
+  dark: 0.62, bands: 2,
+  shadow: "rgba(29,26,23,0.2)",
+  mat: { stone: "#d9d0b8", stoneDark: "#6f6a62", plaster: "#f7f1e1", plaster2: "#e9e0c9", timber: "#84946f", timberDark: "#3f4a38", roof: "#cdb884", roof2: "#55514a", thatch: "#cdb884", cloth: "#c8321e", cloth2: "#f7f1e1", metal: "#3b3833", foliage: "#8a9a80", foliage2: "#5d6b58", trunk: "#2a2622", rock: "#9a958a", glow: "#f1d894", door: "#2a2622", hay: "#e2cf9c", sack: "#c9b27c" },
+  roof: "gable", tree: "bamboo", lamp: "lantern",
+  looks: { wall: { h: 0.8, wall: "#e9e0c9" }, hall: { h: 1.1, roof: "pagoda", roofC: "#55514a" }, tower: { h: 1.9, wall: "#f7f1e1", roof: "pagoda", roofC: "#55514a" }, chapel: { roof: "pagoda", roofC: "#55514a", wall: "#f7f1e1" }, gatehouse: { wall: "#c8321e" }, shop: { roof: "hip", roofC: "#55514a" } },
   water: { deep: "#7f9a9c", shallow: "#a9bcb8", foam: "rgba(250,246,234,0.85)", bank: "rgba(29,26,23,0.5)" },
-  gate: "rgba(184,154,94,0.3)",
+  road: { fill: "#ece3cc", edge: "#b8ad94", mark: "rgba(29,26,23,0.22)", kind: "dirt" },
+  plaza: "#f1e9d4",
   bridge: { deck: "#b8a47c", plank: "#8a775a", rail: "#2a2622" },
-  rubble: "#6f6a62",
-  dust: "#a9a397",
-  spark: "#1d1a17",
+  brush: { a: "#8a9a80", b: "#5d6b58", tip: "#2a2622", crop: "#cdb884" },
+  rubble: "#6f6a62", dust: "#a9a397", spark: "#1d1a17",
+  sky: ["#e9dfc8", "#f7f1e1"], soil: ["#b8ad94", "#5a544a"], halo: "rgba(29,26,23,0.1)",
+  scenery: { trees: 16, rocks: 5, houses: 1.5, lamps: 2 },
 };
 
 /** Which of the game's battlefield backdrops (public/arenas/act<N>) each Arena-mode arena is fought on. */

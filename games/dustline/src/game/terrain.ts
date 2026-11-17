@@ -1,68 +1,24 @@
-// How Dustline draws Arena terrain (engine/core/terrain.ts blocks, engine/core/arena.ts looks): adobe walls with
-// roof beams, false-front saloons, a water tower, hay-bale barricades, barrels and crates for cover, corral fences,
-// log jams, watering holes and trestles. The colours and sizes are here; the shapes the base renderer cannot
-// describe (the false front, the tower on legs, bales, barrels) are drawn by ../render/terrain.ts.
+// Dustline's world: the materials and shapes its buildings, walls, cover, roads, brush, trees and props are built
+// from (see base/src/game/terrain.ts for what each field does, base/src/render/props.ts for the builders).
+export type { Lamp, Materials, Roof, Tree, WorldStyle } from "@base/game/terrain";
+import type { WorldStyle } from "@base/game/terrain";
 
-export type Roof = "flat" | "gable" | "cone" | "crenel";
-export type Detail = "brick" | "plank" | "house" | "stake" | "log" | "crate" | "rail";
-
-export interface LookStyle {
-  h: number;
-  top: string; front: string; side: string; trim: string;
-  roof?: Roof;
-  /** Roof colours (lit slope, shaded slope). */
-  roofLit?: string; roofDark?: string;
-  detail?: Detail;
-  /** Window / lamp glow. */
-  glow?: string;
-  /** Dustline: the painted false front (sign board, awning stripe) of a building. */
-  paint?: string; sign?: string;
-}
-
-export interface TerrainStyle {
-  /** Outline colour for every block. */
-  ink: string;
-  /** Keyed by block.look, then block.kind as the fallback. */
-  looks: Record<string, LookStyle>;
-  water: { deep: string; shallow: string; foam: string; bank: string };
-  /** Decoration marks: a gate's paving and a bridge's deck and rails. */
-  gate: string;
-  bridge: { deck: string; plank: string; rail: string };
-  rubble: string;
-  dust: string;
-  /** Sparks when a shot glances off a wall. */
-  spark: string;
-}
-
-const adobe = { top: "#ecc79a", front: "#d9a070", side: "#b87c50", trim: "#8a5634" };
-const pine = { top: "#d2a56c", front: "#b98a55", side: "#96693c", trim: "#5f3d20" };
-
-export const TERRAIN: TerrainStyle = {
-  ink: "#2a1608",
-  looks: {
-    // adobe: thick, flat-topped, roof beams poking out of the face
-    wall: { h: 0.9, ...adobe, roof: "flat" },
-    // false-front stores: plank sheds behind a tall painted facade
-    building: { h: 1.05, ...pine, roofLit: "#8a6446", roofDark: "#5f4330", glow: "#ffd98a", paint: "#a8402e", sign: "#f0e2b8" },
-    house: { h: 1.05, ...pine, roofLit: "#8a6446", roofDark: "#5f4330", glow: "#ffd98a", paint: "#a8402e", sign: "#f0e2b8" },
-    hall: { h: 1.3, top: "#e6d2a8", front: "#d6bd8c", side: "#a88e60", trim: "#5f3d20", roofLit: "#8a6446", roofDark: "#5f4330", glow: "#ffe2a0", paint: "#3f7f7a", sign: "#f6ecd0" },
-    // a water tower: a banded tank on legs under a shingled cap
-    tower: { h: 2.2, top: "#d2a56c", front: "#b98a55", side: "#8f6238", trim: "#3c3f48", roofLit: "#8a6446", roofDark: "#5f4330", paint: "#a8402e" },
-    // hay bales
-    barricade: { h: 0.5, top: "#f0d470", front: "#e2c25a", side: "#c2a044", trim: "#8f7430" },
-    logs: { h: 0.45, top: "#b88a58", front: "#8f623c", side: "#734c2b", trim: "#3f2a17", detail: "log" },
-    // barrels and the odd crate
-    crates: { h: 0.6, top: "#d9b07a", front: "#b07c48", side: "#8f6238", trim: "#3c3f48", detail: "crate" },
-    cover: { h: 0.6, top: "#d9b07a", front: "#b07c48", side: "#8f6238", trim: "#3c3f48", detail: "crate" },
-    // corral fence, whitewashed
-    fence: { h: 0.52, top: "#f6efdc", front: "#e9dfc6", side: "#c9bda0", trim: "#8a7a5a", detail: "rail" },
-  },
+export const TERRAIN: WorldStyle = {
+  ink: "#2a1608", inkW: 0.028,
+  light: [-0.5, 0.45, 0.8],
+  dark: 0.56, tint: "#6a3a4a", bands: 3,
+  shadow: "rgba(60,25,10,0.3)",
+  mat: { stone: "#d9a070", stoneDark: "#b87c50", plaster: "#d2a56c", plaster2: "#e6d2a8", timber: "#b98a55", timberDark: "#5f3d20", roof: "#8a6446", roof2: "#a8402e", thatch: "#c9a05a", cloth: "#a8402e", cloth2: "#f0e2b8", metal: "#3c3f48", foliage: "#7a9a5a", foliage2: "#5f8050", trunk: "#7a5632", rock: "#c08a5a", glow: "#ffd98a", door: "#5f3d20", hay: "#e2c25a", sack: "#d9b07a" },
+  roof: "flat", tree: "cactus", lamp: "post",
+  looks: { wall: { h: 0.9 }, house: { h: 1.0, roof: "flat", roofC: "#8a6446" }, hall: { h: 1.25, roof: "gable", roofC: "#a8402e" }, tower: { h: 2.2, wall: "#b98a55", roof: "hip", roofC: "#8a6446" }, barn: { roof: "gable", roofC: "#a8402e", wall: "#a8402e" }, chapel: { wall: "#f0e2b8", roof: "gable", roofC: "#a8402e" }, shop: { wall: "#3f7f7a" } },
   water: { deep: "#3f86a8", shallow: "#7fc0d6", foam: "rgba(246,252,255,0.8)", bank: "rgba(110,70,40,0.5)" },
-  gate: "rgba(246,226,180,0.3)",
+  road: { fill: "#e0bd86", edge: "#c0935a", mark: "rgba(120,70,30,0.3)", kind: "dirt" },
+  plaza: "#e8cc9a",
   bridge: { deck: "#b08050", plank: "#7a5630", rail: "#5f3d20" },
-  rubble: "#8a6a48",
-  dust: "#e6cfa2",
-  spark: "#fff0b8",
+  brush: { a: "#c9b05a", b: "#a8923c", tip: "#eadb96", crop: "#e2c25a" },
+  rubble: "#8a6a48", dust: "#e6cfa2", spark: "#fff0b8",
+  sky: ["#f0a85c", "#fde6b4"], soil: ["#b0703f", "#5a3018"], halo: "rgba(255,240,200,0.4)",
+  scenery: { trees: 9, rocks: 7, houses: 1.6, lamps: 0 },
 };
 
 /** Which of the game's battlefield backdrops (public/arenas/act<N>) each Arena-mode arena is fought on. */

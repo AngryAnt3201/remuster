@@ -3,11 +3,12 @@
 // (zones, contact shadows, mines, mounds), upright things sorted by ground y, the air layer, then bars and effects.
 import type { Battle, BattleEvent, Body, Proj } from "@engine/core/battle";
 import { H, UNITS, W, ZONE_DEPTH, bodyDef, toWorld, type BodyKind, type Obstacle, type Piece, type Side, type UnitKind } from "@engine/core/defs";
-import { arenaFor, backdropRect, propRect, propVariant, type Arena } from "./arena";
-import { TerrainLayer } from "./terrain";
+import { arenaFor, propRect, propVariant, type Arena } from "./arena";
+import { TerrainLayer, kitLook } from "./terrain";
+import { World } from "./world";
 import type { Block } from "@engine/core/terrain";
 import type { ArenaMark } from "@engine/core/arena";
-import { Camera, DIST, SLAB, TILT, sortDrawables, type Drawable, type Rect, type ScreenPt } from "./camera";
+import { BEND, Camera, DIST, TILT, sortDrawables, type Drawable, type Rect, type ScreenPt } from "./camera";
 import { Fx, animAlpha, animFrame, frand, type Anim } from "./fx";
 import { BOARD, GOLD, INK, TEAM, VIOLET, ZAP, team } from "./palette";
 import { frame, hasAtlas, motionOf, spriteHeight, type Weight } from "./sprites";
@@ -22,7 +23,7 @@ import { Juice, landSquash, popScale } from "./juice";
 import { drawBanner, drawCallout, drawFloat, drawTrail, hpBar, shadowRing } from "./juicedraw";
 import { equipped } from "@engine/progression/cosmetics"; // [skins]
 import { keepStateDebug, skinMotes } from "./keeps"; // [skins]
-import { arenaLayers, sceneFigures } from "./foreground"; // polish/arenas: arena layers (see render())
+import { arenaLayers } from "./foreground"; // polish/arenas: arena layers (see render())
 
 export type { Rect } from "./camera";
 
@@ -83,6 +84,14 @@ export class BoardView {
   onShake?: (amount: number) => void;
   onSound?: (name: string, gain?: number) => void;
   private bg?: HTMLCanvasElement;
+  /** The scenery standing in front of the board, drawn over the units (cached with the background). */
+  private fgScene?: HTMLCanvasElement;
+  private bgRev = -1;
+  /** The globe the board sits on (world.ts): ground, rim, sky and the scenery round the board. */
+  readonly world = new World();
+  private groundKey = "";
+  /** The view: turn about the board (radians), tilt from straight down, zoom (1 = the board fills the area). */
+  view = { yaw: 0, tilt: TILT, zoom: 1 };
   /** The Blender arena for this match's act (null until loaded, or if the art is missing: then the drawn terrain). */
   arena: Arena | null = null;
   private arenaReq = 0;
@@ -143,6 +152,13 @@ export class BoardView {
     this.ctx = canvas.getContext("2d")!;
     void loadKeeps();
     void loadVfx();
+    // deep links for looking at the world from a fixed side: ?yaw=120&tilt=40&zoom=0.7 (degrees)
+    const q = typeof location !== "undefined" ? new URLSearchParams(location.search) : null;
+    if (q && (q.has("yaw") || q.has("tilt") || q.has("zoom"))) {
+      this.view.yaw = (Number(q.get("yaw") ?? 0) * Math.PI) / 180;
+      if (q.has("tilt")) this.view.tilt = (Number(q.get("tilt")) * Math.PI) / 180;
+      if (q.has("zoom")) this.view.zoom = Number(q.get("zoom"));
+    }
   }
 
   /** Pixels per world unit at the middle of the board (for effects that don't care about depth). */
@@ -156,8 +172,22 @@ export class BoardView {
     this.canvas.style.width = cssW + "px";
     this.canvas.style.height = cssH + "px";
     this.area = { ...area };
-    this.cam.fit(area);
-    this.rect = this.cam.groundRect();
+    this.cam.bend = BEND;
+    this.refit();
+  }
+
+  /** Turn, tilt and zoom the view of the world. Yaw is free; tilt and zoom are kept within sensible limits. */
+  setView(yaw: number, tilt = this.view.tilt, zoom = this.view.zoom) {
+    const v = this.view;
+    v.yaw = yaw; v.tilt = Math.max(0.3, Math.min(1.0, tilt)); v.zoom = Math.max(0.45, Math.min(1.8, zoom));
+    this.refit();
+  }
+  private refit() {
+    const v = this.view, cam = this.cam;
+    cam.setView(v.yaw, v.tilt);
+    cam.fit(this.area);
+    if (v.zoom !== 1) { cam.k *= v.zoom; cam.rev++; }
+    this.rect = cam.groundRect();
     this.bg = undefined;
   }
 
@@ -177,7 +207,7 @@ export class BoardView {
       // The backdrop is only exact through the camera it was rendered with.
       const c = a?.m.camera;
       this.arena = a && c && Math.abs(c.tilt - TILT) < 1e-3 && Math.abs(c.dist - DIST) < 1e-3 ? a : null;
-      this.bg = undefined;
+      this.bg = undefined; this.groundKey = "";
     });
   }
 
@@ -322,75 +352,18 @@ export class BoardView {
     const g = c.getContext("2d")!;
     const dpr = this.dpr, cam = this.cam;
     g.scale(dpr, dpr);
-    if (this.arena) { this.paintArena(g, this.arena); return c; }
-    const bgr = g.createLinearGradient(0, 0, 0, this.cssH);
-    bgr.addColorStop(0, "#05070c"); bgr.addColorStop(1, "#0b1018");
-    g.fillStyle = bgr;
-    g.fillRect(0, 0, this.cssW, this.cssH);
-    const c00 = cam.project(0, 0), c10 = cam.project(W, 0), c01 = cam.project(0, H), c11 = cam.project(W, H);
-    const d01 = cam.project(0, H, -SLAB), d11 = cam.project(W, H, -SLAB);
-    // A soft drop shadow under the whole diorama.
-    g.save();
-    g.shadowColor = "rgba(0,0,0,0.7)"; g.shadowBlur = 28; g.shadowOffsetY = 10;
-    g.fillStyle = "#10151d";
-    g.beginPath(); g.moveTo(c00.x, c00.y); g.lineTo(c10.x, c10.y); g.lineTo(d11.x, d11.y); g.lineTo(d01.x, d01.y); g.closePath(); g.fill();
-    g.restore();
-    // The front face of the board: a slab of earth.
-    const fg = g.createLinearGradient(0, c01.y, 0, d01.y);
-    fg.addColorStop(0, "#3a2c20"); fg.addColorStop(0.35, "#2a1f17"); fg.addColorStop(1, "#140f0b");
-    g.fillStyle = fg;
-    g.beginPath(); g.moveTo(c01.x, c01.y); g.lineTo(c11.x, c11.y); g.lineTo(d11.x, d11.y); g.lineTo(d01.x, d01.y); g.closePath(); g.fill();
-    g.strokeStyle = "rgba(0,0,0,0.35)"; g.lineWidth = 1;
-    for (let i = 1; i < 4; i++) {
-      const u = i / 4, l = cam.project(0, H, -SLAB * u), r = cam.project(W, H, -SLAB * u);
-      g.beginPath(); g.moveTo(l.x, l.y + Math.sin(i * 3.1) * 1.5); g.lineTo(r.x, r.y - Math.sin(i * 2.3) * 1.5); g.stroke();
-    }
-    // The ground: each screen row is one world row scaled across, so a row-by-row copy is an exact warp.
-    this.warpGround(g, false);
-    // A lit lip along the near edge, and a vignette that darkens toward the far edge.
-    g.strokeStyle = "rgba(255,240,210,0.16)"; g.lineWidth = 1.5;
-    g.beginPath(); g.moveTo(c01.x, c01.y); g.lineTo(c11.x, c11.y); g.stroke();
-    g.save();
-    g.beginPath(); g.moveTo(c00.x, c00.y); g.lineTo(c10.x, c10.y); g.lineTo(c11.x, c11.y); g.lineTo(c01.x, c01.y); g.closePath(); g.clip();
-    const rr = this.rect;
-    const vg = g.createRadialGradient(rr.x + rr.w / 2, rr.y + rr.h * 0.6, Math.min(rr.w, rr.h) * 0.3, rr.x + rr.w / 2, rr.y + rr.h * 0.6, Math.max(rr.w, rr.h) * 0.75);
-    vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.45)");
-    g.fillStyle = vg; g.fillRect(rr.x, rr.y, rr.w, rr.h);
-    const hz = g.createLinearGradient(0, rr.y, 0, rr.y + rr.h * 0.35);
-    hz.addColorStop(0, "rgba(4,6,10,0.35)"); hz.addColorStop(1, "rgba(4,6,10,0)");
-    g.fillStyle = hz; g.fillRect(rr.x, rr.y, rr.w, rr.h * 0.35);
-    g.restore();
+    // the ground textures are rebuilt only when the arena (or the drawn board) changes, not when the view turns
+    const key = (this.arena ? this.arena.info.name : "drawn") + "|" + this.obstacles.length;
+    if (key !== this.groundKey) { this.groundKey = key; this.world.setGround(this.arena, () => this.paintGround(64), kitLook(), this.arena ? this.arena.info.name.length * 7 + this.arena.info.name.charCodeAt(0) : 3); }
+    this.world.paint(g, cam, this.cssW, this.cssH, this.arena ? this.paintGround(48, true) : undefined);
+    this.world.drawScenery(g, cam, true);
+    const f = this.fgScene = document.createElement("canvas");
+    f.width = c.width; f.height = c.height;
+    const fg = f.getContext("2d")!;
+    fg.scale(dpr, dpr);
+    this.world.drawScenery(fg, cam, false);
+    this.bgRev = cam.rev;
     return c;
-  }
-
-  /** Copies a top-down board texture onto the ground: each screen row is one world row scaled across, so a
-   *  row-by-row copy is an exact warp. */
-  private warpGround(g: CanvasRenderingContext2D, overlay: boolean) {
-    const cam = this.cam, dpr = this.dpr;
-    const c00 = cam.project(0, 0), c01 = cam.project(0, H);
-    const ppu = Math.max(16, Math.min(2048 / W, Math.ceil(cam.scaleAt(H) * dpr)));
-    const tex = this.paintGround(overlay ? Math.min(ppu, 64) : ppu, overlay);
-    const tp = tex.width / W;
-    const top = Math.floor(c00.y * dpr), bot = Math.ceil(c01.y * dpr);
-    g.imageSmoothingEnabled = true;
-    for (let row = top; row < bot; row++) {
-      const ya = Math.max(0, cam.unproject(c00.x, row / dpr).y), yb = Math.min(H, cam.unproject(c00.x, (row + 1) / dpr).y);
-      if (!(yb > ya)) continue;
-      const ym = (ya + yb) / 2, l = cam.project(0, ym).x, r = cam.project(W, ym).x;
-      g.drawImage(tex, 0, ya * tp, tex.width, Math.max(0.5, (yb - ya) * tp), l, row / dpr, r - l, 1 / dpr + 0.02);
-    }
-  }
-
-  /** The Blender arena: its backdrop was rendered through this camera, so one scaled copy lines its ground up with
-   *  the board exactly; the zone wash goes on top. Obstacles stand up later as prop sprites (drawRock). */
-  private paintArena(g: CanvasRenderingContext2D, a: Arena) {
-    g.fillStyle = a.info.edge;
-    g.fillRect(0, 0, this.cssW, this.cssH);
-    const r = backdropRect(a.m, this.cam.k, this.cam.cx, this.cam.cy);
-    g.imageSmoothingEnabled = true;
-    g.imageSmoothingQuality = "high";
-    g.drawImage(a.ground, r.x, r.y, r.w, r.h);
-    this.warpGround(g, true);
   }
 
   /** An obstacle's Blender prop, standing on its collision circle (its contact shadow is baked in). */
@@ -608,7 +581,7 @@ export class BoardView {
     if (!this.airSorted) return;
     for (const an of this.fx.anims) {
       if (an.delay > 0 || an.layer !== "air") continue;
-      list.push({ y: an.y + AIR_SORT_EPS, layer: an.z >= FLYER_Z ? 2 : 1, draw: () => this.drawAnim(an) });
+      list.push({ x: an.x, y: an.y + AIR_SORT_EPS, layer: an.z >= FLYER_Z ? 2 : 1, draw: () => this.drawAnim(an) });
     }
   }
 
@@ -630,7 +603,7 @@ export class BoardView {
     // JUICE: hit-stop. The impact frame is drawn once, then held on screen until the stop ends.
     if (this.juice.frozen && this.juice.drawn && scene.mode === "battle") return;
     this.juice.drawn = true;
-    if (!this.bg) this.bg = this.paintBackground();
+    if (!this.bg || this.bgRev !== this.cam.rev) this.bg = this.paintBackground();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     // JUICE: a smooth trauma shake (the effects' own kicks feed in through fx.shake).
@@ -656,7 +629,7 @@ export class BoardView {
     if (this.arena) arenaLayers(this).ambient(ctx, this.arena, this.cam, this.time, this.juice.reduced);
     if (scene.mode === "deploy") this.drawDeploy(scene);
     else this.drawBattle(scene);
-    if (this.arena) arenaLayers(this).foreground(ctx, this.arena, this.cam, this.time, sceneFigures(scene));
+    if (this.fgScene) { ctx.save(); ctx.setTransform(zk, 0, 0, zk, dx * this.dpr, dy * this.dpr); ctx.drawImage(this.fgScene, 0, 0); ctx.restore(); }
     if (this.arena) arenaLayers(this).overhead(ctx, this.arena, this.cam, this.time, this.juice.reduced);
     // ---- end arena layers
     this.drawFx();
@@ -830,7 +803,7 @@ export class BoardView {
       if (evo !== undefined && this.time - evo < 0.45) pop *= 1 + 0.45 * Math.sin(((this.time - evo) / 0.45) * Math.PI);
       const mine = p.kind === "mine";
       list.push({
-        y: p.y, layer: mine ? 0 : 1, draw: () => {
+        x: p.x, y: p.y, layer: mine ? 0 : 1, draw: () => {
           if (p.kind === "blades") {
             this.footprints("blades", p.x, p.y, p.side === 0 ? -1 : 1).forEach(([x, y], i) =>
               this.token("blades", p.side, x, y, fall.z, def.radius * pop, face, { t: this.time, id: p.id * 3 + i, rank: p.rank, sq: fall.sq }));
@@ -842,10 +815,10 @@ export class BoardView {
         },
       });
     }
-    for (const o of this.obstacles) list.push({ y: o.y, layer: 1, draw: () => this.drawRock(o) });
+    for (const o of this.obstacles) list.push({ x: o.x, y: o.y, layer: 1, draw: () => this.drawRock(o) });
     list.push(...this.terrain.drawables(this.ctx, this.cam, this.time)); // [arena]
     this.pushKeeps(list, [...shown.filter((p) => p.kind !== "mine"), ...(sc.ghost ? [sc.ghost] : [])]);
-    for (const d of sortDrawables(list)) d.draw();
+    for (const d of sortDrawables(list, this.cam)) d.draw();
     if (sc.ghost) {
       const ctx = this.ctx, g = sc.ghost, def = UNITS[g.kind];
       ctx.save();
@@ -1035,7 +1008,7 @@ export class BoardView {
     }
     // ---- upright and air layers, painter-sorted by ground y
     const list: Drawable[] = [];
-    for (const o of this.obstacles) list.push({ y: o.y, layer: 1, draw: () => this.drawRock(o) });
+    for (const o of this.obstacles) list.push({ x: o.x, y: o.y, layer: 1, draw: () => this.drawRock(o) });
     list.push(...this.terrain.drawables(this.ctx, this.cam, b.time, b.blocks)); // [arena]
     for (const w of b.waves ?? []) this.drawWave(w);
     for (const f of b.fuses ?? []) {
@@ -1044,27 +1017,27 @@ export class BoardView {
       let seen = this.fuseSeen.get(f);
       if (seen === undefined) this.fuseSeen.set(f, (seen = this.time));
       if (tex && this.time - seen < BOMBLET_FLIGHT) continue;
-      list.push({ y: f.y, layer: 1, draw: () => this.drawFuse(f.x, f.y, f.kind === "keg", f.at - b.time < 0.4) });
+      list.push({ x: f.x, y: f.y, layer: 1, draw: () => this.drawFuse(f.x, f.y, f.kind === "keg", f.at - b.time < 0.4) });
     }
     for (const bd of live) {
       const st = as?.pose(bd.id);
       if (st) {
-        if (!st.gone) list.push({ y: st.y, layer: bd.flying ? 2 : 1, draw: () => this.drawStriker(bd, st, height(bd)) });
+        if (!st.gone) list.push({ x: st.x, y: st.y, layer: bd.flying ? 2 : 1, draw: () => this.drawStriker(bd, st, height(bd)) });
         continue;
       }
       if (bd.burrowed) continue;
-      list.push({ y: pos(bd)[1], layer: bd.flying ? 2 : 1, draw: () => this.drawBody(b, bd, pos(bd), height(bd), fadeOf(bd)) });
+      list.push({ x: pos(bd)[0], y: pos(bd)[1], layer: bd.flying ? 2 : 1, draw: () => this.drawBody(b, bd, pos(bd), height(bd), fadeOf(bd)) });
     }
     // The battle's own projectiles stopped mid-air when it ended: they fade out with the leftovers.
     for (const p of b.projs) {
       if (!p.alive || vanish <= 0) continue;
       const lob = p.kind === "grenade" || p.kind === "shell";
-      list.push({ y: p.py + (p.y - p.py) * a, layer: lob ? 2 : 1, draw: () => { ctx.save(); ctx.globalAlpha *= vanish; this.drawProj(p, a); ctx.restore(); } });
+      list.push({ x: p.px + (p.x - p.px) * a, y: p.py + (p.y - p.py) * a, layer: lob ? 2 : 1, draw: () => { ctx.save(); ctx.globalAlpha *= vanish; this.drawProj(p, a); ctx.restore(); } });
     }
     if (as) this.pushShots(list, as);
     this.pushAirAnims(list);
     this.pushKeeps(list, live.filter((bd) => bd.alive && !bd.flying && !as?.pose(bd.id)?.gone).map((bd) => ({ x: pos(bd)[0], y: pos(bd)[1], kind: bd.kind })));
-    for (const d of sortDrawables(list)) d.draw();
+    for (const d of sortDrawables(list, this.cam)) d.draw();
     // ---- bars and ranks on top (not for illusions, bodies underground or the assault's strikers)
     for (const bd of live) {
       if (!bd.alive || bd.hp >= bd.maxHp || bd.kind === "mite" || bd.kind === "decoy" || bd.burrowed || as?.pose(bd.id)) continue;
@@ -1530,7 +1503,7 @@ export class BoardView {
     if (!this.showKeeps) return;
     for (const side of [0, 1] as Side[]) {
       this.keeps[side].see = bodies.some((p) => behindKeep(side, p.x, p.y, RADIUS(p.kind)));
-      list.push({ y: keepAnchor(side).y, layer: 1, draw: () => this.drawKeep(side) });
+      list.push({ x: keepAnchor(side).x, y: keepAnchor(side).y, layer: 1, draw: () => this.drawKeep(side) });
     }
   }
 
@@ -1818,7 +1791,7 @@ export class BoardView {
       const peak = lob ? (sh.style === "shell" ? 1.4 : 0.9) : Math.min(1.2, Math.hypot(end.x - sh.x0, end.y - sh.y0) * 0.1);
       const hAt = (v: number) => 0.45 + (end.z - 0.45) * v + peak * bump(v);
       const p = at(u);
-      list.push({ y: p.y, layer: lob ? 2 : 1, draw: () => this.drawShot(sh, at, hAt, u) });
+      list.push({ x: p.x, y: p.y, layer: lob ? 2 : 1, draw: () => this.drawShot(sh, at, hAt, u) });
     }
   }
 
