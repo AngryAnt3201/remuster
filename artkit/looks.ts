@@ -1,11 +1,12 @@
 // Looks: whole-sprite post-processing chosen by a game's Style, so the same models can ship with a radically
 // different feel. "toon" (the default), "neon" and "paper" are shaded inside the renderer (toon3d.ts reads
 // style.look); "pixel" renders small and scales up with hard pixels and a short palette, here.
-import { render, type Model, type RenderOpts, type Sprite, type Style } from "./toon3d";
+import { clamp, render, type Model, type RenderOpts, type Sprite, type Style } from "./toon3d";
 
 /** Render a model in the style's look. Use this everywhere a sprite is made for a game. */
 export function shoot(m: Model, o: RenderOpts): Sprite {
   const lk = o.style.look;
+  if (lk?.kind === "grit") return grit(m, o, lk);
   if (lk?.kind !== "pixel") return render(m, o);
   const scale = Math.max(2, Math.round(lk.scale)), levels = Math.max(2, lk.levels ?? 6);
   const k = (o.ppu / scale) / 128;
@@ -30,12 +31,44 @@ export function shoot(m: Model, o: RenderOpts): Sprite {
   return { w, h, ax: s.ax * scale, ay: s.ay * scale, data };
 }
 
+const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+/** The grit look: a small, ink-less, hard-lit render (toon3d shades it), then scanner noise and an ordered dither
+ *  down to a few shades per channel, scaled up in hard pixels. The team mask (when asked for) is left clean. */
+function grit(m: Model, o: RenderOpts, lk: { scale: number; levels?: number; noise?: number }): Sprite {
+  const scale = Math.max(1, Math.round(lk.scale)), levels = Math.max(2, lk.levels ?? 6), nz = (lk.noise ?? 0.5) * 34;
+  const st: Style = { ...o.style, outline: 0, inner: 0, rim: { ...o.style.rim, strength: 0 }, glow: { ...o.style.glow, radius: o.style.glow.radius * 0.6 } };
+  const s = render(m, { ...o, ppu: o.ppu / scale, style: st, ss: 2, shadow: undefined });
+  const q = 255 / (levels - 1), w = s.w * scale, h = s.h * scale;
+  const data = s.data.map((d, di) => {
+    const isMask = !!o.mask && di === s.data.length - 1;
+    const out = new Uint8ClampedArray(w * h * 4);
+    for (let y = 0; y < s.h; y++) for (let x = 0; x < s.w; x++) {
+      const i = (y * s.w + x) * 4;
+      if (d[i + 3] < 120) continue;
+      let r = d[i], g = d[i + 1], b = d[i + 2];
+      if (!isMask) {
+        let hsh = (x * 374761393 + y * 668265263) | 0; hsh = Math.imul(hsh ^ (hsh >>> 13), 1274126177); hsh ^= hsh >>> 16;
+        const n = (((hsh & 255) / 255) - 0.5) * nz, t = (BAYER4[(y & 3) * 4 + (x & 3)] / 16 - 0.47) * q;
+        r = Math.round(clamp((r + n + t) / q, 0, levels - 1)) * q; g = Math.round(clamp((g + n + t) / q, 0, levels - 1)) * q; b = Math.round(clamp((b + n + t) / q, 0, levels - 1)) * q;
+      } else { r = r > 127 ? 255 : 0; g = g > 127 ? 255 : 0; b = b > 127 ? 255 : 0; }
+      for (let yy = 0; yy < scale; yy++) for (let xx = 0; xx < scale; xx++) {
+        const j = ((y * scale + yy) * w + x * scale + xx) * 4;
+        out[j] = r; out[j + 1] = g; out[j + 2] = b; out[j + 3] = 255;
+      }
+    }
+    return out;
+  });
+  return { w, h, ax: s.ax * scale, ay: s.ay * scale, data };
+}
+
 /** Ready-made styles to start a game from (spread one and change what you like). */
 export const LOOKS = {
   /** Thick warm ink, three soft bands, violet shadows: the base game's feel. */
   toon: (): Partial<Style> => ({ look: { kind: "toon" } }),
   /** Chunky pixels: `scale` output pixels per art pixel, `levels` shades per channel. */
   pixel: (scale = 3, levels = 6): Partial<Style> => ({ look: { kind: "pixel", scale, levels }, rim: { color: "#ffffff", strength: 0, width: 0.3 } }),
+  /** Digitised 90s shooter sprites: no ink, hard top light, dithered to `levels` shades per channel. */
+  grit: (scale = 3, levels = 6, noise = 0.5): Partial<Style> => ({ look: { kind: "grit", scale, levels, noise }, outline: 0, inner: 0, rim: { color: "#ffffff", strength: 0, width: 0.3 } }),
   /** Dark fills with glowing edges in each part's own colour. */
   neon: (fill = 0.16): Partial<Style> => ({ look: { kind: "neon", fill }, outline: 2.2, inner: 1.4, glow: { gain: 1, radius: 8 }, rim: { color: "#ffffff", strength: 0, width: 0.3 } }),
   /** No ink, no bands: smooth light over muted materials, for realistic figures (toon3d's "real" look). `ambient`
