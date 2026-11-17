@@ -50,7 +50,7 @@ function surface(p: Painter, d: Ground, x: number, y: number, w: number, h: numb
     case "slab": p.slabs(x, y, w, h, [base, lt, shade(base, -0.06)], { sw: 2.25, sh: 2.0, joint: 0.07, jointColor: "#1c1612", bond: 0 }); p.mottle(x, y, w, h, "#1c1612", { alpha: 0.12 }); break;
     case "tile": p.slabs(x, y, w, h, [base, dk, lt], { sw: 0.75, sh: 0.75, joint: 0.045, jointColor: "#120a08", bond: 0 }); break;
     case "grate": p.rect(x, y, w, h, "#1c1210"); for (let yy = y; yy < y + h; yy += 0.5) for (let xx = x; xx < x + w; xx += 0.5) { p.rect(xx + 0.05, yy + 0.05, 0.4, 0.4, p.r() < 0.2 ? lt : base); p.rect(xx + 0.14, yy + 0.14, 0.22, 0.22, dk); } break;
-    case "bone": p.cobbles(x, y, w, h, [base, lt, dk], { size: 0.3, gap: shade(base, -0.45), aspect: 1.5 }); break;
+    case "bone": p.cobbles(x, y, w, h, [base, shade(base, 0.06), shade(base, -0.08)], { size: 0.34, gap: shade(base, -0.24), aspect: 1.5, edge: 0.008 }); break;
     default:
       p.mottle(x, y, w, h, dk, { alpha: 0.4, n: Math.round(w * h * 0.5), size: [0.3, 1.2] });
       p.mottle(x, y, w, h, lt, { alpha: 0.3, n: Math.round(w * h * 0.4), size: [0.2, 0.8] });
@@ -110,7 +110,7 @@ export const GROUNDS: Ground[] = [
   { name: "Flesh Floor", obstacle: "bone", kind: "flesh", field: "#7a4a3e", out: "#5a2e28", hot: "#3a1410", hotGlow: "#b3170d", strip: "#3d2c26", kerb: "#b8a488", plaza: "#6b5348", ambient: EMBERS },
   { name: "Slime Marsh", obstacle: "stump", kind: "marsh", field: "#4e4a34", out: "#343822", hot: "#7aa024", hotGlow: "#b8e03a", strip: "#3a3f44", kerb: "#c08a40", plaza: "#5d646a", ambient: SPORES },
   { name: "Slag Foundry", obstacle: "crate", kind: "grate", field: "#4c5054", out: "#3a2a24", hot: "#ffb020", hotGlow: "#ff7a1c", strip: "#2a2c30", kerb: "#ffb020", plaza: "#6b5348", ambient: EMBERS },
-  { name: "Bone Yard", obstacle: "bone", kind: "bone", field: "#8a7a64", out: "#5a4a3c", hot: "#3a1410", hotGlow: "#8a1c12", strip: "#4a3830", kerb: "#e0d4b8", plaza: "#5d646a", ambient: ASH },
+  { name: "Bone Yard", obstacle: "bone", kind: "bone", field: "#7a6c5a", out: "#5a4a3c", hot: "#3a1410", hotGlow: "#8a1c12", strip: "#4a3830", kerb: "#e0d4b8", plaza: "#5d646a", ambient: ASH },
   { name: "Blood Cistern", obstacle: "pillar", kind: "tile", field: "#5e5650", out: "#3a2c28", hot: "#8a1c12", hotGlow: "#b3170d", strip: "#3d2c26", kerb: "#b8a488", plaza: "#4a3830", ambient: BLINK },
   { name: "Hazard Depot", obstacle: "crate", kind: "slab", field: "#6e675c", out: "#4a443c", hot: "#7aa024", hotGlow: "#b8e03a", strip: "#3a3f44", kerb: "#ffb020", plaza: "#5d646a", ambient: SPORES },
   { name: "The Maw", obstacle: "spike", kind: "obsidian", field: "#3e3234", out: "#241a1a", hot: "#ff7a1c", hotGlow: "#e03a10", strip: "#5a1c14", kerb: "#e0d4b8", plaza: "#4a3830", ambient: EMBERS },

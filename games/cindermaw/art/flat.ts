@@ -148,7 +148,7 @@ export const UI: UiArt = {
     // dressing down both sides, then the 9th
     const side: [Build, number, number, number][] = [[SCENE[2], 80, HZ + 110, 170], [SCENE[4], 230, HZ + 60, 190], [SCENE[3], 1100, HZ + 90, 200], [SCENE[0], 980, HZ + 70, 170], [SCENE[4], 1150, HZ + 250, 250], [SCENE[1], 60, HZ + 300, 230]];
     side.sort((a, b) => a[2] - b[2]).forEach(([b, x, y, ppu]) => put(st, p, b, x, y, { ppu, yaw: x < 600 ? 70 : 110, el: 24, shadow: 0.8 }));
-    const cast: [string, number, number, number, number, number][] = [["golem", 3, 150, HZ + 250, 170, 62], ["lancer", 3, 1040, HZ + 270, 170, 124], ["tide", 3, 380, HZ + 290, 190, 70], ["ravager", 3, 830, HZ + 290, 190, 108], ["bulwark", 3, 250, HZ + 400, 210, 66], ["ranger", 3, 960, HZ + 410, 210, 112], ["lion", 4, 603, HZ + 420, 250, 90]];
+    const cast: [string, number, number, number, number, number][] = [["golem", 3, 150, HZ + 250, 150, 70], ["bulwark", 3, 370, HZ + 300, 200, 76], ["ranger", 3, 840, HZ + 300, 200, 104], ["lancer", 3, 1050, HZ + 260, 170, 112], ["lion", 4, 603, HZ + 360, 250, 90]];
     for (const [kind, tier, x, y, ppu, yaw] of cast) putUnit(st, p, kind, tier, x, y, { ppu, yaw, el: 24, shadow: 0.5 });
     putUnit(st, p, "harrier", 3, 230, HZ - 500, { ppu: 250, yaw: 40, el: 20, anim: "walk", frame: 1, team: "ember" });
     putUnit(st, p, "griffin", 3, 960, HZ - 640, { ppu: 200, yaw: 140, el: 20, anim: "walk", frame: 2, team: "ember" });
