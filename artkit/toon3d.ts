@@ -428,7 +428,10 @@ export interface Style {
    *  optional free-form remap. */
   grade?: { saturation?: number; contrast?: number; warmth?: number; map?: (rgb: V3) => V3 };
   /** A whole-sprite look applied after rendering (artkit/looks.ts): reuse models with a radically different feel. */
-  look?: { kind: "toon" } | { kind: "pixel"; scale: number; levels?: number } | { kind: "neon"; fill?: number } | { kind: "paper"; paper?: string };
+  look?: { kind: "toon" } | { kind: "pixel"; scale: number; levels?: number } | { kind: "neon"; fill?: number } | { kind: "paper"; paper?: string }
+    /** Smooth, unbanded shading for realistic figures: wrapped diffuse light over a sky/ground ambient, soft
+     *  highlights on metal, forms darkening where they turn away from the eye. Use with outline 0 and inner 0. */
+    | { kind: "real"; ambient?: number; spec?: number; edge?: number };
 }
 
 export const DEFAULT_STYLE: Style = {
@@ -669,7 +672,20 @@ export function render(model: Model, o: RenderOpts): Sprite {
           const rm = smooth(1 - st.rim.width, 1 - st.rim.width + 0.06, 1 - nz) * clamp((nx * rimDir[0] + ny * rimDir[1] + nz * rimDir[2]) * 2.2) * st.rim.strength;
           if (rm > 0) { r = lerp(r, rimRgb[0], rm); g = lerp(g, rimRgb[1], rm); bl = lerp(bl, rimRgb[2], rm); }
         }
-        if (mask) { /* flat coverage */ } else if (look === "neon") {
+        if (mask) { /* flat coverage */ } else if (look === "real") {
+          const lk = st.look as { ambient?: number; spec?: number; edge?: number };
+          const amb = lk.ambient ?? 0.36, sh = m.shade ?? 1;
+          const hemi = 0.5 + 0.5 * (ny * cosE + nz * sinE);                       // sky above, dark ground below
+          const wrap = clamp((d + 0.3) / 1.3);
+          let f = amb * (0.45 + 0.55 * hemi) + (1 - amb) * wrap * wrap * 1.08;
+          f *= 1 - (lk.edge ?? 0.3) * (1 - smooth(0, 0.55, nz));                  // forms fall off toward their edges
+          f = 1 - (1 - Math.min(f, 1.12)) * sh;
+          const lum = (0.3 * c[9] + 0.59 * c[10] + 0.11 * c[11]) / 255, ta = clamp(st.shadowAmount * (1 - f) * 1.6);
+          r = lerp(c[9] * f, tint[0] * lum * f * 1.5, ta); g = lerp(c[10] * f, tint[1] * lum * f * 1.5, ta); bl = lerp(c[11] * f, tint[2] * lum * f * 1.5, ta);
+          const sp = Math.max(0, nx * Hc[0] + ny * Hc[1] + nz * Hc[2]);
+          const hl = (Math.pow(sp, 26) * (0.12 + 0.88 * metal) + Math.pow(sp, 6) * 0.1 * metal) * (lk.spec ?? 0.5);
+          if (hl > 0) { r += (235 - r) * hl; g += (238 - g) * hl; bl += (240 - bl) * hl; }
+        } else if (look === "neon") {
           const f = (st.look as { fill?: number }).fill ?? 0.16, lit = 0.6 + 0.4 * b;
           r = c[9] * f * lit + 8; g = c[10] * f * lit + 9; bl = c[11] * f * lit + 20;
         } else if (look === "paper") {
