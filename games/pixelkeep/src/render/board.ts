@@ -15,11 +15,13 @@ export * from "@base/render/board";
 const ART_PER_PLANE = 1456 / 4 / 0.52;
 /** The backdrop's top-left corner on the image plane (artkit/arena.ts ARENA.view). */
 const U0 = -0.26, V0 = -0.42;
+/** The battle is drawn at this fraction of the art's own resolution: fewer, fatter pixels, like an 8-bit console. */
+const CHUNK = 0.5;
 
 export class BoardView extends Base {
   layout(cssW: number, cssH: number, area: Rect) {
     super.layout(cssW, cssH, area);
-    const cam = this.cam, dpr = ART_PER_PLANE / cam.k;
+    const cam = this.cam, dpr = (ART_PER_PLANE / cam.k) * CHUNK;
     // put the backdrop's corner on a whole canvas pixel, so every art pixel of it fills exactly one canvas pixel
     const rx = cam.cx + cam.k * U0, ry = cam.cy + cam.k * V0;
     cam.cx += Math.round(rx * dpr) / dpr - rx;

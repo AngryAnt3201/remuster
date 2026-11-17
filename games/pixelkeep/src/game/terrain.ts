@@ -19,6 +19,12 @@ export const TERRAIN: WorldStyle = {
   rubble: "#804040", dust: "#ffbf80", spark: "#ffff80",
   sky: ["#4080ff", "#80bfff"], soil: ["#804000", "#402000"], halo: "rgba(255,255,255,0.5)",
   scenery: { trees: 18, rocks: 4, houses: 1.5, lamps: 0 },
+  // the cartridge: every pixel of the battle snaps to a 28-colour console palette, dithered, behind faint scanlines
+  post: {
+    dither: 0.9, scan: 0.14,
+    palette: ["#000000", "#101018", "#404040", "#808080", "#bfbfbf", "#ffffff", "#400000", "#802020", "#bf4040", "#ff4040", "#ff8080", "#804000", "#bf8040", "#ffbf40", "#ffff40", "#ffffbf",
+      "#004000", "#008000", "#40bf40", "#80ff40", "#0040bf", "#4080ff", "#80bfff", "#402080", "#8040bf", "#bf80ff", "#00bfbf", "#ff40bf"],
+  },
 };
 
 /** Which of the game's battlefield backdrops (public/arenas/act<N>) each Arena-mode arena is fought on. */
