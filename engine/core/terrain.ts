@@ -1,4 +1,5 @@
-// Arena terrain: the walls, buildings, barricades, cover and water that Arena battles are fought around.
+// Arena terrain: the walls, buildings, barricades, cover and water that battles are fought around, and the two
+// ground zones (roads and brush) that shape how units cross the board.
 // This file is the contract between the sim (engine/core/battle.ts), the match and AI (placement), the Arena mode
 // content (engine/core/arena.ts) and every frontend's renderer. Blocks are axis-aligned rectangles in world units
 // (the board is W x H = 9 x 14, see defs.ts); (x, y) is the centre, w and h the full width (across) and depth.
@@ -12,11 +13,23 @@
 //   barricade   blocked        blocked                      pass over / under        blocked              yes (hp)
 //   cover       blocked        pass; the shot is weakened   pass                     clear                yes (hp)
 //   water       blocked        pass                         pass                     clear                never
+//   road        pass, faster   pass                         pass                     clear                never
+//   brush       pass, hidden   pass                         pass                     clear (see below)    never
+//
+// "road" and "brush" are ground zones, not obstacles: they block nothing and never break (isZone).
+//   road    a ground unit whose centre is on a road moves at ROAD_SPEED times its speed, and routes round blocks
+//           prefer roads. Fliers and burrowers are unaffected.
+//   brush   tall grass, reeds, an orchard, an alley's shadow. A ground unit whose centre is in brush is hidden:
+//           enemies cannot target it from farther than BRUSH_REVEAL (edge to edge) unless it is revealed (it attacked,
+//           cast or took damage within the last BRUSH_EXPOSE seconds). Fliers and structures are never hidden; blasts
+//           and other area damage still hurt hidden units. A unit that starts the battle in brush lies in wait
+//           (AMBUSH_RANGE, AMBUSH_WAIT). Body.hidden says which bodies are hidden now.
+// Zones may overlap each other's edges; they never overlap a blocking block.
 //
 // "building" behaves exactly like "wall"; it exists so a frontend can draw a house, tower or saloon instead of a
 // length of wall. `look` is a free-form hint for frontends only (the sim never reads it).
 
-export type BlockKind = "wall" | "building" | "barricade" | "cover" | "water";
+export type BlockKind = "wall" | "building" | "barricade" | "cover" | "water" | "road" | "brush";
 
 export interface Block {
   /** Unique within its arena (stable across rounds; battle events refer to it). */
@@ -30,7 +43,8 @@ export interface Block {
   h: number;
   /** Starting health for barricade and cover (defaults: BLOCK_HP). Ignored for the kinds that never break. */
   hp?: number;
-  /** Frontend hint: which model to draw ("house", "tower", "crates", "fence", "pond"...). The sim never reads it. */
+  /** Frontend hint: which model to draw ("house", "tower", "crates", "fence", "pond"...; the list is BLOCK_LOOKS in
+   * arena.ts). The sim never reads it. */
   look?: string;
 }
 
@@ -41,7 +55,21 @@ export const COVER_KEEP = 0.6;
 /** How close behind cover (edge to centre, world units) a target must stand for the cover to count. */
 export const COVER_REACH = 0.9;
 
-export const blocksGround = (_k: BlockKind) => true;
+/** Ground speed multiplier for a unit whose centre is on a road. */
+export const ROAD_SPEED = 1.25;
+/** How close (edge to edge, world units) an enemy must be to see a unit hidden in brush. */
+export const BRUSH_REVEAL = 1.7;
+/** Seconds a unit in brush stays revealed after it attacks, casts or takes damage. */
+export const BRUSH_EXPOSE = 1.5;
+/** A unit that starts the battle in brush lies in wait until an enemy it can see comes this close (edge to edge; or
+ * within its own attack range if that is longer), it is revealed, it is moved out of the brush, or AMBUSH_WAIT
+ * seconds have passed. */
+export const AMBUSH_RANGE = 3;
+export const AMBUSH_WAIT = 6;
+
+/** Roads and brush: ground zones that block nothing and never break. */
+export const isZone = (k: BlockKind): k is "road" | "brush" => k === "road" || k === "brush";
+export const blocksGround = (k: BlockKind) => !isZone(k);
 export const blocksShots = (k: BlockKind) => k === "wall" || k === "building" || k === "barricade";
 export const blocksSight = blocksShots;
 export const breakable = (k: BlockKind): k is "barricade" | "cover" => k === "barricade" || k === "cover";
@@ -58,6 +86,9 @@ export const blockLeft = (b: Block) => b.x - b.w / 2;
 export const blockRight = (b: Block) => b.x + b.w / 2;
 export const blockTop = (b: Block) => b.y - b.h / 2;
 export const blockBottom = (b: Block) => b.y + b.h / 2;
+
+/** Whether a point is inside a block's rectangle (edges included). */
+export const pointInBlock = (b: Block, x: number, y: number) => x >= blockLeft(b) && x <= blockRight(b) && y >= blockTop(b) && y <= blockBottom(b);
 
 /** Whether a circle (centre x, y, radius r) overlaps a block. */
 export function circleHitsBlock(b: Block, x: number, y: number, r: number): boolean {

@@ -34,6 +34,7 @@ import { underLevelledHint } from "./ui/army";
 import { onlineArenaFinish, onlineArenaForfeit, onlineArenaMatch, startOnline, trackMatchEnd, trackScreen } from "./online";
 import { arenaLadder, settleArena, awardArena, awardCampaign, awardDaily, awardGauntletRival, awardSkirmish, nextArenaMatch, settleLegacyCoins, withLevels } from "@engine/progression/troops";
 import { LEAGUES, arenaById, arenaUnlocked, leagueProgress, trophyChange, type ArenaDef } from "@engine/core/arena";
+import { isZone } from "@engine/core/terrain";
 import { ARENA_BACKDROP, TERRAIN } from "./game/terrain";
 import { foeLevelForAct } from "@engine/progression/economy";
 import { attachReward, barracksScreen } from "./ui/barracks";
@@ -362,6 +363,7 @@ function playLevel(l: LevelDef, attempt = 0) {
     mode: "campaign",
     title: l.name,
     arena: l.act,
+    marks: l.marks, // [arena] the level's set piece: its blocks are cfg.terrain
     hint: l.id === 1 && !load().campaign[1],
     onEnd: (m) => {
       const n = starsFor(l, m);
@@ -539,8 +541,11 @@ function arenaThumb(a: ArenaDef, px = 54) {
   c.style.width = `${9 * k}px`; c.style.height = `${14 * k}px`;
   const g = c.getContext("2d")!;
   g.scale(k * dpr, k * dpr);
-  for (const m of a.marks) { g.fillStyle = m.look === "bridge" ? TERRAIN.bridge.deck : TERRAIN.gate; g.fillRect(m.x - m.w / 2, m.y - m.h / 2, m.w, m.h); }
+  // Roads and brush are ground: drawn first, flat, under everything else.
+  for (const b of a.blocks) if (isZone(b.kind)) { g.fillStyle = b.kind === "road" ? "rgba(214, 196, 160, 0.55)" : "rgba(96, 148, 84, 0.6)"; g.fillRect(b.x - b.w / 2, b.y - b.h / 2, b.w, b.h); }
+  for (const m of a.marks) if (m.look === "gate" || m.look === "bridge") { g.fillStyle = m.look === "bridge" ? TERRAIN.bridge.deck : TERRAIN.gate; g.fillRect(m.x - m.w / 2, m.y - m.h / 2, m.w, m.h); }
   for (const b of a.blocks) {
+    if (isZone(b.kind)) continue;
     g.fillStyle = b.kind === "water" ? TERRAIN.water.shallow : (TERRAIN.looks[b.look ?? ""] ?? TERRAIN.looks[b.kind] ?? TERRAIN.looks.wall)[b.kind === "building" ? "roofLit" : "top"] ?? "#bbb";
     g.fillRect(b.x - b.w / 2, b.y - b.h / 2, b.w, b.h);
   }

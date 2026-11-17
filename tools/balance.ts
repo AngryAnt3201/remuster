@@ -59,6 +59,7 @@ export function twistOf(l: LevelDef): string {
   const t: string[] = [];
   if (l.start?.[1]?.length) t.push(`start ${l.start[1].length}`);
   if (l.obstacles?.length) t.push(`${l.obstacles.length} rocks`);
+  if (l.set) t.push(`set ${l.set}`);
   if (l.noReroll) t.push("no reroll");
   if (l.maxRounds) t.push(`${l.maxRounds} rounds`);
   const fm = l.mods?.[1];

@@ -97,8 +97,11 @@ describe("match records", () => {
     const only = (r: MatchRecord, ...ps: RecordPiece[]) => { mine(r).length = 0; mine(r).push(...ps); };
     // an extra unit: round 1 has room for three
     expect(bad((r) => { const b = kindIx(r, "blades"); only(r, [900, b, 1, 12, 1], [901, b, 2, 12, 1], [902, b, 3, 12, 1], [903, b, 4, 12, 1]); })).toBe("supply");
-    // on the crates in its own zone (twin-gates: x 1.75..3.0, y 8.5..8.9)
-    expect(bad((r) => only(r, [900, kindIx(r, "blades"), 2.4, 8.7, 1]))).toBe("blocked");
+    // on the sandbags in its own zone (twin-gates: x 0.5..1.5, y 8.25..8.65)
+    expect(bad((r) => only(r, [900, kindIx(r, "blades"), 1.0, 8.45, 1]))).toBe("blocked");
+    // on the road or in the orchard is fine: zones are ground (x 1.75..3.0 is the road, x 0.25..1.5 y 9.5..11.5 the orchard)
+    expect(bad((r) => only(r, [900, kindIx(r, "blades"), 2.4, 9.5, 1]))).not.toBe("blocked");
+    expect(bad((r) => only(r, [900, kindIx(r, "blades"), 0.9, 10.5, 1]))).not.toBe("blocked");
     // in the enemy's zone, and off the board
     expect(bad((r) => only(r, [900, kindIx(r, "blades"), 4.5, 3, 1]))).toBe("zone");
     expect(bad((r) => only(r, [900, kindIx(r, "blades"), -3, 12, 1]))).toBe("zone");

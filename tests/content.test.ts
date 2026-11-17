@@ -26,7 +26,7 @@ describe("campaign", () => {
     // Bosses: a set-piece board and at least one more twist.
     for (const b of LEVELS.filter((l) => l.boss)) {
       expect(b.start?.[1]?.length).toBeGreaterThan(0);
-      const twists = [b.obstacles?.length, b.noReroll, b.maxRounds, b.mods?.[1]?.broodStart, b.mods?.[1]?.litStart, b.income?.[1], b.supply?.[1], b.hp[0] !== 400].filter(Boolean);
+      const twists = [b.obstacles?.length, b.set, b.noReroll, b.maxRounds, b.mods?.[1]?.broodStart, b.mods?.[1]?.litStart, b.income?.[1], b.supply?.[1], b.hp[0] !== 400].filter(Boolean);
       expect(twists.length).toBeGreaterThan(0);
     }
   });

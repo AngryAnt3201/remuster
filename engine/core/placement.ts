@@ -1,7 +1,8 @@
-// Where a piece may stand in an arena: never overlapping a block. Shared by the match (buy, place, move), the AI's
+// Where a piece may stand on terrain: never overlapping a block (roads and brush are ground, not blocks: a piece may
+// stand on them). Shared by the match (buy, place, move), the AI's
 // formations and any UI that wants to test or snap a spot before committing it.
 import { UNITS, clampToZone, type Side, type UnitKind } from "./defs";
-import { circleHitsBlock, type Block } from "./terrain";
+import { circleHitsBlock, isZone, type Block } from "./terrain";
 
 /** The radius a placed piece needs clear of blocks: its body, or for a pack (Blade Trio) the whole triangle. */
 export const footprint = (kind: UnitKind) => UNITS[kind].radius + ((UNITS[kind].bodies ?? 1) > 1 ? 0.32 : 0);
@@ -10,7 +11,7 @@ export const footprint = (kind: UnitKind) => UNITS[kind].radius + ((UNITS[kind].
 export function spotBlocked(terrain: readonly Block[] | undefined, kind: UnitKind, x: number, y: number): boolean {
   if (!terrain?.length) return false;
   const r = footprint(kind) + 0.02;
-  for (const b of terrain) if (circleHitsBlock(b, x, y, r)) return true;
+  for (const b of terrain) if (!isZone(b.kind) && circleHitsBlock(b, x, y, r)) return true;
   return false;
 }
 
