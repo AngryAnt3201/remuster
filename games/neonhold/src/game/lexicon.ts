@@ -545,4 +545,16 @@ export const LEXICON: Record<string, string> = {
   "gold": "creds",
   "trophies": "rep",
   "army": "crew",
+  // battle callouts
+  "SWOOP": "DIVE",
+  "RIPTIDE": "SURGE",
+  "WAVE": "OVERLOAD",
+  "RALLY": "BOOST",
+  "RIPOSTE": "COUNTER",
+  "PARRY": "DEFLECT",
+  "IMPALED": "PINNED",
+  "SEIZED": "JACKED",
+  "HOOKED": "TETHERED",
+  "BEACON": "UPLINK",
+  "REVIVED": "REBOOT",
 };
