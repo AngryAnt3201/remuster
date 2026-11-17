@@ -9,6 +9,7 @@
     { "id": "04-every-look", "bar": 15, "text": "Same battle. Same rules. A completely different game." },
     { "id": "05-we-run", "bar": 21, "text": "We run the game underneath: the rules, the servers, the ladder." },
     { "id": "06-you-own", "bar": 25, "text": "You redesign everything a player sees and hears." },
+    { "id": "06b-peek", "bar": 27, "text": "After a match, step into your rival's game." },
     { "id": "07-arenas", "bar": 29, "text": "And every level is a real place. Streets, cover, ambushes. Spin it like a globe." },
     { "id": "08-yours", "bar": 37, "text": "One game. Make it yours." },
     { "id": "09-remuster", "bar": 47, "text": "Remuster." }

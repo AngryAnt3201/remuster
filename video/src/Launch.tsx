@@ -4,7 +4,7 @@ import React from "react";
 import { AbsoluteFill, Audio, OffthreadVideo, Sequence, continueRender, delayRender, interpolate, spring, staticFile, useCurrentFrame } from "remotion";
 import clips from "./clips.json";
 import vo from "../vo/script.json";
-import { BAR, BARS, BEAT, CAPTIONS, DURATION, FPS, GAMES, PROMPTS, SCENE_SKIP, SCENE_START, SHOTS, TAIL, at, game, type GameId, type Shot } from "./timeline";
+import { BAR, BARS, BEAT, CAPTIONS, DURATION, FPS, GAMES, PEEK, PROMPTS, SCENE_SKIP, SCENE_START, SHOTS, TAIL, at, game, type GameId, type Shot } from "./timeline";
 
 const W = 1080, H = 1920;
 const INK = "#1a1210";
@@ -64,6 +64,36 @@ const ShotView: React.FC<{ s: Shot }> = ({ s }) => {
         <div style={{ position: "absolute", left: 44, top: 150, transform: `translateX(${interpolate(pop(f, 2), [0, 1], [-520, 0])}px)` }}>
           <div style={{ display: "inline-block", fontFamily: DISPLAY, fontSize: 76, color: "#fff", textShadow: outline(6), background: g.color, padding: "6px 30px 12px", borderRadius: 22, border: `7px solid ${INK}`, boxShadow: `0 9px 0 ${INK}` }}>{g.name}</div>
         </div>
+      ) : null}
+    </AbsoluteFill>
+  );
+};
+
+/** "See it in the rival's game": the player's results sheet, a tap on its button, and the rival's game sliding up
+ *  over it under the bar the real overlay has, replaying the same round from the rival's end of the field. */
+const Peek: React.FC = () => {
+  const f = useCurrentFrame();
+  const P = PEEK, to = game(P.to);
+  const tap = interpolate(f, [P.tapAt, P.tapAt + 16], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const open = spring({ frame: f - P.openAt, fps: FPS, config: { stiffness: 170, damping: 22, mass: 0.9 } });
+  // the capture is 1080 x 2338 and fills the frame by height crop: its rows sit (2338 - 1920) / 2 higher on screen
+  const bx = P.button[0], by = P.button[1] - (2338 - H) / 2;
+  return (
+    <AbsoluteFill style={{ background: INK }}>
+      <Footage g={P.from} clip="peek" t={P.fromT} />
+      {f >= P.tapAt && f < P.tapAt + 26 ? (
+        <div style={{ position: "absolute", left: bx - 90, top: by - 90, width: 180, height: 180, borderRadius: 90, border: "10px solid #fff", opacity: 1 - tap, transform: `scale(${0.35 + tap * 0.9})`, boxShadow: "0 0 40px rgba(255,255,255,0.8)" }} />
+      ) : null}
+      {f >= P.openAt ? (
+        <AbsoluteFill style={{ transform: `translateY(${(1 - open) * H}px)`, background: "#000" }}>
+          <div style={{ position: "absolute", left: 0, top: 0, width: W, height: 150, background: "#111", display: "flex", alignItems: "center", padding: "0 36px", boxSizing: "border-box", gap: 24 }}>
+            <div style={{ flex: 1, color: "#fff", fontFamily: "system-ui, sans-serif", fontWeight: 600, fontSize: 40, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{P.rival} plays <span style={{ color: to.color }}>{to.name}</span></div>
+            <div style={{ background: "#e5484d", color: "#fff", fontFamily: "system-ui, sans-serif", fontWeight: 600, fontSize: 40, padding: "18px 44px", borderRadius: 22 }}>Close</div>
+          </div>
+          <div style={{ position: "absolute", left: 0, top: 150, width: W, height: H - 150, overflow: "hidden" }}>
+            <Footage g={P.to} clip="peekview" t={P.toT} />
+          </div>
+        </AbsoluteFill>
       ) : null}
     </AbsoluteFill>
   );
@@ -150,6 +180,7 @@ export const Launch: React.FC<{ music: boolean; vo: boolean; sfx: boolean }> = (
         </Sequence>
       ))}
       <Sequence from={at(21)} durationInFrames={4 * BAR}><Grid clip="siege" /></Sequence>
+      <Sequence from={at(PEEK.bar)} durationInFrames={PEEK.bars * BAR}><Peek /></Sequence>
       <Sequence from={at(39)} durationInFrames={2 * BAR}><AbsoluteFill style={{ background: INK }} /></Sequence>
       {PROMPTS.map((p, i) => (
         <Sequence key={i} from={at(p.bar)} durationInFrames={at(p.send) - at(p.bar) + 4} layout="none"><Prompt text={p.text} typeFrames={at(p.send) - at(p.bar)} /></Sequence>

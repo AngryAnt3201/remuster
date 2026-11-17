@@ -860,7 +860,14 @@ async function playFilm(name: string, speed: number) {
     cfg: sceneConfig(scene), you: { ...DEFAULT_AI, difficulty: 0 }, mode: "watch", scripted: true, title: scene.title, arena: scene.arena,
     camera: still ? undefined : () => filmCamera(name, (performance.now() - t0) / 1000),
     marks: scene.marks ?? (scene.terrain ? arenaById(scene.terrain)?.marks : undefined),
-    onEnd: () => { filmMark("end"); }, onQuit: title,
+    onEnd: (m) => {
+      filmMark("end");
+      if (!scene.sheet) return;
+      // the real results sheet, with the real button (it has nowhere to go while filming)
+      results(m, { heading: "Victory", note: "+28 trophies · 1,312 now · 3 in a row", primary: ["Next battle", () => {}], secondary: ["Arena", () => {}] });
+      sheetEl?.querySelector(".results")?.append(btn(`See it in ${scene.names?.[1] ?? "the rival"}'s game`, "ghost peek-btn", () => {}));
+      filmMark("sheet");
+    }, onQuit: title,
   });
   st.render = renderSfx; // the recorder rebuilds the scene's sound offline with this game's synth
   st.ready = true;

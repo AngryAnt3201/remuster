@@ -61,7 +61,8 @@ first. To replace it with a produced track, keep 144 BPM and the bar count and d
 | 11-17 | The same battle carries on in Blackridge, then Pixelkeep, Cindermaw, Neonhold, Inkfall, each on a typed prompt |
 | 18-20 | A cut every two beats through all six as the battle is won |
 | 21-24 | All six at once. "We run the game. You own the look." |
-| 25-28 | Each game's home and Army screens |
+| 25 | Two games' home screens |
+| 26-28 | Seeing the rival's game: Crownfall's results sheet, a tap on "See it in Captain Varro's game", Cindermaw replaying the round from the rival's side (`peek` and `peekview` clips; `PEEK` in `src/timeline.ts`) |
 | 29-36 | Real places: a village, a river crossing and a market square, each opening on the whole globe and turning |
 | 37-38 | Break. "One game. Make it yours." |
 | 39-46 | A cut every two beats: the best moments of everything |
@@ -69,7 +70,7 @@ first. To replace it with a produced track, keep 144 BPM and the bar count and d
 
 ## Voice-over
 
-`vo/script.json` has the nine lines and the bar each starts on. The files in `vo/` are placeholders spoken by the
+`vo/script.json` has the ten lines and the bar each starts on. The files in `vo/` are placeholders spoken by the
 Mac's built-in voice (`vo/make.sh`). Record each line as `vo/<id>.wav` (any sample rate, mono or stereo), delete
 its `.placeholder` marker, and render again. Lines are placed by their start; if a recording runs long, move the
 next line's `bar` in `script.json`. The music ducks under each line automatically.

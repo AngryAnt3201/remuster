@@ -20,3 +20,7 @@ film --scene crossing --seconds 16
 film --scene market --seconds 16
 film --url "/?demo" --name home --seconds 8
 film --url "/?demo&tab=army" --name army --seconds 3
+# the peek shot (video/src/timeline.ts PEEK): the player's results sheet in the base game, the rival's view in Cindermaw
+[ $game = base ] && film --scene peek --seconds 20
+[ $game = cindermaw ] && film --scene peekview --seconds 14
+true
