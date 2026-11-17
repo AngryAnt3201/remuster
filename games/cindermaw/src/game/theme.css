@@ -284,3 +284,30 @@ html, body { background: #120a08; }
 :root input[type="range"] { accent-color: var(--cm-led); }
 
 :root .hm-rack .ch-minis { top: calc(var(--st) + 168px); left: 6px; right: 6px; }
+:root .cm-logo b::after { font-size-adjust: none; }
+/* shop, pass, offers */
+:root .pass-screen, :root .pass-screen[class] { --season: #e03a10 !important; --season-d: #3a0806 !important; background: #120a08; }
+:root .screen-head, :root .pass-screen .screen-head { background: var(--cm-grit) 0 0 / 4px 4px, #2a2826; border-bottom: 2px solid var(--k-ink); box-shadow: inset 0 -2px 0 #0e0c0a; }
+:root .of-card, :root .of-card.t3, :root .of-card.t4 { background: var(--cm-grit) 0 0 / 4px 4px, #3c3a38; border: 2px solid var(--k-ink); box-shadow: var(--cm-up-dk); color: var(--k-text); }
+:root .of-item { background: #140a08; box-shadow: var(--cm-down); color: var(--k-text); }
+:root .btn.gem { --b: #6a1c6a; box-shadow: inset 2px 2px 0 #b040b0, inset -2px -2px 0 #2a082a, 0 3px 0 var(--k-ink); }
+:root .pq-xp, :root .pq-row .pq-xp, :root [class*="-xp"]:not(.hm-cmd-xp) { background-color: #140000; color: var(--k-accent); border-color: var(--k-ink); }
+:root .pt-cell.premium, :root .pt-cell.premium:not(.reached):not(.got) { background: #5a3a1c; }
+:root .pt-cell { box-shadow: var(--cm-up-dk); }
+:root .pr-cards .pr-card, :root .pr-cards.r-rare .pr-card, :root .pr-cards.r-legendary .pr-card { background: #6e6c68; box-shadow: var(--cm-up); }
+:root .pr-cards.r-rare .pr-card { background: #8a9298; } :root .pr-cards.r-legendary .pr-card { background: #ffb020; }
+/* results, the Pit */
+:root .results .result-stats span { background: #140000; border: 0; box-shadow: var(--cm-down); color: var(--k-muted); font-family: var(--tiny); font-size: 9px; }
+:root .results .result-stats b, :root .results.won .result-stats span:nth-child(2) b, :root .results.lost .result-stats span:nth-child(3) b { font: 400 34px/1 var(--display); color: var(--cm-led); }
+:root .results.won .result-stats span:nth-child(2) b { color: var(--tide); }
+:root .results.lost .result-crest .icon { color: #5a1c14; }
+:root .results.won .result-crest .icon { color: var(--gold); filter: none; }
+:root .ar-thumb { background: #4a3830; box-shadow: 0 0 0 2px var(--k-ink); filter: grayscale(1) sepia(0.9) hue-rotate(-28deg) saturate(1.6) brightness(0.75) contrast(1.25); }
+:root .ar-arena.locked .ar-thumb { filter: grayscale(1) brightness(0.5); }
+:root .ar-arena { background: #140a08; box-shadow: var(--cm-down); }
+:root .reward-strip { background: #140000; box-shadow: var(--cm-down); border: 0; color: var(--k-text); }
+:root .reward-chip { background: #3a0806; color: var(--k-accent); }
+:root .gem-card, :root .gem-card.best { background: var(--cm-grit) 0 0 / 4px 4px, #3c3a38; border: 2px solid var(--k-ink); box-shadow: var(--cm-up-dk); color: var(--k-text); }
+:root .gem-card.best { background: #5a3a1c; }
+:root { --gem: #b040b0; --gem-d: #ff9aff; }
+:root .td-thumb { filter: grayscale(1) sepia(0.9) hue-rotate(-28deg) saturate(1.6) brightness(0.75) contrast(1.25); }
