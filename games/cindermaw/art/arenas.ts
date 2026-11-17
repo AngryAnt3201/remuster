@@ -99,7 +99,7 @@ function ground(d: Ground): ArenaDef {
 const bonePile: Build = (m) => { for (const [x, y, z, s] of [[0, 0, 0.3, 0.55], [0.5, 0.3, 0.2, 0.38], [-0.5, 0.2, 0.2, 0.4], [0.1, -0.5, 0.18, 0.36], [-0.3, -0.4, 0.5, 0.3]]) m.ellipsoid([x, y, z], [s, s * 0.9, s * 0.8], P.bone, { segs: 7 }); for (const a of [0.4, 2.2, 4.1]) m.cylinder([Math.cos(a) * 0.2, Math.sin(a) * 0.2, 0.5], [Math.cos(a) * 0.9, Math.sin(a) * 0.9, 0.9], 0.06, P.boneDk, 0.05, { segs: 5 }); };
 const crate: Build = (m) => { m.box([0, 0, 0.6], [1.5, 1.5, 1.2], P.ironDk); m.decal(0.02, () => { for (const z of [0.25, 0.95]) m.box([0, 0, z], [1.52, 1.52, 0.2], P.hazard); }); m.box([0.2, -0.1, 1.5], [0.9, 0.9, 0.6], P.rust); };
 const spikes: Build = (m) => { m.cylinder([0, 0, 0], [0, 0, 0.25], 1.0, P.char, 0.9, { segs: 10 }); for (const [x, y, hh] of [[0, 0, 2.0], [0.5, 0.3, 1.3], [-0.45, 0.35, 1.5], [0.2, -0.5, 1.1], [-0.4, -0.4, 1.2]]) m.cone([x, y, 0.2], [x * 1.2, y * 1.2, hh], 0.22, P.boneDk, { segs: 5 }); };
-const PROPS: Build[] = [bonePile, crate, spikes];
+export const PROPS: Build[] = [bonePile, crate, spikes];
 
 const EMBERS = motes("rise", 16, ["#ff7a1c", "#ffb020"], 0.045), ASH = motes("fall", 22, ["#8f7a66", "#6b5348"], 0.05), SPORES = motes("drift", 14, ["#b8e03a", "#7aa024"], 0.045), BLINK = motes("blink", 10, ["#ff7a1c", "#e03a10"], 0.05);
 
