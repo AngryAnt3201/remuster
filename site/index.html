@@ -3,41 +3,135 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0b0f17">
-  <title>Muster: Tactics · turn-based army battler for iPhone</title>
-  <meta name="description" content="Muster: Tactics is a turn-based army battler for iPhone. Build an army, place it, and watch it fight. Free to play with every level open. Offline, no ads, no tracking.">
+  <meta name="theme-color" content="#0d1626">
+  <title>Remuster · one auto-battler, any number of games</title>
+  <meta name="description" content="Remuster is a finished auto-battler split in two: an engine and backend we run, and a game you redesign by telling Claude Code what it should be. Same battle, same rules, a completely different game.">
+  <meta property="og:title" content="Remuster · one game, make it yours">
+  <meta property="og:description" content="One auto-battler, any number of games. Tell Claude what yours should be.">
+  <meta property="og:image" content="https://angryant3201.github.io/remuster/v/launch.jpg">
   <link rel="icon" href="icon.png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="site.css">
 </head>
-<body>
-  <div class="wrap">
-    <nav>
-      <a class="brand" href="./"><img src="icon.png" alt="">Muster: Tactics</a>
-      <div class="links"><a href="support.html">Support</a><a href="privacy.html">Privacy</a></div>
-    </nav>
+<body data-game="base">
+  <canvas id="fx" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="wipe" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
 
-    <header class="hero">
-      <img src="icon.png" alt="Muster: Tactics app icon">
-      <p class="word">MUSTER</p>
-      <p class="tag">build · place · clash</p>
-      <p class="lede">A turn-based army battler for iPhone. Buy units, place them on your half of the field, press Fight and watch your army play out your plan.</p>
-      <span class="badge">Coming soon to the App Store</span>
-    </header>
+  <nav class="top">
+    <a class="brand" href="./"><span class="mark"><b></b><b></b></span>Remuster</a>
+    <div class="links">
+      <a href="#games">Games</a><a href="#how">How</a><a href="#film">Film</a>
+      <a class="gh" href="https://github.com/AngryAnt3201/remuster">GitHub</a>
+    </div>
+  </nav>
 
-    <section class="grid" aria-label="Features">
-      <div class="card tide"><h3><span data-count="units">31</span> units</h3><p>No grid, no lanes. Every unit steers freely and fights its own way: flankers, chargers, casters, traps, flyers, builders.</p></div>
-      <div class="card ember"><h3>Evolve and Ascend</h3><p>Rank units from Recruit to Elite, then Ascend them for a new look and a signature ability.</p></div>
-      <div class="card gold"><h3>Rivals that think</h3><p>Rivals test their plans against your board. Tune them yourself in the AI lab, or watch two AIs fight.</p></div>
-      <div class="card tide"><h3>Five modes</h3><p>A <span data-count="levels">60</span>-level campaign with bosses, a Daily Challenge, the Gauntlet, Breakpoint puzzles and open Skirmish.</p></div>
-      <div class="card ember"><h3>Offline</h3><p>No account, no sign-in, no internet needed. Your progress stays on your device.</p></div>
-      <div class="card gold"><h3>Free to play</h3><p>Every act, the Gauntlet, every puzzle, the Daily Challenge and Skirmish are free. Optional purchases only speed you up. No ads, no tracking, no energy.</p></div>
-    </section>
+  <header class="hero">
+    <div class="pitch">
+      <p class="kicker">One auto-battler · any number of games</p>
+      <h1 class="title" aria-label="Remuster"><span>R</span><span>E</span><span>M</span><span>U</span><span>S</span><span>T</span><span>E</span><span>R</span></h1>
+      <p class="lede">A finished game, split in two. We run the rules, the servers and the ladder. You redesign everything a player sees and hears, by telling Claude what it should be.</p>
 
-    <footer>
-      <span>© 2026 Jack Wakem</span>
-      <span><a href="support.html">Support</a> · <a href="privacy.html">Privacy Policy</a> · <a href="mailto:jackwakem@gmail.com">jackwakem@gmail.com</a></span>
-    </footer>
-  </div>
+      <form class="prompt" id="prompt" autocomplete="off">
+        <div class="bar"><i></i><i></i><i></i><span>claude code</span></div>
+        <label class="line"><span class="cmd">/remix</span><input id="ask" type="text" spellcheck="false" aria-label="What should the game be?" placeholder="make it…"><button type="submit" aria-label="Remix">↵</button></label>
+        <p class="said" id="said">Try it: type a world and press enter. This page is the demo.</p>
+      </form>
+
+      <div class="chips" id="chips" role="tablist" aria-label="Games"></div>
+
+      <div class="cta">
+        <a class="btn primary" href="https://github.com/AngryAnt3201/remuster">Get it on GitHub</a>
+        <a class="btn" id="playlink" href="play/base/">Play Crownfall</a>
+      </div>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="phone hero-phone" id="phone">
+        <div class="screen" id="heroscreen"></div>
+        <div class="glare"></div>
+      </div>
+      <div class="plate" id="plate"><b id="gname">Crownfall</b><span id="gtag">The base game: a storybook kingdom</span></div>
+      <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+    </div>
+  </header>
+
+  <section class="band" id="games">
+    <h2><span>Same battle.</span> <span>Same seed.</span> <span>Six games.</span></h2>
+    <p class="sub">Every phone below is playing the same fight, blow for blow. Only the picture changes. Drag to spin.</p>
+    <div class="ringwrap" id="ringwrap">
+      <div class="ring" id="ring"></div>
+      <div class="floor"></div>
+    </div>
+    <div class="ringlabel"><b id="rname">Crownfall</b><code id="rprompt">the base game</code><a id="rplay" class="btn small" href="play/base/">Play it</a></div>
+  </section>
+
+  <section class="band" id="compare">
+    <h2>Step into your rival's game</h2>
+    <p class="sub">After a match, replay the deciding round the way your rival saw it. Drag the line.</p>
+    <div class="cmp" id="cmp">
+      <video class="l" muted loop playsinline preload="none"></video>
+      <video class="r" muted loop playsinline preload="none"></video>
+      <div class="handle" id="handle"><i>◂ ▸</i></div>
+      <span class="tagl" id="tagl">Crownfall</span><span class="tagr" id="tagr">Cindermaw</span>
+    </div>
+    <div class="cmppick"><div class="chips mini" id="pickl"></div><span>vs</span><div class="chips mini" id="pickr"></div></div>
+  </section>
+
+  <section class="band" id="how">
+    <h2>We run the game. You own the look.</h2>
+    <div class="howgrid">
+      <div class="stack" id="stack">
+        <div class="slab s-back"><b>Backend</b><span>accounts · cloud saves · ladder · hosting</span></div>
+        <div class="slab s-eng"><b>Engine <em>locked</em></b><span>battle sim · rules · AI · economy</span></div>
+        <div class="slab s-game" id="slabgame"><b>Your game</b><span>art · interface · words · sound · music</span></div>
+      </div>
+      <div class="howtext">
+        <ul class="facts">
+          <li><b>31</b><span>units, each with its own behaviour</span></li>
+          <li><b>60</b><span>campaign levels, a boss per act</span></li>
+          <li><b>7</b><span>modes, from Arena to tower defence</span></li>
+          <li><b>12</b><span>arenas on a trophy ladder</span></li>
+        </ul>
+        <p>The engine is deterministic and locked. The server re-fights every ladder match with it, so nobody can claim a win they didn't earn, in any game.</p>
+        <p>Everything else is yours: every sprite, screen, word, sound and tune. A remix that only recolours the base game doesn't pass the checks.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="places">
+    <h2>Every level is a real place</h2>
+    <p class="sub">Streets, cover, bridges, ambushes. The battlefield is the top of a small globe: spin it, tip it, zoom it.</p>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section class="band" id="film">
+    <h2>The launch film</h2>
+    <p class="sub">83 seconds, six games, one battle. Sound on.</p>
+    <div class="filmwrap"><button class="film" id="filmbtn" aria-label="Play the launch film"><img src="v/launch.jpg" alt="" loading="lazy"><span class="playbtn">▶</span></button></div>
+  </section>
+
+  <section class="band" id="start">
+    <h2>One game. Make it yours.</h2>
+    <div class="term">
+      <div class="bar"><i></i><i></i><i></i><span>your terminal</span></div>
+<pre><code><span class="c"># get the game</span>
+git clone https://github.com/AngryAnt3201/remuster.git
+cd remuster &amp;&amp; npm install
+npm run dev                      <span class="c"># Crownfall at localhost:5300</span>
+
+<span class="c"># then, in Claude Code</span>
+<span class="hl">/remix dustline a spaghetti western</span></code></pre>
+    </div>
+    <p class="sub">Eight games ship in the repo: Crownfall, Blackridge, Pixelkeep, Cindermaw, Neonhold, Inkfall, Brasswick and Dustline. The ninth is yours.</p>
+    <div class="cta center"><a class="btn primary big" href="https://github.com/AngryAnt3201/remuster">Open the repo on GitHub</a></div>
+  </section>
+
+  <footer>
+    <span>© 2026 Jack Wakem</span>
+    <span><a href="https://github.com/AngryAnt3201/remuster">GitHub</a></span>
+  </footer>
+
+  <script src="site.js"></script>
 </body>
 </html>

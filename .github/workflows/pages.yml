@@ -1,0 +1,45 @@
+# The public site (site/) with six of the games playable in the browser under /play/<id>/. Served by GitHub Pages.
+name: Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - name: Build the games the site links to
+        run: |
+          mkdir -p _site/play
+          cp -R site/. _site/
+          npx vite build && cp -R dist _site/play/base
+          for g in blackridge pixelkeep cindermaw neonhold inkfall; do
+            GAME=$g npx vite build && cp -R dist-games/$g _site/play/$g
+            # A game's own fonts are copied in after the build, so its stylesheet still points at the site root.
+            sed -i 's#url(/fonts/#url(../fonts/#g' _site/play/$g/assets/*.css
+          done
+          touch _site/.nojekyll
+          du -sh _site
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: _site }
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
